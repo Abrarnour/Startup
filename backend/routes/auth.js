@@ -54,7 +54,6 @@ router.post('/register', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' },
     )
-
     res.status(201).json({
       message: 'تم إنشاء الحساب بنجاح',
       token,
