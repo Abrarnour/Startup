@@ -101,7 +101,7 @@ const handleRegister = async () => {
   loading.value = true
   try {
     // إرسال البيانات للـ Backend (تأكد من أن المسار صحيح في الـ API الخاص بك)
-    await axios.post('http://localhost:3000/api/auth/register', registerData)
+    await axios.post('https://belmahi-school-production.up.railway.app/api/auth/register', registerData)
 
     successMessage.value = 'Compte créé avec succès !'
 

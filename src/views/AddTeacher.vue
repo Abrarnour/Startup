@@ -50,7 +50,7 @@ const handleSubmit = async () => {
 
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('http://localhost:3000/api/auth/register-teacher', {
+    const response = await fetch('https://belmahi-school-production.up.railway.app/api/auth/register-teacher', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

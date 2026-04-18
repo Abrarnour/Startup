@@ -226,7 +226,7 @@
 import { ref, watch, computed } from 'vue'
 import * as api from '../services/api.js'
 
-const API_URL = 'http://localhost:3000/api'
+const API_URL = 'https://belmahi-school-production.up.railway.app/api'
 
 const props = defineProps({
   isOpen: Boolean,

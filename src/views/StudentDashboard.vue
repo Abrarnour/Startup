@@ -25,7 +25,7 @@ const loadCourses = async () => {
 
   try {
     // Appeler l'API pour récupérer les cours de l'étudiant
-    const response = await fetch('http://localhost:3000/api/students/my-courses', {
+    const response = await fetch('https://belmahi-school-production.up.railway.app/api/students/my-courses', {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`,
