@@ -49,8 +49,15 @@ router.post('/register', async (req, res) => {
       [name, last_name, email, password, role, birthday, city],
     )
 
+    const token = jwt.sign(
+      { id: newUser.rows[0].id, email: newUser.rows[0].email, role: newUser.rows[0].role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' },
+    )
+
     res.status(201).json({
       message: 'تم إنشاء الحساب بنجاح',
+      token,
       user: newUser.rows[0],
     })
   } catch (err) {

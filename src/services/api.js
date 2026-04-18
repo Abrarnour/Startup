@@ -44,8 +44,10 @@ export const register = async (userData) => {
   }
 
   const data = await response.json()
-  localStorage.setItem('token', data.token)
-  localStorage.setItem('user', JSON.stringify(data.user))
+  if (data.token) {
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+  }
   return data
 }
 
