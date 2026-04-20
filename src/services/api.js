@@ -1254,3 +1254,24 @@ export const getCalendarEvents = async (role) => {
 
   return await response.json()
 }
+
+// ============= NOTIFICATIONS =============
+
+export const getUpcomingNotifications = async () => {
+  const response = await fetch(`${API_URL}/notifications/upcoming`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) throw new Error('Erreur notifications')
+  return response.json()
+}
+
+export const getAllStudents = async () => {
+  const response = await fetch(`${API_URL}/users/students`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to fetch students')
+  }
+  return response.json()
+}

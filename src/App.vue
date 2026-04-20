@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { getCurrentUser, logout as apiLogout } from './services/api.js' // ✅ Import API
-
 const router = useRouter()
 const user = ref(null)
 // État global
@@ -45,7 +44,7 @@ const toggleDarkMode = () => {
       @toggle-dark-mode="toggleDarkMode"
     />
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-4 md:py-8">
       <RouterView v-slot="{ Component }">
         <component :is="Component" :darkMode="darkMode" :user="user" @login="handleLogin" />
       </RouterView>
@@ -154,9 +153,37 @@ const toggleDarkMode = () => {
         </div>
       </div>
     </footer>
+    <!-- Toast notifications — DANS App.vue -->
+    <Transition name="slide-up">
+      <div
+        v-if="toastMessage"
+        class="fixed bottom-6 right-6 z-50 max-w-sm bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-start gap-3"
+      >
+        <span class="text-2xl">🔔</span>
+        <div>
+          <p class="font-bold text-sm">Rappel de cours</p>
+          <p class="text-sm opacity-90 mt-1">{{ toastMessage }}</p>
+        </div>
+        <button @click="toastMessage = null" class="ml-2 opacity-70 hover:opacity-100 text-xl">
+          ×
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
 <style>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s ease;
+}
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
 /* Vous pouvez laisser ce fichier vide ou mettre des styles VRAIMENT globaux,
    comme la police de caractères pour tout le body si vous le souhaitez. */
 </style>

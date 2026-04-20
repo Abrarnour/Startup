@@ -19,6 +19,8 @@ import publicRoutes from './routes/public.js'
 import studentsRoutes from './routes/students.js'
 import materialsRoutes from './routes/materials.js' // ⭐ NEW
 import calendarRouter from './routes/calendar.js'
+import notificationsRouter from './routes/notifications.js' // ⬅️ AJOUTER
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -88,7 +90,7 @@ app.use('/api/groups', groupsRoutes)
 app.use('/api/parents', parentsRoutes)
 app.use('/api/public', publicRoutes)
 app.use('/api/materials', materialsRoutes) // ⭐ NEW ROUTE
-
+app.use('/api/notifications', notificationsRouter)
 // Route de test
 app.get('/', (req, res) => {
   res.json({
