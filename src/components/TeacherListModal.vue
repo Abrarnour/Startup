@@ -149,12 +149,11 @@
                     {{ teacher.student_count }} étudiants
                   </span>
                 </td>
-                <td class="px-6 py-4 text-right">
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     @click="initiateDelete(teacher)"
-                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    :class="darkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-50'"
-                    title="Supprimer cet enseignant"
+                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Supprimer l'enseignant"
                   >
                     <Trash2 :size="18" />
                   </button>
@@ -243,12 +242,55 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="confirmTarget"
+      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+    >
+      <div
+        :class="darkMode ? 'bg-gray-800' : 'bg-white'"
+        class="w-full max-w-md rounded-2xl p-6 shadow-2xl"
+      >
+        <div class="flex items-center gap-4 mb-4 text-red-600">
+          <div class="p-3 bg-red-100 rounded-full">
+            <AlertTriangle :size="24" />
+          </div>
+          <h3 class="text-xl font-bold">Confirmer la suppression</h3>
+        </div>
+
+        <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="mb-6">
+          Êtes-vous sûr de vouloir supprimer
+          <strong>{{ confirmTarget.name }} {{ confirmTarget.last_name }}</strong> ? Cette action
+          supprimera également tous ses cours associés.
+        </p>
+
+        <div class="flex gap-3">
+          <button
+            @click="confirmTarget = null"
+            class="flex-1 px-4 py-2 rounded-xl font-medium border"
+            :class="
+              darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'
+            "
+          >
+            Annuler
+          </button>
+          <button
+            @click="confirmDelete"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="deleting" class="animate-spin" :size="18" />
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { getAdminTeachersList } from '../services/api.js'
+import { Search, X, User, Mail, Phone, Trash2, AlertTriangle, Loader2 } from 'lucide-vue-next'
 // In <script setup>
 import { adminDeleteUser } from '../services/api.js' // Add this import
 const confirmTarget = ref(null)
@@ -260,7 +302,27 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'teacher-deleted'])
+// Ensure this function exists
+const loadTeachers = async () => {
+  loading.value = true
+  try {
+    teachers.value = await getAdminTeachersList()
+  } catch (e) {
+    console.error('Failed to load teachers:', e)
+  } finally {
+    loading.value = false
+  }
+}
 
+// Update the Watcher
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      loadTeachers() // This MUST be called here
+    }
+  },
+)
 const teachers = ref([])
 const search = ref('')
 const loading = ref(false)

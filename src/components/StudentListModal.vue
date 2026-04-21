@@ -37,20 +37,30 @@
             </p>
           </div>
         </div>
-        <div class="flex items-center gap-4">
-          <button
-            @click="handleCleanup"
-            class="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium"
-          >
-            <Trash2 :size="18" />
-            Nettoyer Inactifs
-          </button>
-          <button
-            @click="$emit('close')"
-            class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl"
-          >
-            <X :size="24" />
-          </button>
+        <div
+          class="flex items-center justify-between p-6 border-b"
+          :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
+        >
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold">Liste des Étudiants</h2>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              @click="handleCleanup"
+              class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+            >
+              Nettoyer (60j inactifs)
+            </button>
+
+            <button
+              @click="$emit('close')"
+              class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              :class="darkMode ? 'hover:bg-gray-800' : ''"
+            >
+              <X :size="24" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -243,25 +253,27 @@ import {
 } from '../services/api.js'
 
 const handleCleanup = async () => {
-  if (
-    confirm(
-      'Voulez-vous vraiment supprimer tous les étudiants sans cours depuis plus de 60 jours ? Cette action est irréversible.',
-    )
-  ) {
+  // ⚠️ The Alert Window to make sure
+  const confirmed = window.confirm(
+    'Êtes-vous sûr de vouloir supprimer tous les étudiants inactifs depuis plus de 60 jours ? Cette action est irréversible.',
+  )
+
+  if (!confirmed) return
+
+  try {
     loading.value = true
-    try {
-      const result = await adminCleanupInactiveStudents()
-      alert(result.message)
-      // Recharger la liste
-      students.value = await getAdminStudentsList()
-      emit('student-deleted')
-    } catch (e) {
-      alert(e.message)
-    } finally {
-      loading.value = false
-    }
+    const result = await adminCleanupInactiveStudents()
+    alert(`${result.count} étudiants supprimés avec succès.`)
+
+    // Refresh the list after deletion
+    await loadStudents()
+  } catch (e) {
+    alert('Erreur lors du nettoyage : ' + e.message)
+  } finally {
+    loading.value = false
   }
 }
+
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
