@@ -17,9 +17,9 @@ import CourseModal from '../components/CourseModal.vue'
 import * as api from '../services/api.js'
 import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
-import { useLanguage } from '../composables/useLanguage.js'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 
-const { t } = useLanguage()
+const { t } = useLanguage() // ✅ Extract t for translations
 const showStudentModal = ref(false)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -71,47 +71,45 @@ const openTeacherModal = async () => {
 }
 
 const handleDeleteTeacher = async (teacherId) => {
-  if (
-    !window.confirm('Supprimer cet enseignant ? Ses cours resteront mais sans professeur assigné.')
-  )
-    return
+  if (!window.confirm(t('confirm_delete_teacher_soft'))) return
   try {
     await api.deleteTeacher(teacherId)
     teachersList.value = teachersList.value.filter((t) => t.id !== teacherId)
     await loadStats() // refresh the count in the card
   } catch (err) {
-    alert('Erreur: ' + err.message)
+    alert(t('error') + ': ' + err.message)
   }
 }
-// Options de filtrage
-const educationLevels = [
-  { value: 'tous', label: 'Tous les niveaux' },
-  { value: 'primaire', label: 'ابتدائي (Primaire)' },
-  { value: 'moyen', label: 'متوسط (Collège)' },
-  { value: 'secondaire', label: 'ثانوي (Lycée)' },
-]
 
-const courseTypes = [
-  { value: 'tous', label: 'Tous les types' },
-  { value: 'continuous', label: 'Cours continus' },
-  { value: 'one_time', label: 'Sessions uniques' },
-]
+// Options de filtrage
+const educationLevels = computed(() => [
+  { value: 'tous', label: t('all_levels') },
+  { value: 'primaire', label: t('primary_level_label') },
+  { value: 'moyen', label: t('middle_level_label') },
+  { value: 'secondaire', label: t('secondary_level_label') },
+])
+
+const courseTypes = computed(() => [
+  { value: 'tous', label: t('all_types') },
+  { value: 'continuous', label: t('continuous_courses') },
+  { value: 'one_time', label: t('single_sessions') },
+])
 
 // Computed
 const availableYears = computed(() => {
-  const options = [{ value: 'tous', label: 'Toutes les années' }]
+  const options = [{ value: 'tous', label: t('all_years') }]
 
   if (selectedEducationLevel.value === 'primaire') {
     for (let i = 1; i <= 5; i++) {
-      options.push({ value: i, label: `${i}ère année` })
+      options.push({ value: i, label: `${i} ${t('year_suffix')}` })
     }
   } else if (selectedEducationLevel.value === 'moyen') {
     for (let i = 1; i <= 4; i++) {
-      options.push({ value: i, label: `${i}ème année` })
+      options.push({ value: i, label: `${i} ${t('year_suffix')}` })
     }
   } else if (selectedEducationLevel.value === 'secondaire') {
     for (let i = 1; i <= 3; i++) {
-      options.push({ value: i, label: `${i}ème année` })
+      options.push({ value: i, label: `${i} ${t('year_suffix')}` })
     }
   }
 
@@ -182,7 +180,7 @@ const loadCourses = async () => {
 
 const toggleFavorite = async (id) => {
   if (!props.user) {
-    alert('Vous devez être connecté pour ajouter des favoris')
+    alert(t('must_be_logged_for_favorites'))
     return
   }
 
@@ -202,13 +200,13 @@ const toggleFavorite = async (id) => {
     }
   } catch (err) {
     console.error('Erreur favoris:', err)
-    alert('Erreur lors de la gestion des favoris: ' + err.message)
+    alert(t('error_favorites') + err.message)
     await loadCourses()
   }
 }
 
 const deleteCourse = async (id) => {
-  if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce cours ?')) {
+  if (!window.confirm(t('confirm_delete_course_msg'))) {
     return
   }
 
@@ -216,7 +214,7 @@ const deleteCourse = async (id) => {
     await api.deleteCourse(id)
     await loadCourses()
   } catch (err) {
-    alert('Erreur: ' + err.message)
+    alert(t('error') + ': ' + err.message)
   }
 }
 
@@ -255,31 +253,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Message de chargement -->
   <div v-if="loading" class="text-center py-12">
     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     <p :class="props.darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
-      Chargement des cours...
+      {{ t('loading_courses_list') }}
     </p>
   </div>
 
-  <!-- Message d'erreur -->
   <div
     v-else-if="error"
     class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6"
   >
-    <p class="font-semibold">❌ Erreur: {{ error }}</p>
+    <p class="font-semibold">❌ {{ t('error') }}: {{ error }}</p>
     <button
       @click="loadCourses"
       class="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
     >
-      Réessayer
+      {{ t('retry') }}
     </button>
   </div>
 
-  <!-- Contenu principal -->
   <div v-else>
-    <!-- Header avec statistiques -->
     <header
       :class="
         props.darkMode
@@ -291,23 +285,21 @@ onMounted(() => {
       <div class="max-w-7xl mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
           <div>
-            <h2 class="text-2xl font-bold mb-1">Tableau de bord</h2>
-            <p class="text-blue-100 text-sm">Statistiques globales</p>
+            <h2 class="text-2xl font-bold mb-1">{{ t('dashboard') }}</h2>
+            <p class="text-blue-100 text-sm">{{ t('global_stats') }}</p>
           </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <!-- Card 1: Cours -->
           <div
             class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
           >
             <BookOpen class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ courses.length }}</div>
             <div class="text-sm text-blue-100">
-              Cours {{ user?.role === 'teacher' ? 'assignés' : 'disponibles' }}
+              {{ user?.role === 'teacher' ? t('courses_assigned') : t('courses_available') }}
             </div>
           </div>
 
-          <!-- Card 2: Étudiants (admin only) -->
           <div
             v-if="user?.role === 'admin'"
             @click="showStudentModal = true"
@@ -315,13 +307,12 @@ onMounted(() => {
           >
             <Users class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ stats.students }}</div>
-            <div class="text-sm text-blue-100">Étudiants</div>
+            <div class="text-sm text-blue-100">{{ t('students') }}</div>
             <p class="text-yellow-300 text-xs mt-1 flex items-center gap-1">
               👆 {{ t('click_to_manage') }}
             </p>
           </div>
 
-          <!-- Card 3: Enseignants (admin, clickable) -->
           <div
             v-if="user?.role === 'admin'"
             @click="showTeacherModal = true"
@@ -329,25 +320,23 @@ onMounted(() => {
           >
             <User class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ stats.teachers }}</div>
-            <div class="text-sm text-blue-100">Enseignants</div>
+            <div class="text-sm text-blue-100">{{ t('teachers') }}</div>
             <p class="text-yellow-300 text-xs mt-1 flex items-center gap-1">
               👆 {{ t('click_to_manage') }}
             </p>
           </div>
 
-          <!-- Card 4: Favoris -->
           <div
             class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
           >
             <Heart class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ favoriteCount }}</div>
-            <div class="text-sm text-blue-100">Favoris</div>
+            <div class="text-sm text-blue-100">{{ t('favorites') }}</div>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Barre de recherche et filtres -->
     <div
       :class="props.darkMode ? 'bg-gray-800' : 'bg-white'"
       class="rounded-2xl shadow-xl p-6 mb-8"
@@ -357,7 +346,7 @@ onMounted(() => {
           <Search class="absolute left-3 top-3 text-gray-400" :size="20" />
           <input
             type="text"
-            placeholder="Rechercher un cours..."
+            :placeholder="t('search_course_placeholder')"
             v-model="searchTerm"
             :class="
               props.darkMode
@@ -378,7 +367,7 @@ onMounted(() => {
           class="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all transform hover:scale-105"
         >
           <Filter :size="20" />
-          {{ showFilters ? 'Masquer' : 'Filtres' }}
+          {{ showFilters ? t('hide') : t('filters') }}
         </button>
 
         <button
@@ -397,7 +386,7 @@ onMounted(() => {
             :fill="showOnlyFavorites ? 'currentColor' : 'none'"
             :class="showOnlyFavorites ? 'animate-pulse' : ''"
           />
-          <span>{{ showOnlyFavorites ? 'Tous' : 'Favoris' }}</span>
+          <span>{{ showOnlyFavorites ? t('all') : t('favorites') }}</span>
         </button>
 
         <button
@@ -406,18 +395,17 @@ onMounted(() => {
           class="flex items-center gap-2 px-6 py-3 bg-[#0056b3] text-white rounded-xl font-bold hover:bg-[#004494] transition-all shadow-lg"
         >
           <Plus :size="20" />
-          Ajouter un cours
+          {{ t('add_course') }}
         </button>
       </div>
 
-      <!-- Filtres -->
       <div v-if="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
         <div>
           <label
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-1"
           >
-            Niveau
+            {{ t('level') }}
           </label>
           <select
             v-model="selectedEducationLevel"
@@ -439,7 +427,7 @@ onMounted(() => {
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-1"
           >
-            Année
+            {{ t('year_label') }}
           </label>
           <select
             v-model="selectedYearLevel"
@@ -461,7 +449,7 @@ onMounted(() => {
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-1"
           >
-            Type
+            {{ t('type') }}
           </label>
           <select
             v-model="selectedCourseType"
@@ -483,7 +471,7 @@ onMounted(() => {
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-1"
           >
-            Trier par
+            {{ t('sort_by') }}
           </label>
           <select
             v-model="sortBy"
@@ -494,20 +482,21 @@ onMounted(() => {
             "
             class="w-full py-2 px-3 border-2 rounded-xl transition-all"
           >
-            <option value="recent">Plus récent</option>
-            <option value="title">Titre</option>
-            <option value="hours">Heures (↓)</option>
-            <option value="price">Prix (↓)</option>
+            <option value="recent">{{ t('sort_recent') }}</option>
+            <option value="title">{{ t('sort_title') }}</option>
+            <option value="hours">{{ t('sort_hours_desc') }}</option>
+            <option value="price">{{ t('sort_price_desc') }}</option>
           </select>
         </div>
       </div>
     </div>
 
-    <!-- Liste des cours -->
     <div class="mb-4 flex justify-between items-center">
       <h2 :class="props.darkMode ? 'text-white' : 'text-gray-800'" class="text-2xl font-bold">
-        📚 {{ filteredCourses.length }} cours
-        <span v-if="filteredCourses.length !== courses.length">sur {{ courses.length }}</span>
+        📚 {{ filteredCourses.length }} {{ t('courses_word') }}
+        <span v-if="filteredCourses.length !== courses.length"
+          >{{ t('out_of') }} {{ courses.length }}</span
+        >
       </h2>
     </div>
 
@@ -517,7 +506,7 @@ onMounted(() => {
       class="rounded-2xl shadow-xl p-12 text-center"
     >
       <p :class="props.darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-lg">
-        Aucun cours ne correspond à vos critères.
+        {{ t('no_course_match_criteria') }}
       </p>
     </div>
 
@@ -535,7 +524,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Modal d'ajout/modification -->
     <CourseModal
       :show="showModal"
       :darkMode="props.darkMode"
@@ -544,7 +532,6 @@ onMounted(() => {
       @course-saved="handleCourseSaved"
     />
 
-    <!-- Modal de détails -->
     <div
       v-if="selectedCourse"
       @click="selectedCourse = null"
@@ -573,7 +560,7 @@ onMounted(() => {
         </div>
 
         <p :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'" class="text-lg mb-6">
-          {{ selectedCourse.description || 'Aucune description disponible' }}
+          {{ selectedCourse.description || t('no_description_available') }}
         </p>
 
         <div class="grid grid-cols-2 gap-4">
@@ -582,14 +569,18 @@ onMounted(() => {
             class="flex items-center gap-2"
           >
             <Clock :size="20" />
-            <span class="font-semibold">{{ selectedCourse.total_hours }} Heures</span>
+            <span class="font-semibold"
+              >{{ selectedCourse.total_hours }} {{ t('hours_label') }}</span
+            >
           </div>
           <div
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="flex items-center gap-2"
           >
             <User :size="20" />
-            <span class="font-semibold">{{ selectedCourse.max_students }} Places max</span>
+            <span class="font-semibold"
+              >{{ selectedCourse.max_students }} {{ t('max_seats_label') }}</span
+            >
           </div>
         </div>
       </div>

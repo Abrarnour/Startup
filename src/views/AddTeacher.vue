@@ -2,8 +2,9 @@
 import { ref, reactive, defineProps } from 'vue'
 import { useRouter } from 'vue-router'
 import { UserPlus, Mail, Lock, Phone, User, Calendar, MapPin } from 'lucide-vue-next'
-// Add these to your imports
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 
+const { t } = useLanguage() // ✅ Extract t for translations
 const router = useRouter()
 
 const props = defineProps({
@@ -43,7 +44,7 @@ const handleSubmit = async () => {
     !teacherData.phone ||
     !teacherData.gender
   ) {
-    error.value = 'Veuillez remplir tous les champs obligatoires'
+    error.value = t('fill_required_fields')
     return
   }
 
@@ -65,11 +66,11 @@ const handleSubmit = async () => {
 
     if (!response.ok) {
       const data = await response.json()
-      throw new Error(data.error || 'Erreur lors de la création')
+      throw new Error(data.error || t('error_creation'))
     }
 
     const data = await response.json()
-    successMessage.value = 'Enseignant créé avec succès!'
+    successMessage.value = t('teacher_created_success')
 
     // Réinitialiser le formulaire après 2 secondes
     setTimeout(() => {
@@ -86,7 +87,7 @@ const handleSubmit = async () => {
       successMessage.value = ''
     }, 2000)
   } catch (err) {
-    error.value = err.message || 'Erreur lors de la création'
+    error.value = err.message || t('error_creation')
   } finally {
     loading.value = false
   }
@@ -99,7 +100,6 @@ const handleSubmit = async () => {
       :class="props.darkMode ? 'bg-gray-800' : 'bg-white'"
       class="max-w-4xl mx-auto rounded-3xl shadow-2xl p-8"
     >
-      <!-- En-tête -->
       <div class="text-center mb-8">
         <div
           class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-300 to-blue-700 rounded-full mb-4"
@@ -110,14 +110,13 @@ const handleSubmit = async () => {
           :class="props.darkMode ? 'text-white' : 'text-gray-900'"
           class="text-3xl font-bold mb-2"
         >
-          Ajouter un Enseignant
+          {{ t('add_teacher_title') }}
         </h1>
         <p :class="props.darkMode ? 'text-gray-400' : 'text-gray-600'">
-          Créer un compte enseignant avec accès aux outils pédagogiques
+          {{ t('add_teacher_subtitle') }}
         </p>
       </div>
 
-      <!-- Messages -->
       <div
         v-if="error"
         class="mb-6 p-4 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg"
@@ -132,17 +131,14 @@ const handleSubmit = async () => {
         <p class="font-semibold">✅ {{ successMessage }}</p>
       </div>
 
-      <!-- Formulaire -->
       <form @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- Informations personnelles -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Prénom -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Prénom <span class="text-red-500">*</span>
+              {{ t('first_name_label') }} <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <User class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -150,7 +146,7 @@ const handleSubmit = async () => {
                 v-model="teacherData.name"
                 type="text"
                 required
-                placeholder="Ex: Mohammed"
+                :placeholder="t('ex_mohammed')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -161,13 +157,12 @@ const handleSubmit = async () => {
             </div>
           </div>
 
-          <!-- Nom -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Nom <span class="text-red-500">*</span>
+              {{ t('last_name') }} <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <User class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -175,7 +170,7 @@ const handleSubmit = async () => {
                 v-model="teacherData.last_name"
                 type="text"
                 required
-                placeholder="Ex: Benali"
+                :placeholder="t('ex_benali')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -187,13 +182,12 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <!-- Genre -->
         <div>
           <label
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-2"
           >
-            Civilité <span class="text-red-500">*</span>
+            {{ t('civility') }} <span class="text-red-500">*</span>
           </label>
           <div class="flex gap-4">
             <label class="flex items-center gap-2 cursor-pointer">
@@ -204,7 +198,7 @@ const handleSubmit = async () => {
                 class="w-5 h-5 text-blue-600"
               />
               <span :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'" class="font-medium">
-                Monsieur (M.)
+                {{ t('mister_full') }}
               </span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
@@ -215,21 +209,19 @@ const handleSubmit = async () => {
                 class="w-5 h-5 text-blue-600"
               />
               <span :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'" class="font-medium">
-                Madame (Mme.)
+                {{ t('madam_full') }}
               </span>
             </label>
           </div>
         </div>
 
-        <!-- Email et Téléphone -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Email -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Email <span class="text-red-500">*</span>
+              {{ t('email') }} <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <Mail class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -237,7 +229,7 @@ const handleSubmit = async () => {
                 v-model="teacherData.email"
                 type="email"
                 required
-                placeholder="enseignant@usto.dz"
+                :placeholder="t('ex_email_teacher')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -248,13 +240,12 @@ const handleSubmit = async () => {
             </div>
           </div>
 
-          <!-- Téléphone -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Téléphone <span class="text-red-500">*</span>
+              {{ t('phone') }} <span class="text-red-500">*</span>
             </label>
             <div class="relative">
               <Phone class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -262,7 +253,7 @@ const handleSubmit = async () => {
                 v-model="teacherData.phone"
                 type="tel"
                 required
-                placeholder="0555 12 34 56"
+                :placeholder="t('ex_phone')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -274,15 +265,13 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <!-- Date de naissance et Ville -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Date de naissance -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Date de naissance
+              {{ t('birthday') }}
             </label>
             <div class="relative">
               <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -299,20 +288,19 @@ const handleSubmit = async () => {
             </div>
           </div>
 
-          <!-- Ville -->
           <div>
             <label
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              Ville
+              {{ t('city') }}
             </label>
             <div class="relative">
               <MapPin class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
               <input
                 v-model="teacherData.city"
                 type="text"
-                placeholder="Ex: Oran"
+                :placeholder="t('ex_city')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
@@ -324,13 +312,12 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <!-- Mot de passe -->
         <div>
           <label
             :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-medium mb-2"
           >
-            Mot de passe <span class="text-red-500">*</span>
+            {{ t('password') }} <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <Lock class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
@@ -338,7 +325,7 @@ const handleSubmit = async () => {
               v-model="teacherData.password"
               type="password"
               required
-              placeholder="Mot de passe sécurisé"
+              :placeholder="t('secure_password')"
               :class="
                 props.darkMode
                   ? 'bg-gray-700 border-gray-600 text-white'
@@ -348,18 +335,17 @@ const handleSubmit = async () => {
             />
           </div>
           <p :class="props.darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-xs mt-1">
-            Minimum 8 caractères recommandés
+            {{ t('min_8_chars') }}
           </p>
         </div>
 
-        <!-- Boutons d'action -->
         <div class="flex gap-4 pt-4">
           <button
             type="submit"
             :disabled="loading"
             class="flex-1 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ loading ? 'Création en cours...' : ' Créer le compte enseignant' }}
+            {{ loading ? t('creation_in_progress') : t('create_teacher_account') }}
           </button>
 
           <button
@@ -370,16 +356,14 @@ const handleSubmit = async () => {
             "
             class="px-8 py-4 rounded-xl font-semibold transition-all"
           >
-            Annuler
+            {{ t('cancel') }}
           </button>
         </div>
       </form>
 
-      <!-- Note informative -->
       <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-lg">
         <p class="text-sm text-blue-800 dark:text-blue-300">
-          <strong>📌 Note:</strong> L'enseignant pourra se connecter avec l'email et le mot de passe
-          définis. Il aura accès aux outils pédagogiques et pourra gérer ses cours.
+          <strong>{{ t('note_label') }}</strong> {{ t('teacher_note_desc') }}
         </p>
       </div>
     </div>
