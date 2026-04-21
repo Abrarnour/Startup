@@ -222,15 +222,6 @@ onMounted(() => {
         </p>
       </div>
 
-      <div class="mb-6">
-        <button
-          @click="showAddChildModal = true"
-          class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2 shadow-lg"
-        >
-          <UserPlus :size="20" /> {{ t('add_child_btn') }}
-        </button>
-      </div>
-
       <div
         class="mb-6 flex gap-4 border-b-2"
         :class="props.darkMode ? 'border-gray-700' : 'border-gray-200'"
