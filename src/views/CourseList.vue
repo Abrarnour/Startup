@@ -324,8 +324,8 @@ onMounted(() => {
           <!-- Card 3: Enseignants (admin, clickable) -->
           <div
             v-if="user?.role === 'admin'"
-            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all cursor-pointer"
             @click="showTeacherModal = true"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all cursor-pointer"
           >
             <User class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ stats.teachers }}</div>
