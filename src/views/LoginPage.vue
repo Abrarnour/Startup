@@ -130,7 +130,7 @@ const handleRegister = async () => {
       class="relative rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 h-[650px] flex"
     >
       <div
-        class="absolute top-0 left-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col text-white flex flex-col justify-center items-center text-center p-12"
+        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col text-white flex flex-col justify-center items-center text-center p-12"
         :class="isSignUp ? 'translate-x-full' : 'translate-x-0'"
       >
         <div v-if="!isSignUp" class="space-y-6">
@@ -139,7 +139,7 @@ const handleRegister = async () => {
             {{ t('login_subtitle') }}
           </p>
 
-          <div class="space-y-4 text-left hidden md:block">
+          <div class="space-y-4 text-start hidden md:block">
             <div class="flex items-center gap-3">
               <div class="bg-white/20 p-2 rounded-lg"><LogIn :size="20" /></div>
               <p class="text-sm">{{ t('secure_login') }}</p>
@@ -172,7 +172,7 @@ const handleRegister = async () => {
         </div>
 
         <div
-          class="absolute bottom-6 left-6 right-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm text-xs text-left"
+          class="absolute bottom-6 start-6 right-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm text-xs text-start"
         >
           <p class="font-bold mb-1">🔑 Test Accounts:</p>
           <span>Etudiant: etudiant@usto.dz | Admin: admin@usto.dz</span>
@@ -273,7 +273,10 @@ const handleRegister = async () => {
           {{ t('login_title') }}
         </h2>
 
-        <div v-if="error" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+        <div
+          v-if="error"
+          class="mb-4 p-3 bg-red-100 border-s-4 border-red-500 text-red-700 rounded-lg text-sm"
+        >
           ❌ {{ error }}
         </div>
         <div v-if="successMessage" class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg text-sm">
@@ -282,31 +285,31 @@ const handleRegister = async () => {
 
         <form @submit.prevent="handleLogin" class="space-y-6">
           <div class="relative">
-            <User class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
+            <User class="absolute start-3 top-3 text-gray-400" :size="18" />
             <input
               v-model="email"
               type="email"
               :placeholder="t('email')"
-              class="w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              class="w-full ps-10 pe-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               :class="
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
               "
             />
           </div>
           <div class="relative">
-            <Lock class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
+            <Lock class="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
             <input
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               :placeholder="t('password')"
-              class="w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              class="w-full ps-10 pe-12 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               :class="
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
               "
             />
             <button
               @click.prevent="togglePasswordVisibility"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600"
+              class="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600"
             >
               <Eye v-if="!showPassword" :size="20" />
               <EyeOff v-else :size="20" />
