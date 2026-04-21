@@ -1,6 +1,9 @@
 <script setup>
-import { defineProps, ref, onMounted, onUnmounted } from 'vue'
+import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام اللغة
+
+const { t } = useLanguage() // ✅ استدعاء دالة الترجمة
 
 defineProps({
   darkMode: { type: Boolean, default: false },
@@ -8,10 +11,10 @@ defineProps({
 
 // ── Animated counters ──────────────────────────────────────────
 const counters = ref([
-  { label: 'Élèves formés', target: 320, current: 0, suffix: '+' },
-  { label: 'Cours disponibles', target: 48, current: 0, suffix: '' },
-  { label: 'Enseignants', target: 12, current: 0, suffix: '' },
-  { label: "Années d'expérience", target: 8, current: 0, suffix: '+' },
+  { key: 'stat_students', target: 320, current: 0, suffix: '+' },
+  { key: 'stat_courses', target: 48, current: 0, suffix: '' },
+  { key: 'stat_teachers', target: 12, current: 0, suffix: '' },
+  { key: 'stat_experience', target: 8, current: 0, suffix: '+' },
 ])
 
 const animateCounter = (counter) => {
@@ -52,90 +55,91 @@ onMounted(() => {
 onUnmounted(() => io?.disconnect())
 
 // ── Features ──────────────────────────────────────────────────
-const features = [
+// استخدمت computed لتحديث القيم آلياً عند تغيير اللغة
+const features = computed(() => [
   {
     icon: '🎯',
     num: '01',
-    title: 'Pédagogie Moderne',
-    desc: 'Méthodes actives, supports numériques et suivi individualisé pour chaque élève.',
+    title: t('f1_title'),
+    desc: t('f1_desc'),
   },
   {
     icon: '📅',
     num: '02',
-    title: 'Emploi du Temps Flexible',
-    desc: 'Des créneaux adaptés à votre agenda avec un calendrier en temps réel.',
+    title: t('f2_title'),
+    desc: t('f2_desc'),
   },
   {
     icon: '👨‍🏫',
     num: '03',
-    title: 'Enseignants Qualifiés',
-    desc: 'Une équipe de professeurs expérimentés, passionnés et dévoués à la réussite.',
+    title: t('f3_title'),
+    desc: t('f3_desc'),
   },
   {
     icon: '📊',
     num: '04',
-    title: 'Suivi de Progression',
-    desc: "Accédez aux résultats et à l'évolution de chaque élève à tout moment.",
+    title: t('f4_title'),
+    desc: t('f4_desc'),
   },
   {
     icon: '📚',
     num: '05',
-    title: 'Ressources Pédagogiques',
-    desc: 'Des cours, exercices et fiches de révision téléchargeables à la demande.',
+    title: t('f5_title'),
+    desc: t('f5_desc'),
   },
   {
     icon: '🏆',
     num: '06',
-    title: 'Excellence Reconnue',
-    desc: "D'excellents taux de réussite au BEM et au BAC depuis notre création.",
+    title: t('f6_title'),
+    desc: t('f6_desc'),
   },
-]
+])
 
 // ── Levels ────────────────────────────────────────────────────
-const levels = [
+const levels = computed(() => [
   {
-    name: 'Primaire',
-    arabic: 'ابتدائي',
-    years: '1ère → 5ème année',
+    name: t('level_primary'),
+    arabic: t('level_primary_ar'),
+    years: t('years_primary'),
     img: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=85',
     accent: '#10b981',
   },
   {
-    name: 'Moyen',
-    arabic: 'متوسط',
-    years: '1ère → 4ème année',
+    name: t('level_middle'),
+    arabic: t('level_middle_ar'),
+    years: t('years_middle'),
     img: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=85',
     accent: '#3b82f6',
   },
   {
-    name: 'Secondaire',
-    arabic: 'ثانوي',
-    years: '1ère → 3ème année',
+    name: t('level_secondary'),
+    arabic: t('level_secondary_ar'),
+    years: t('years_secondary'),
     img: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=85',
     accent: '#8b5cf6',
   },
-]
+])
 
 // ── Testimonials ──────────────────────────────────────────────
-const testimonials = ref([
+const testimonials = computed(() => [
   {
     name: 'Amira B.',
-    role: 'Parent',
-    text: 'Grâce à Belmahi School, ma fille a gagné confiance et méthode. Les résultats sont là !',
+    role: t('parent_role'),
+    text: t('testi_1_text'),
     rating: 5,
     color: '#0255ae',
   },
   {
     name: 'Yacine M.',
-    role: 'Étudiant',
-    text: "Les cours sont clairs, les profs disponibles. J'ai eu mon BEM avec mention !",
+    role: t('student_role'),
+    text: t('testi_2_text'),
     rating: 5,
     color: '#10b981',
   },
   {
     name: 'Nadia K.',
-    role: 'Parent',
-    text: 'Interface moderne, suivi rigoureux. Enfin une école qui utilise la technologie !',
+    role: t('parent_role'),
+    text: t('testi_3_text'),
     rating: 5,
     color: '#f59e0b',
   },
@@ -145,35 +149,38 @@ const tInterval = setInterval(() => {
   activeTestimonial.value = (activeTestimonial.value + 1) % testimonials.value.length
 }, 4500)
 onUnmounted(() => clearInterval(tInterval))
+
+// ── About List ────────────────────────────────────────────────
+const aboutList = computed(() => [
+  t('about_li_1'),
+  t('about_li_2'),
+  t('about_li_3'),
+  t('about_li_4'),
+])
 </script>
 
 <template>
   <div class="home" :class="{ 'dark-mode': darkMode }">
-    <!-- ══════════════════════════════════
-         1. HERO — split dark editorial
-         ══════════════════════════════════ -->
     <section class="hero reveal">
-      <!-- Left -->
       <div class="hero-left">
         <div class="hero-eyebrow">
           <span class="live-dot"></span>
-          Oran, Algérie &nbsp;·&nbsp; École Privée
+          {{ t('hero_eyebrow') }}
         </div>
 
         <h1 class="hero-heading">
-          <span class="h-top">PORTAIL DE</span>
-          <span class="h-main">BELMAHI</span>
-          <span class="h-arabic">مدرسة بلماحي</span>
+          <span class="h-top">{{ t('hero_h_top') }}</span>
+          <span class="h-main">{{ t('hero_h_main') }}</span>
+          <span class="h-arabic">{{ t('hero_h_arabic') }}</span>
         </h1>
 
         <p class="hero-body">
-          Une plateforme moderne pour suivre, gérer et accéder à vos cours — du primaire jusqu'au
-          baccalauréat.
+          {{ t('hero_body') }}
         </p>
 
         <div class="hero-actions">
           <RouterLink to="/courses" class="btn-electric">
-            Explorer les Cours
+            {{ t('explore_courses') }}
             <svg
               width="17"
               height="17"
@@ -185,19 +192,17 @@ onUnmounted(() => clearInterval(tInterval))
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </RouterLink>
-          <RouterLink to="/login" class="btn-ghost">Se Connecter</RouterLink>
+          <RouterLink to="/login" class="btn-ghost">{{ t('login_link') }}</RouterLink>
         </div>
 
-        <!-- Tiny strip stats -->
         <div class="hero-strip">
-          <div class="strip-item" v-for="c in counters" :key="c.label">
-            <span class="strip-val">{{ c.target }}{{ c.suffix }}</span>
-            <span class="strip-lbl">{{ c.label }}</span>
+          <div class="strip-item" v-for="c in counters" :key="c.key">
+            <span class="strip-val">{{ c.current }}{{ c.suffix }}</span>
+            <span class="strip-lbl">{{ t(c.key) }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Right — full bleed photo -->
       <div class="hero-right">
         <img
           src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1000&q=88"
@@ -206,33 +211,28 @@ onUnmounted(() => clearInterval(tInterval))
         />
         <div class="hero-photo-veil"></div>
 
-        <!-- Floating glass card -->
         <div class="hero-glass-card">
           <span class="glass-num">320+</span>
-          <span class="glass-txt">Élèves formés avec succès</span>
+          <span class="glass-txt">{{ t('hero_glass_txt') }}</span>
         </div>
 
-        <!-- Floating badge top -->
-        <div class="hero-badge-pill"><span class="pill-dot"></span> Inscription ouverte</div>
+        <div class="hero-badge-pill">
+          <span class="pill-dot"></span> {{ t('registration_open') }}
+        </div>
       </div>
 
-      <!-- Scroll hint -->
       <div class="hero-scroll-hint" aria-hidden="true">
         <div class="scroll-track"><div class="scroll-thumb"></div></div>
-        <span>Défiler</span>
+        <span>{{ t('scroll_hint') }}</span>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         2. BENTO STATS
-         ══════════════════════════════════ -->
     <section class="bento reveal" ref="countersRef">
       <div class="bento-grid">
-        <!-- Big card -->
         <div class="bc bc-navy bc-big">
-          <div class="bc-ghost-txt">ÉLÈVES</div>
+          <div class="bc-ghost-txt">{{ t('bento_students') }}</div>
           <div class="bc-num">{{ counters[0].current }}{{ counters[0].suffix }}</div>
-          <div class="bc-lbl">{{ counters[0].label }}</div>
+          <div class="bc-lbl">{{ t(counters[0].key) }}</div>
           <div class="bc-bar">
             <div
               class="bc-fill"
@@ -241,23 +241,21 @@ onUnmounted(() => clearInterval(tInterval))
           </div>
         </div>
 
-        <!-- Stack: 2 small -->
         <div class="bc-stack">
           <div class="bc bc-light bc-sm">
             <div class="bc-num">{{ counters[1].current }}{{ counters[1].suffix }}</div>
-            <div class="bc-lbl">{{ counters[1].label }}</div>
+            <div class="bc-lbl">{{ t(counters[1].key) }}</div>
           </div>
           <div class="bc bc-electric bc-sm">
             <div class="bc-num">{{ counters[2].current }}{{ counters[2].suffix }}</div>
-            <div class="bc-lbl">{{ counters[2].label }}</div>
+            <div class="bc-lbl">{{ t(counters[2].key) }}</div>
           </div>
         </div>
 
-        <!-- Wide amber card -->
         <div class="bc bc-amber bc-wide">
-          <div class="bc-ghost-txt">ANS</div>
+          <div class="bc-ghost-txt">{{ t('bento_years') }}</div>
           <div class="bc-num">{{ counters[3].current }}{{ counters[3].suffix }}</div>
-          <div class="bc-lbl">{{ counters[3].label }}</div>
+          <div class="bc-lbl">{{ t(counters[3].key) }}</div>
           <img
             src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=400&q=80"
             alt=""
@@ -267,16 +265,15 @@ onUnmounted(() => clearInterval(tInterval))
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         3. LEVELS — full photo cards
-         ══════════════════════════════════ -->
     <section class="levels reveal">
       <div class="levels-top">
         <div>
-          <span class="eyetag">Niveaux</span>
-          <h2 class="sec-title">Tous les Cycles<br /><em>Scolaires</em></h2>
+          <span class="eyetag">{{ t('levels_eyetag') }}</span>
+          <h2 class="sec-title">
+            {{ t('levels_title_1') }}<br /><em>{{ t('levels_title_2') }}</em>
+          </h2>
         </div>
-        <p class="sec-sub">De la première année primaire jusqu'au Baccalauréat</p>
+        <p class="sec-sub">{{ t('levels_sub') }}</p>
       </div>
 
       <div class="levels-grid">
@@ -288,7 +285,7 @@ onUnmounted(() => clearInterval(tInterval))
             <h3 class="lc-name">{{ lv.name }}</h3>
             <p class="lc-years">{{ lv.years }}</p>
             <RouterLink to="/courses" class="lc-cta">
-              Voir les cours
+              {{ t('see_courses') }}
               <svg
                 width="14"
                 height="14"
@@ -305,14 +302,13 @@ onUnmounted(() => clearInterval(tInterval))
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         4. FEATURES — editorial grid
-         ══════════════════════════════════ -->
     <section class="features reveal">
       <div class="features-top">
         <div>
-          <span class="eyetag">Pourquoi nous</span>
-          <h2 class="sec-title">Ce qui nous<br /><em>différencie</em></h2>
+          <span class="eyetag">{{ t('feat_eyetag') }}</span>
+          <h2 class="sec-title">
+            {{ t('feat_title_1') }}<br /><em>{{ t('feat_title_2') }}</em>
+          </h2>
         </div>
         <div class="features-img-col">
           <img
@@ -341,12 +337,8 @@ onUnmounted(() => clearInterval(tInterval))
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         5. ABOUT — layered images
-         ══════════════════════════════════ -->
     <section class="about reveal" :class="{ dark: darkMode }">
       <div class="about-grid">
-        <!-- Visual -->
         <div class="about-vis">
           <div class="av-frame av-frame1">
             <img src="/blmahi.jpeg" alt="Belmahi School" class="av-img" />
@@ -356,30 +348,19 @@ onUnmounted(() => clearInterval(tInterval))
           </div>
           <div class="av-chip">
             <span class="av-chip-num">8+</span>
-            <span class="av-chip-lbl">Années<br />d'expérience</span>
+            <span class="av-chip-lbl"
+              >{{ t('about_chip_years') }}<br />{{ t('about_chip_exp') }}</span
+            >
           </div>
           <div class="av-ring"></div>
         </div>
 
-        <!-- Text -->
         <div class="about-txt">
-          <span class="eyetag">À propos</span>
-          <h2 class="about-h">Qui Sommes-<br />Nous ?</h2>
-          <p class="about-desc">
-            <strong>Belmahi School</strong> est une institution éducative privée à Oran, dédiée à
-            l'excellence académique. Nous combinons innovation pédagogique et encadrement humain
-            pour accompagner chaque élève vers la réussite.
-          </p>
+          <span class="eyetag">{{ t('about_eyetag') }}</span>
+          <h2 class="about-h">{{ t('about_title_1') }}<br />{{ t('about_title_2') }}</h2>
+          <p class="about-desc" v-html="t('about_desc')"></p>
           <ul class="about-list">
-            <li
-              v-for="pt in [
-                'Primaire, Moyen et Secondaire',
-                'Professeurs diplômés et expérimentés',
-                'Suivi numérique en temps réel',
-                'Excellents résultats au BEM et BAC',
-              ]"
-              :key="pt"
-            >
+            <li v-for="pt in aboutList" :key="pt">
               <span class="ck">✓</span>
               <span>{{ pt }}</span>
             </li>
@@ -394,21 +375,19 @@ onUnmounted(() => clearInterval(tInterval))
                 d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
               />
             </svg>
-            Nous trouver sur Google Maps
+            {{ t('find_us_maps') }}
           </a>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         6. TESTIMONIALS — featured quote
-         ══════════════════════════════════ -->
     <section class="testi reveal">
       <div class="testi-layout">
-        <!-- Sidebar -->
         <div class="testi-side">
-          <span class="eyetag">Témoignages</span>
-          <h2 class="sec-title">Ce que disent<br /><em>nos familles</em></h2>
+          <span class="eyetag">{{ t('testi_eyetag') }}</span>
+          <h2 class="sec-title">
+            {{ t('testi_title_1') }}<br /><em>{{ t('testi_title_2') }}</em>
+          </h2>
           <div class="testi-controls">
             <button
               v-for="(t, i) in testimonials"
@@ -426,7 +405,6 @@ onUnmounted(() => clearInterval(tInterval))
           </div>
         </div>
 
-        <!-- Featured card -->
         <div class="testi-main">
           <transition name="tslide" mode="out-in">
             <div :key="activeTestimonial" class="testi-card">
@@ -453,9 +431,6 @@ onUnmounted(() => clearInterval(tInterval))
       </div>
     </section>
 
-    <!-- ══════════════════════════════════
-         7. CTA — dark cinematic
-         ══════════════════════════════════ -->
     <section class="cta reveal">
       <div class="cta-photo-wrap">
         <img
@@ -466,11 +441,11 @@ onUnmounted(() => clearInterval(tInterval))
         <div class="cta-overlay"></div>
       </div>
       <div class="cta-content">
-        <span class="eyetag eyetag-light">Rejoindre</span>
-        <h2 class="cta-title">Prêt à rejoindre<br />notre école ?</h2>
-        <p class="cta-sub">Créez votre compte et accédez à tous vos cours dès aujourd'hui.</p>
+        <span class="eyetag eyetag-light">{{ t('cta_eyetag') }}</span>
+        <h2 class="cta-title">{{ t('cta_title_1') }}<br />{{ t('cta_title_2') }}</h2>
+        <p class="cta-sub">{{ t('cta_sub') }}</p>
         <RouterLink to="/login" class="btn-electric btn-large">
-          Commencer maintenant
+          {{ t('cta_btn') }}
           <svg
             width="18"
             height="18"
