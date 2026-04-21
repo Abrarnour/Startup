@@ -204,6 +204,45 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="confirmTarget"
+      class="absolute inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-2xl"
+    >
+      <div
+        :class="darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'"
+        class="p-6 rounded-xl shadow-xl max-w-sm w-full mx-4 border"
+      >
+        <div class="flex items-center gap-3 text-red-600 mb-4">
+          <AlertTriangle :size="24" />
+          <h3 class="font-bold text-lg">Confirmer la suppression</h3>
+        </div>
+        <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="mb-6">
+          Voulez-vous vraiment supprimer l'enseignant
+          <span class="font-bold">{{ confirmTarget.name }} {{ confirmTarget.last_name }}</span> ?
+          Cette action est irréversible.
+        </p>
+        <div class="flex gap-3">
+          <button
+            @click="confirmTarget = null"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 rounded-lg border font-medium"
+            :class="
+              darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'
+            "
+          >
+            Annuler
+          </button>
+          <button
+            @click="confirmDelete"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="deleting" class="animate-spin" :size="18" />
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 

@@ -37,19 +37,21 @@
             </p>
           </div>
         </div>
-        <button
-          @click="handleCleanup"
-          class="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium"
-        >
-          <Trash2 :size="18" />
-          Nettoyer Inactifs
-        </button>
-        <button
-          @click="$emit('close')"
-          class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl"
-        >
-          ×
-        </button>
+        <div class="flex items-center gap-4">
+          <button
+            @click="handleCleanup"
+            class="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors text-sm font-medium"
+          >
+            <Trash2 :size="18" />
+            Nettoyer Inactifs
+          </button>
+          <button
+            @click="$emit('close')"
+            class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl"
+          >
+            <X :size="24" />
+          </button>
+        </div>
       </div>
 
       <!-- ── Barre de recherche ── -->
