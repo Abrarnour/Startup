@@ -19,7 +19,7 @@ import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
 import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام اللغة
 
-const { t } = useLanguage() // ✅ استدعاء دالة الترجمة
+const { t, locale } = useLanguage() // ✅ استدعاء دالة الترجمة
 const router = useRouter()
 
 // props لـ Dark Mode
@@ -130,8 +130,10 @@ const handleRegister = async () => {
       class="relative rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 h-[650px] flex"
     >
       <div
-        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col text-white flex flex-col justify-center items-center text-center p-12"
-        :class="isSignUp ? 'translate-x-full' : 'translate-x-0'"
+        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
+        :class="
+          isSignUp ? (locale === 'ar' ? '-translate-x-full' : 'translate-x-full') : 'translate-x-0'
+        "
       >
         <div v-if="!isSignUp" class="space-y-6">
           <h2 class="text-4xl font-bold">{{ t('welcome_title') }}</h2>
