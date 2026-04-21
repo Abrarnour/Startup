@@ -249,7 +249,7 @@ const isActive = (path) => {
               <span
                 v-if="user.role === 'admin'"
                 class="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold"
-                >{{ props.t('admin_badge') }}</span
+                >{{ props.t('Admin') }}</span
               >
               <span
                 v-else-if="user.role === 'Parent'"
@@ -294,16 +294,6 @@ const isActive = (path) => {
       </div>
     </div>
   </nav>
-
-  <div v-if="user?.role === 'Parent'" class="flex items-center gap-4">
-    <button
-      @click="$emit('add-child')"
-      class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2"
-    >
-      <UserPlus :size="18" />
-      {{ props.t('add_child') }}
-    </button>
-  </div>
 </template>
 
 <style scoped>
