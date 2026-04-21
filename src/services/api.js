@@ -1314,3 +1314,18 @@ export const adminDeleteUser = async (userId) => {
   }
   return response.json()
 }
+
+// frontend/src/services/api.js
+
+// Nettoyer les étudiants inactifs (0 cours + 60 jours)
+export const adminCleanupInactiveStudents = async () => {
+  const response = await fetch(`${API_URL}/auth/users/cleanup/inactive-students`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur lors du nettoyage')
+  }
+  return response.json()
+}

@@ -149,18 +149,58 @@
                     {{ teacher.student_count }} étudiants
                   </span>
                 </td>
-                <td class="p-3">
-                  <!-- Pas de suppression pour enseignants par défaut - juste visualisation -->
-                  <span
-                    class="text-xs px-2 py-1 rounded-lg"
-                    :class="darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'"
+                <td class="px-6 py-4 text-right">
+                  <button
+                    @click="initiateDelete(teacher)"
+                    class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    :class="darkMode ? 'hover:bg-red-900/20' : 'hover:bg-red-50'"
+                    title="Supprimer cet enseignant"
                   >
-                    Actif
-                  </span>
+                    <Trash2 :size="18" />
+                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="confirmTarget"
+      class="absolute inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-2xl"
+    >
+      <div
+        :class="darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'"
+        class="p-6 rounded-xl shadow-xl max-w-sm w-full mx-4 border"
+      >
+        <div class="flex items-center gap-3 text-red-600 mb-4">
+          <AlertTriangle :size="24" />
+          <h3 class="font-bold text-lg">Confirmer la suppression</h3>
+        </div>
+        <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="mb-6">
+          Voulez-vous vraiment supprimer l'enseignant
+          <span class="font-bold">{{ confirmTarget.name }} {{ confirmTarget.last_name }}</span> ?
+          Cette action est irréversible.
+        </p>
+        <div class="flex gap-3">
+          <button
+            @click="confirmTarget = null"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 rounded-lg border font-medium"
+            :class="
+              darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'
+            "
+          >
+            Annuler
+          </button>
+          <button
+            @click="confirmDelete"
+            :disabled="deleting"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Loader2 v-if="deleting" class="animate-spin" :size="18" />
+            {{ deleting ? 'Suppression...' : 'Supprimer' }}
+          </button>
         </div>
       </div>
     </div>
@@ -170,14 +210,17 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { getAdminTeachersList } from '../services/api.js'
-
+// In <script setup>
+import { adminDeleteUser } from '../services/api.js' // Add this import
+const confirmTarget = ref(null)
+const deleting = ref(false)
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
   t: { type: Function, default: (k) => k },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'teacher-deleted'])
 
 const teachers = ref([])
 const search = ref('')
@@ -190,7 +233,24 @@ const filteredTeachers = computed(() => {
     `${t.name} ${t.last_name} ${t.email} ${t.phone || ''}`.toLowerCase().includes(q),
   )
 })
+const initiateDelete = (teacher) => {
+  confirmTarget.value = teacher
+}
 
+const confirmDelete = async () => {
+  if (!confirmTarget.value) return
+  deleting.value = true
+  try {
+    await adminDeleteUser(confirmTarget.value.id)
+    teachers.value = teachers.value.filter((t) => t.id !== confirmTarget.value.id)
+    confirmTarget.value = null
+    emit('teacher-deleted')
+  } catch (e) {
+    alert(e.message)
+  } finally {
+    deleting.value = false
+  }
+}
 // Charger à l'ouverture
 watch(
   () => props.show,

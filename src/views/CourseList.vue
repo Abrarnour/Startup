@@ -601,6 +601,7 @@ onMounted(() => {
     :darkMode="darkMode"
     :t="t"
     @close="showTeacherModal = false"
+    @teacher-deleted="loadStats"
   />
 
   <StudentListModal

@@ -293,4 +293,37 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) =>
     res.status(500).json({ error: 'Erreur lors de la suppression' })
   }
 })
+
+// backend/routes/auth.js
+
+// ═══════════════════════════════════════
+// DELETE /api/auth/users/cleanup/inactive-students
+// Supprimer les étudiants sans cours depuis > 60 jours
+// ═══════════════════════════════════════
+router.delete(
+  '/users/cleanup/inactive-students',
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    try {
+      const result = await pool.query(`
+      DELETE FROM users
+      WHERE role = 'student'
+      AND id NOT IN (SELECT student_id FROM group_students)
+      AND created_at < NOW() - INTERVAL '60 days'
+      RETURNING id
+    `)
+
+      console.log(`✅ Cleanup finished: ${result.rowCount} inactive students removed.`)
+      res.json({
+        success: true,
+        count: result.rowCount,
+        message: `${result.rowCount} étudiants inactifs supprimés avec succès.`,
+      })
+    } catch (error) {
+      console.error('Erreur cleanup étudiants:', error)
+      res.status(500).json({ error: 'Erreur lors du nettoyage des données' })
+    }
+  },
+)
 export default router
