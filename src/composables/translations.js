@@ -257,6 +257,25 @@ export const translations = {
     cta_title_2: 'notre école ?',
     cta_sub: "Créez votre compte et accédez à tous vos cours dès aujourd'hui.",
     cta_btn: 'Commencer maintenant',
+
+    teacher_count_suffix: 'enseignant(s)',
+    student_count_suffix: 'étudiant(s)',
+    madam: 'Madame',
+    mister: 'Monsieur',
+    delete_teacher_title: "Supprimer l'enseignant",
+    confirm_delete_teacher_msg_1: "Voulez-vous vraiment supprimer l'enseignant",
+    confirm_delete_teacher_msg_2: '? Cette action est irréversible.',
+    confirm_delete_teacher_msg_alt_1: 'Êtes-vous sûr de vouloir supprimer',
+    confirm_delete_teacher_msg_alt_2:
+      '? Cette action supprimera également tous ses cours associés.',
+    deleting: 'Suppression...',
+    cleanup_inactive: 'Nettoyer (60j inactifs)',
+    student_label: 'Étudiant',
+    confirm_cleanup_msg:
+      'Êtes-vous sûr de vouloir supprimer tous les étudiants inactifs depuis plus de 60 jours ? Cette action est irréversible.',
+    cleanup_success_1: '',
+    cleanup_success_2: ' étudiants supprimés avec succès.',
+    cleanup_error: 'Erreur lors du nettoyage : ',
   },
 
   // ════════════════════════════════════════
@@ -508,5 +527,23 @@ export const translations = {
     cta_title_2: 'إلى مدرستنا؟',
     cta_sub: 'أنشئ حسابك وقم بالوصول إلى جميع دروسك ابتداءً من اليوم.',
     cta_btn: 'ابدأ الآن',
+
+    teacher_count_suffix: 'أستاذ(ة)',
+    student_count_suffix: 'طالب(ة)',
+    madam: 'أستاذة',
+    mister: 'أستاذ',
+    delete_teacher_title: 'حذف الأستاذ',
+    confirm_delete_teacher_msg_1: 'هل تريد حقًا حذف الأستاذ',
+    confirm_delete_teacher_msg_2: '؟ هذا الإجراء لا يمكن التراجع عنه.',
+    confirm_delete_teacher_msg_alt_1: 'هل أنت متأكد أنك تريد حذف',
+    confirm_delete_teacher_msg_alt_2: '؟ سيؤدي هذا الإجراء أيضًا إلى حذف جميع دوراته المرتبطة.',
+    deleting: 'جاري الحذف...',
+    cleanup_inactive: 'تنظيف (60 يوم غير نشط)',
+    student_label: 'الطالب',
+    confirm_cleanup_msg:
+      'هل أنت متأكد أنك تريد حذف جميع الطلاب غير النشطين لأكثر من 60 يومًا؟ هذا الإجراء لا يمكن التراجع عنه.',
+    cleanup_success_1: 'تم حذف ',
+    cleanup_success_2: ' طالب بنجاح.',
+    cleanup_error: 'خطأ أثناء التنظيف : ',
   },
 }

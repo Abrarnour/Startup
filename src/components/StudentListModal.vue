@@ -8,7 +8,6 @@
       :class="darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'"
       class="relative w-full max-w-4xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl m-4"
     >
-      <!-- ── Header ── -->
       <div
         class="flex items-center justify-between p-6 border-b"
         :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
@@ -33,7 +32,7 @@
           <div>
             <h2 class="text-xl font-bold">{{ t('student_list') }}</h2>
             <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-              {{ filteredStudents.length }} étudiant(s)
+              {{ filteredStudents.length }} {{ t('student_count_suffix') }}
             </p>
           </div>
         </div>
@@ -42,7 +41,7 @@
           :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
         >
           <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold">Liste des Étudiants</h2>
+            <h2 class="text-xl font-bold">{{ t('student_list') }}</h2>
           </div>
 
           <div class="flex items-center gap-2">
@@ -50,7 +49,7 @@
               @click="handleCleanup"
               class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
             >
-              Nettoyer (60j inactifs)
+              {{ t('cleanup_inactive') }}
             </button>
 
             <button
@@ -64,7 +63,6 @@
         </div>
       </div>
 
-      <!-- ── Barre de recherche ── -->
       <div class="p-4 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
         <div class="relative">
           <svg
@@ -95,7 +93,6 @@
         </div>
       </div>
 
-      <!-- ── Liste ── -->
       <div class="flex-1 overflow-y-auto p-4">
         <div v-if="loading" class="flex items-center justify-center py-12">
           <div
@@ -113,10 +110,10 @@
           <table class="w-full">
             <thead>
               <tr :class="darkMode ? 'bg-gray-800' : 'bg-gray-50'" class="text-sm font-semibold">
-                <th class="text-left p-3 rounded-l-xl">Étudiant</th>
+                <th class="text-left p-3 rounded-l-xl">{{ t('student_label') }}</th>
                 <th class="text-left p-3">{{ t('email') }}</th>
                 <th class="text-left p-3">{{ t('phone') }}</th>
-                <th class="text-left p-3">Cours inscrits</th>
+                <th class="text-left p-3">{{ t('enrolled_courses') }}</th>
                 <th class="text-left p-3 rounded-r-xl">{{ t('actions') }}</th>
               </tr>
             </thead>
@@ -153,7 +150,7 @@
                   <span
                     class="px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold"
                   >
-                    {{ student.enrolled_courses }} cours
+                    {{ student.enrolled_courses }} {{ t('courses_label') }}
                   </span>
                 </td>
                 <td class="p-3">
@@ -185,7 +182,6 @@
       </div>
     </div>
 
-    <!-- ── Modal de confirmation de suppression ── -->
     <div
       v-if="confirmTarget"
       class="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
@@ -236,7 +232,7 @@
             :disabled="deleting"
             class="flex-1 py-3 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ deleting ? 'Suppression...' : t('confirm') }}
+            {{ deleting ? t('deleting') : t('confirm') }}
           </button>
         </div>
       </div>
@@ -255,21 +251,19 @@ import {
 
 const handleCleanup = async () => {
   // ⚠️ The Alert Window to make sure
-  const confirmed = window.confirm(
-    'Êtes-vous sûr de vouloir supprimer tous les étudiants inactifs depuis plus de 60 jours ? Cette action est irréversible.',
-  )
+  const confirmed = window.confirm(props.t('confirm_cleanup_msg'))
 
   if (!confirmed) return
 
   try {
     loading.value = true
     const result = await adminCleanupInactiveStudents()
-    alert(`${result.count} étudiants supprimés avec succès.`)
+    alert(`${props.t('cleanup_success_1')}${result.count}${props.t('cleanup_success_2')}`)
 
     // Refresh the list after deletion
     await loadStudents()
   } catch (e) {
-    alert('Erreur lors du nettoyage : ' + e.message)
+    alert(props.t('cleanup_error') + e.message)
   } finally {
     loading.value = false
   }
