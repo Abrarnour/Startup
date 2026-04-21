@@ -47,7 +47,6 @@ const isActive = (path) => {
   >
     <div class="max-w-7xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
-        <!-- Logo et Titre -->
         <div class="flex items-center gap-3">
           <RouterLink
             to="/"
@@ -59,12 +58,11 @@ const isActive = (path) => {
               class="w-12 h-12 object-cover rounded-full border-2 border-white shadow-lg"
             />
             <div class="hidden md:block">
-              <h1 class="text-xm font-bold">Portail de cours</h1>
-              <p class="text-xs text-blue-100">Belmahi School - Oran</p>
+              <h1 class="text-xm font-bold">{{ props.t('nav_portal_title') }}</h1>
+              <p class="text-xs text-blue-100">{{ props.t('nav_school_subtitle') }}</p>
             </div>
           </RouterLink>
 
-          <!-- Bouton Dark Mode -->
           <button
             @click="$emit('toggle-dark-mode')"
             class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all transform hover:scale-110"
@@ -72,13 +70,11 @@ const isActive = (path) => {
             <Sun v-if="darkMode" :size="24" />
             <Moon v-else :size="24" />
           </button>
-          <!-- 🌐 BOUTON CHANGEMENT DE LANGUE — juste après le bouton dark mode -->
           <button
             @click="$emit('toggle-lang')"
             :title="props.t('language')"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-sm font-bold tracking-wide"
           >
-            <!-- Drapeau / texte selon la langue active -->
             <span v-if="currentLang === 'fr'" class="flex items-center gap-1">
               <span>🇫🇷</span>
               <span class="hidden sm:inline text-xs">FR</span>
@@ -89,12 +85,11 @@ const isActive = (path) => {
             </span>
           </button>
 
-          <!-- 🔔 BOUTON NOTIFICATIONS -->
           <div class="relative">
             <button
               @click="togglePanel"
               class="relative p-2 rounded-full hover:bg-white/10 transition-all"
-              title="Notifications"
+              :title="props.t('notifications')"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -110,7 +105,6 @@ const isActive = (path) => {
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 />
               </svg>
-              <!-- Badge rouge -->
               <span
                 v-if="unreadCount > 0"
                 class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse"
@@ -119,17 +113,16 @@ const isActive = (path) => {
               </span>
             </button>
 
-            <!-- Panneau de notifications -->
             <div
               v-if="showNotifPanel"
               class="absolute left-0 top-12 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200 z-50"
             >
               <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="font-bold text-gray-800">🔔 Notifications</h3>
-                <span class="text-xs text-gray-500">Aujourd'hui</span>
+                <h3 class="font-bold text-gray-800">{{ props.t('nav_notifications_header') }}</h3>
+                <span class="text-xs text-gray-500">{{ props.t('today') }}</span>
               </div>
               <div v-if="notifications.length === 0" class="p-6 text-center text-gray-500 text-sm">
-                Aucune notification
+                {{ props.t('no_notif') }}
               </div>
               <div
                 v-for="notif in notifications"
@@ -145,9 +138,7 @@ const isActive = (path) => {
           </div>
         </div>
 
-        <!-- Menu de Navigation Central -->
         <ul class="flex items-center gap-2">
-          <!-- Accueil — toujours visible -->
           <li>
             <RouterLink
               to="/"
@@ -157,11 +148,10 @@ const isActive = (path) => {
               ]"
             >
               <Home :size="20" />
-              <span class="hidden md:inline">Accueil</span>
+              <span class="hidden md:inline">{{ props.t('home') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Cours — Admin uniquement -->
           <li v-if="user && user.role === 'admin'">
             <RouterLink
               to="/courses"
@@ -171,11 +161,10 @@ const isActive = (path) => {
               ]"
             >
               <BookOpen :size="20" />
-              <span class="hidden md:inline">Cours</span>
+              <span class="hidden md:inline">{{ props.t('courses') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Dashboard enseignant -->
           <li v-if="user && user.role === 'teacher'">
             <RouterLink
               to="/teacher-dashboard"
@@ -187,11 +176,10 @@ const isActive = (path) => {
               ]"
             >
               <Layout :size="20" />
-              <span class="hidden md:inline">Mes Cours</span>
+              <span class="hidden md:inline">{{ props.t('my_courses') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Dashboard Parent -->
           <li v-if="user && user.role === 'Parent'">
             <RouterLink
               to="/parent-dashboard"
@@ -203,11 +191,10 @@ const isActive = (path) => {
               ]"
             >
               <LayoutDashboard :size="20" />
-              <span class="hidden md:inline">Mon Espace</span>
+              <span class="hidden md:inline">{{ props.t('my_space') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Dashboard Étudiant -->
           <li v-if="user && user.role === 'student'">
             <RouterLink
               to="/student-dashboard"
@@ -219,11 +206,10 @@ const isActive = (path) => {
               ]"
             >
               <LayoutDashboard :size="20" />
-              <span class="hidden md:inline">Mon Espace</span>
+              <span class="hidden md:inline">{{ props.t('my_space') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Calendrier -->
           <li v-if="user">
             <RouterLink
               to="/calendar"
@@ -235,11 +221,10 @@ const isActive = (path) => {
               ]"
             >
               <Calendar :size="15" />
-              <span class="hidden md:inline">Emploi du Temps</span>
+              <span class="hidden md:inline">{{ props.t('calendar') }}</span>
             </RouterLink>
           </li>
 
-          <!-- Ajouter Enseignant — Admin uniquement -->
           <li v-if="user && user.role === 'admin'">
             <RouterLink
               to="/add-teacher"
@@ -251,12 +236,11 @@ const isActive = (path) => {
               ]"
             >
               <UserPlus :size="15" />
-              <span class="hidden md:inline">Ajouter Enseignant</span>
+              <span class="hidden md:inline">{{ props.t('add_teacher') }}</span>
             </RouterLink>
           </li>
         </ul>
 
-        <!-- Section Utilisateur -->
         <div class="flex items-center gap-3">
           <div v-if="user" class="flex items-center gap-3">
             <div class="hidden md:flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
@@ -265,22 +249,22 @@ const isActive = (path) => {
               <span
                 v-if="user.role === 'admin'"
                 class="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold"
-                >ADMIN</span
+                >{{ props.t('admin_badge') }}</span
               >
               <span
                 v-else-if="user.role === 'Parent'"
                 class="ml-2 px-2 py-0.5 bg-blue-400 text-blue-900 rounded-full text-xs font-bold"
-                >PARENT</span
+                >{{ props.t('parent_badge') }}</span
               >
               <span
                 v-else-if="user.role === 'teacher'"
                 class="ml-2 px-2 py-0.5 bg-purple-400 text-purple-900 rounded-full text-xs font-bold"
-                >ENSEIGNANT</span
+                >{{ props.t('teacher_badge') }}</span
               >
               <span
                 v-else
                 class="ml-2 px-2 py-0.5 bg-green-400 text-green-900 rounded-full text-xs font-bold"
-                >ÉTUDIANT</span
+                >{{ props.t('student_badge') }}</span
               >
             </div>
 
@@ -289,11 +273,10 @@ const isActive = (path) => {
               class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
             >
               <LogOut :size="18" />
-              <span class="hidden md:inline">Déconnexion</span>
+              <span class="hidden md:inline">{{ props.t('logout') }}</span>
             </button>
           </div>
 
-          <!-- Si pas connecté -->
           <RouterLink
             v-else
             to="/login"
@@ -305,21 +288,20 @@ const isActive = (path) => {
             ]"
           >
             <LogIn :size="20" />
-            <span class="hidden md:inline">Connexion</span>
+            <span class="hidden md:inline">{{ props.t('login') }}</span>
           </RouterLink>
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- Pour les Parents -->
   <div v-if="user?.role === 'Parent'" class="flex items-center gap-4">
     <button
       @click="$emit('add-child')"
       class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2"
     >
       <UserPlus :size="18" />
-      Ajouter un enfant
+      {{ props.t('add_child') }}
     </button>
   </div>
 </template>
