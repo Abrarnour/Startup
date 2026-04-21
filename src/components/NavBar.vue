@@ -1,5 +1,5 @@
 <script setup>
-import { defineEmits } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   User as UserIcon,
@@ -15,22 +15,8 @@ import { Sun, Moon } from 'lucide-vue-next'
 import { Calendar } from 'lucide-vue-next'
 import { useNotifications } from '../composables/useNotifications.js'
 
-// Après les props existantes :
-const { notifications, unreadCount, showNotifPanel, toastNotif, togglePanel } = useNotifications(
-  computed(() => props.user),
-)
-const emit = defineEmits(['logout', 'add-child', 'toggle-dark-mode'])
-const route = useRoute()
-
-const handleLogout = () => {
-  emit('logout')
-}
-
-const isActive = (path) => {
-  return route.path === path
-}
-
-defineProps({
+// ✅ FIX 1: defineProps AVANT d'utiliser props
+const props = defineProps({
   darkMode: {
     type: Boolean,
     required: true,
@@ -40,6 +26,23 @@ defineProps({
     default: null,
   },
 })
+
+const emit = defineEmits(['logout', 'add-child', 'toggle-dark-mode'])
+
+// ✅ FIX 2: computed importé + props correctement défini AVANT cette ligne
+const { notifications, unreadCount, showNotifPanel, toastNotif, togglePanel } = useNotifications(
+  computed(() => props.user),
+)
+
+const route = useRoute()
+
+const handleLogout = () => {
+  emit('logout')
+}
+
+const isActive = (path) => {
+  return route.path === path
+}
 </script>
 
 <template>
@@ -65,6 +68,8 @@ defineProps({
               <p class="text-xs text-blue-100">Belmahi School - Oran</p>
             </div>
           </RouterLink>
+
+          <!-- Bouton Dark Mode -->
           <button
             @click="$emit('toggle-dark-mode')"
             class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all transform hover:scale-110"
@@ -72,14 +77,14 @@ defineProps({
             <Sun v-if="darkMode" :size="24" />
             <Moon v-else :size="24" />
           </button>
-          <!-- 🔔 BOUTON NOTIFICATIONS — à mettre dans la navbar à côté du dark mode -->
+
+          <!-- 🔔 BOUTON NOTIFICATIONS -->
           <div class="relative">
             <button
               @click="togglePanel"
               class="relative p-2 rounded-full hover:bg-white/10 transition-all"
-              :title="'Notifications'"
+              title="Notifications"
             >
-              <!-- Icône cloche -->
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="h-5 w-5 text-white"
@@ -91,10 +96,7 @@ defineProps({
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
-               6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388
-               6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3
-               3 0 11-6 0v-1m6 0H9"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                 />
               </svg>
               <!-- Badge rouge -->
@@ -109,12 +111,10 @@ defineProps({
             <!-- Panneau de notifications -->
             <div
               v-if="showNotifPanel"
-              class="absolute right-0 top-12 w-80 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50"
+              class="absolute left-0 top-12 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200 z-50"
             >
-              <div
-                class="p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center"
-              >
-                <h3 class="font-bold text-gray-800 dark:text-white">🔔 Notifications</h3>
+              <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">🔔 Notifications</h3>
                 <span class="text-xs text-gray-500">Aujourd'hui</span>
               </div>
               <div v-if="notifications.length === 0" class="p-6 text-center text-gray-500 text-sm">
@@ -123,18 +123,15 @@ defineProps({
               <div
                 v-for="notif in notifications"
                 :key="notif.id || notif.key"
-                class="p-4 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                class="p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors"
               >
-                <p class="text-sm text-gray-700 dark:text-gray-300">{{ notif.message }}</p>
+                <p class="text-sm text-gray-700">{{ notif.message }}</p>
                 <p class="text-xs text-gray-400 mt-1">
                   {{ notif.time ? notif.time.slice(0, 5) : '' }}
                 </p>
               </div>
             </div>
           </div>
-
-          <!-- 🍞 TOAST NOTIFICATION (en bas à droite de l'écran) -->
-          <!-- METTRE CE CODE DIRECTEMENT DANS App.vue, pas dans NavBar -->
         </div>
 
         <!-- Menu de Navigation Central -->
@@ -153,11 +150,7 @@ defineProps({
             </RouterLink>
           </li>
 
-          <!--
-            ✅ FIX 2A: "Cours" visible UNIQUEMENT pour l'admin.
-            Avant : v-if="user && user.role !== 'teacher'"  ← montrait à tout le monde sauf teacher
-            Après : v-if="user && user.role === 'admin'"   ← montré SEULEMENT à l'admin
-          -->
+          <!-- Cours — Admin uniquement -->
           <li v-if="user && user.role === 'admin'">
             <RouterLink
               to="/courses"
@@ -171,7 +164,7 @@ defineProps({
             </RouterLink>
           </li>
 
-          <!-- Tableau de bord enseignant (pour enseignants uniquement) -->
+          <!-- Dashboard enseignant -->
           <li v-if="user && user.role === 'teacher'">
             <RouterLink
               to="/teacher-dashboard"
@@ -187,7 +180,7 @@ defineProps({
             </RouterLink>
           </li>
 
-          <!-- Tableau de bord Parent (pour parents uniquement) -->
+          <!-- Dashboard Parent -->
           <li v-if="user && user.role === 'Parent'">
             <RouterLink
               to="/parent-dashboard"
@@ -203,7 +196,7 @@ defineProps({
             </RouterLink>
           </li>
 
-          <!-- Tableau de bord Étudiant (pour étudiants uniquement) -->
+          <!-- Dashboard Étudiant -->
           <li v-if="user && user.role === 'student'">
             <RouterLink
               to="/student-dashboard"
@@ -219,6 +212,7 @@ defineProps({
             </RouterLink>
           </li>
 
+          <!-- Calendrier -->
           <li v-if="user">
             <RouterLink
               to="/calendar"
@@ -234,7 +228,7 @@ defineProps({
             </RouterLink>
           </li>
 
-          <!-- Ajouter Enseignant (Admin uniquement) -->
+          <!-- Ajouter Enseignant — Admin uniquement -->
           <li v-if="user && user.role === 'admin'">
             <RouterLink
               to="/add-teacher"
@@ -254,38 +248,31 @@ defineProps({
         <!-- Section Utilisateur -->
         <div class="flex items-center gap-3">
           <div v-if="user" class="flex items-center gap-3">
-            <!-- Nom de l'utilisateur avec badge de rôle -->
             <div class="hidden md:flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
               <UserIcon :size="18" class="text-white" />
               <span class="text-white font-semibold">{{ user.name }}</span>
-
               <span
                 v-if="user.role === 'admin'"
                 class="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold"
+                >ADMIN</span
               >
-                ADMIN
-              </span>
               <span
                 v-else-if="user.role === 'Parent'"
                 class="ml-2 px-2 py-0.5 bg-blue-400 text-blue-900 rounded-full text-xs font-bold"
+                >PARENT</span
               >
-                PARENT
-              </span>
               <span
                 v-else-if="user.role === 'teacher'"
                 class="ml-2 px-2 py-0.5 bg-purple-400 text-purple-900 rounded-full text-xs font-bold"
+                >ENSEIGNANT</span
               >
-                ENSEIGNANT
-              </span>
               <span
                 v-else
                 class="ml-2 px-2 py-0.5 bg-green-400 text-green-900 rounded-full text-xs font-bold"
+                >ÉTUDIANT</span
               >
-                ÉTUDIANT
-              </span>
             </div>
 
-            <!-- Bouton Déconnexion -->
             <button
               @click="handleLogout"
               class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all transform hover:scale-105"
@@ -295,7 +282,7 @@ defineProps({
             </button>
           </div>
 
-          <!-- Si l'utilisateur n'est PAS connecté -->
+          <!-- Si pas connecté -->
           <RouterLink
             v-else
             to="/login"
