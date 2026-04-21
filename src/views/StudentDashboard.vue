@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { BookOpen, Calendar, Users, Clock } from 'lucide-vue-next'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import * as api from '../services/api.js'
+import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
+
+const { t } = useLanguage() // ⬅️ تفعيل دالة الترجمة
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -25,12 +28,15 @@ const loadCourses = async () => {
 
   try {
     // Appeler l'API pour récupérer les cours de l'étudiant
-    const response = await fetch('https://belmahi-school-production.up.railway.app/api/students/my-courses', {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
+    const response = await fetch(
+      'https://belmahi-school-production.up.railway.app/api/students/my-courses',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       },
-    })
+    )
 
     if (!response.ok) {
       throw new Error('Erreur lors du chargement des cours')
@@ -58,17 +64,17 @@ const openMaterialsModal = (courseId) => {
 // Labels des niveaux
 const getLevelLabel = (level) => {
   const labels = {
-    primaire: 'Primaire (ابتدائي)',
-    moyen: 'Moyen (متوسط)',
-    secondaire: 'Secondaire (ثانوي)',
+    primaire: t('level_primary_full'),
+    moyen: t('level_middle_full'),
+    secondaire: t('level_secondary_full'),
   }
   return labels[level] || level
 }
 
 // Format teacher name
 const formatTeacherName = (course) => {
-  if (!course.teacher_name) return 'Non assigné'
-  const prefix = course.teacher_gender === 'M' ? 'Mr.' : 'Mme.'
+  if (!course.teacher_name) return t('not_assigned')
+  const prefix = course.teacher_gender === 'M' ? t('mister_short') : t('madam_short')
   return `${prefix} ${course.teacher_name} ${course.teacher_last_name || ''}`
 }
 
@@ -78,30 +84,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Message de chargement -->
   <div v-if="loading" class="text-center py-12">
     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
-      Chargement de vos cours...
+      {{ t('loading_your_courses') }}
     </p>
   </div>
 
-  <!-- Message d'erreur -->
   <div
     v-else-if="error"
     class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6"
   >
-    <p class="font-semibold">❌ Erreur: {{ error }}</p>
+    <p class="font-semibold">{{ t('error_prefix') }} {{ error }}</p>
     <button
       @click="loadCourses"
       class="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
     >
-      Réessayer
+      {{ t('retry') }}
     </button>
   </div>
 
   <div v-else>
-    <!-- En-tête -->
     <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
       <div class="flex items-start gap-4">
         <div class="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl">
@@ -109,16 +112,15 @@ onMounted(() => {
         </div>
         <div class="flex-1">
           <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
-            Bienvenue, {{ user?.name }} {{ user?.last_name }}
+            {{ t('welcome_comma') }} {{ user?.name }} {{ user?.last_name }}
           </h1>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
-            Vos cours inscrits
+            {{ t('your_enrolled_courses') }}
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Message si aucun cours -->
     <div
       v-if="enrolledCourses.length === 0"
       :class="darkMode ? 'bg-gray-800' : 'bg-white'"
@@ -130,14 +132,13 @@ onMounted(() => {
         class="mx-auto mb-4"
       />
       <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold mb-2">
-        Aucun cours inscrit
+        {{ t('no_enrolled_courses') }}
       </h3>
       <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
-        Vous n'êtes pas encore inscrit à des cours.
+        {{ t('not_enrolled_yet') }}
       </p>
     </div>
 
-    <!-- Liste des cours -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
         v-for="course in enrolledCourses"
@@ -145,7 +146,6 @@ onMounted(() => {
         :class="darkMode ? 'bg-gray-800' : 'bg-white'"
         class="rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6"
       >
-        <!-- Barre de couleur selon niveau -->
         <div
           :class="{
             'bg-gradient-to-r from-green-500 to-emerald-500': course.education_level === 'primaire',
@@ -155,21 +155,19 @@ onMounted(() => {
           class="h-2 rounded-full mb-4"
         />
 
-        <!-- Titre du cours -->
         <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold mb-2">
           {{ course.title }}
         </h3>
 
-        <!-- Niveau -->
         <div class="mb-3">
           <span
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"
           >
-            {{ getLevelLabel(course.education_level) }} - {{ course.year_level }}ème année
+            {{ getLevelLabel(course.education_level) }} - {{ course.year_level }}
+            {{ t('year_suffix') }}
           </span>
         </div>
 
-        <!-- Enseignant -->
         <div
           :class="darkMode ? 'text-gray-300' : 'text-gray-600'"
           class="flex items-center gap-2 mb-3"
@@ -178,7 +176,6 @@ onMounted(() => {
           <span class="font-semibold">{{ formatTeacherName(course) }}</span>
         </div>
 
-        <!-- Groupe -->
         <div
           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
           class="flex items-center gap-2 mb-3"
@@ -187,7 +184,6 @@ onMounted(() => {
           <span>{{ course.group_name }}</span>
         </div>
 
-        <!-- Horaire -->
         <div
           v-if="course.day_of_week"
           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
@@ -195,12 +191,11 @@ onMounted(() => {
         >
           <Clock :size="18" />
           <span>
-            {{ course.day_of_week }} - {{ course.session_start_time }} à
+            {{ course.day_of_week }} - {{ course.session_start_time }} {{ t('to_time') }}
             {{ course.session_end_time }}
           </span>
         </div>
 
-        <!-- Description -->
         <p
           v-if="course.description"
           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
@@ -209,16 +204,14 @@ onMounted(() => {
           {{ course.description }}
         </p>
 
-        <!-- ⭐ VIEW MATERIALS BUTTON -->
         <button
           @click="openMaterialsModal(course.course_id)"
           class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md"
         >
           <span class="text-xl">📚</span>
-          View Course Materials
+          {{ t('view_course_materials') }}
         </button>
 
-        <!-- Payment Status -->
         <div class="mt-3 text-center">
           <span
             :class="{
@@ -230,17 +223,16 @@ onMounted(() => {
           >
             {{
               course.payment_status === 'paid'
-                ? '✓ Payé'
+                ? t('paid_status')
                 : course.payment_status === 'partial'
-                  ? '⚠ Partiel'
-                  : '⏳ En attente'
+                  ? t('partial_status')
+                  : t('pending_status')
             }}
           </span>
         </div>
       </div>
     </div>
 
-    <!-- ⭐ Materials Modal -->
     <MaterialsListModal
       :is-open="showMaterialsModal"
       :course-id="selectedCourseId"

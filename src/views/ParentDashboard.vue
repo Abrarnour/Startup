@@ -16,6 +16,9 @@ import {
 import * as api from '../services/api.js'
 import AddChildModal from '../components/AddChildModal.vue'
 import EnrollChildModal from '../components/EnrollChildModal.vue'
+import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
+
+const { t } = useLanguage() // ⬅️ تفعيل الترجمة
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -41,26 +44,30 @@ const notesLoading = ref(null)
 const notesOpen = ref(null)
 
 // ── Labels ───────────────────────────────────────────────────────
-const educationLevelLabels = {
-  primaire: 'ابتدائي',
-  moyen: 'متوسط',
-  secondaire: 'ثانوي',
-}
-const branchLabels = {
-  sciences_experimentales: 'علوم تجريبية',
-  mathematiques: 'رياضيات',
-  techniques_mathematiques: 'تقني رياضي',
-  gestion_economie: 'تسيير واقتصاد',
-  lettres_philosophie: 'آداب وفلسفة',
-  langues_etrangeres: 'لغات أجنبية',
-}
-const noteTypeLabel = {
-  general: 'Général',
-  behavior: 'Comportement',
-  progress: 'Progrès',
-  attendance: 'Présence',
-  payment: 'Paiement',
-}
+// تم تحويل هذه القوائم إلى computed لتتغير تلقائياً مع تغيير اللغة
+const educationLevelLabels = computed(() => ({
+  primaire: t('level_primary'),
+  moyen: t('level_middle'),
+  secondaire: t('level_secondary'),
+}))
+
+const branchLabels = computed(() => ({
+  sciences_experimentales: t('branch_science'),
+  mathematiques: t('branch_math'),
+  techniques_mathematiques: t('branch_tech_math'),
+  gestion_economie: t('branch_management'),
+  lettres_philosophie: t('branch_letters'),
+  langues_etrangeres: t('branch_languages'),
+}))
+
+const noteTypeLabel = computed(() => ({
+  general: t('note_type_general'),
+  behavior: t('note_type_behavior'),
+  progress: t('note_type_progress'),
+  attendance: t('note_type_attendance'),
+  payment: t('note_type_payment'),
+}))
+
 const noteTypeColor = {
   general: 'bg-gray-100 text-gray-700',
   behavior: 'bg-orange-100 text-orange-700',
@@ -143,8 +150,8 @@ const toggleNotes = async (enrollment) => {
 
 // ── Helpers ───────────────────────────────────────────────────────
 const formatTeacherName = (c) => {
-  if (!c.teacher_name) return 'Non assigné'
-  return `${c.teacher_gender === 'M' ? 'Mr.' : 'Mme.'} ${c.teacher_name} ${c.teacher_last_name}`
+  if (!c.teacher_name) return t('not_assigned')
+  return `${c.teacher_gender === 'M' ? t('mister_short') : t('madam_short')} ${c.teacher_name} ${c.teacher_last_name}`
 }
 const formatDate = (d) =>
   d
@@ -175,22 +182,22 @@ const handleEnrolled = () => {
 }
 
 const unenrollChild = async (enrollmentId) => {
-  if (!confirm('Retirer cet enfant de ce cours?')) return
+  if (!confirm(t('confirm_unenroll_child'))) return
   try {
     await api.unenrollChild(selectedChild.value.id, enrollmentId)
     loadChildCourses(selectedChild.value.id)
   } catch (e) {
-    alert('Erreur: ' + e.message)
+    alert(t('error_prefix_short') + e.message)
   }
 }
 const unlinkChild = async (childId) => {
-  if (!confirm('Retirer cet enfant de votre liste?')) return
+  if (!confirm(t('confirm_unlink_child'))) return
   try {
     await api.unlinkChild(childId)
     loadChildren()
     if (selectedChild.value?.id === childId) deselectChild()
   } catch (e) {
-    alert('Erreur: ' + e.message)
+    alert(t('error_prefix_short') + e.message)
   }
 }
 
@@ -209,9 +216,9 @@ onMounted(() => {
   >
     <div class="container mx-auto px-4 py-8">
       <div class="mb-8">
-        <h1 class="text-4xl font-bold mb-2">Espace Parent — Bienvenue {{ user?.name }} 👨‍👩‍👧‍👦</h1>
+        <h1 class="text-4xl font-bold mb-2">{{ t('parent_space_welcome') }} {{ user?.name }} 👨‍👩‍👧‍👦</h1>
         <p :class="props.darkMode ? 'text-gray-400' : 'text-gray-600'">
-          Gérez les inscriptions de vos enfants
+          {{ t('manage_children_enrollments') }}
         </p>
       </div>
 
@@ -220,11 +227,10 @@ onMounted(() => {
           @click="showAddChildModal = true"
           class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2 shadow-lg"
         >
-          <UserPlus :size="20" /> Ajouter un enfant
+          <UserPlus :size="20" /> {{ t('add_child_btn') }}
         </button>
       </div>
 
-      <!-- Tabs -->
       <div
         class="mb-6 flex gap-4 border-b-2"
         :class="props.darkMode ? 'border-gray-700' : 'border-gray-200'"
@@ -240,7 +246,7 @@ onMounted(() => {
           "
           class="px-6 py-3 font-semibold border-b-2 transition-all flex items-center gap-2"
         >
-          <Users :size="20" /> Mes Enfants ({{ children.length }})
+          <Users :size="20" /> {{ t('my_children_tab') }} ({{ children.length }})
         </button>
         <button
           @click="activeTab = 'courses'"
@@ -253,27 +259,25 @@ onMounted(() => {
           "
           class="px-6 py-3 font-semibold border-b-2 transition-all flex items-center gap-2"
         >
-          <BookOpen :size="20" /> Cours Disponibles
+          <BookOpen :size="20" /> {{ t('available_courses_tab') }}
         </button>
       </div>
 
-      <!-- ═══ TAB: MES ENFANTS ═══ -->
       <div v-if="activeTab === 'children'">
         <div v-if="children.length === 0" class="text-center py-16">
           <Users :size="64" class="mx-auto mb-4 text-gray-400" />
           <p class="text-xl mb-4" :class="props.darkMode ? 'text-gray-400' : 'text-gray-600'">
-            Aucun enfant enregistré
+            {{ t('no_child_registered') }}
           </p>
           <button
             @click="showAddChildModal = true"
             class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold"
           >
-            Ajouter votre premier enfant
+            {{ t('add_first_child') }}
           </button>
         </div>
 
         <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Children list -->
           <div class="lg:col-span-1 space-y-4">
             <div
               v-for="child in children"
@@ -306,7 +310,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Child courses + notes -->
           <div class="lg:col-span-2">
             <div
               v-if="!selectedChild"
@@ -314,11 +317,11 @@ onMounted(() => {
               :class="props.darkMode ? 'text-gray-500' : 'text-gray-400'"
             >
               <GraduationCap :size="56" class="mx-auto mb-4 opacity-30" />
-              <p>Sélectionnez un enfant pour voir ses cours</p>
+              <p>{{ t('select_child_to_view_courses') }}</p>
             </div>
 
             <div v-else>
-              <h2 class="text-2xl font-bold mb-5">Cours de {{ selectedChild.name }}</h2>
+              <h2 class="text-2xl font-bold mb-5">{{ t('courses_of') }}{{ selectedChild.name }}</h2>
 
               <div v-if="loading" class="text-center py-10">
                 <div
@@ -334,7 +337,7 @@ onMounted(() => {
                 "
               >
                 <BookOpen :size="40" class="mx-auto mb-3 opacity-30" />
-                <p>Aucun cours pour le moment</p>
+                <p>{{ t('no_courses_yet') }}</p>
               </div>
 
               <div v-else class="space-y-5">
@@ -362,7 +365,7 @@ onMounted(() => {
                             class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold"
                           >
                             {{ educationLevelLabels[enrollment.education_level] }} —
-                            {{ enrollment.year_level }}ème
+                            {{ enrollment.year_level }}{{ t('year_suffix_short') }}
                           </span>
                           <span
                             v-if="enrollment.branch"
@@ -370,7 +373,6 @@ onMounted(() => {
                           >
                             {{ branchLabels[enrollment.branch] }}
                           </span>
-                          <!-- PAYMENT BADGE: only 2 states -->
                           <span
                             :class="
                               enrollment.payment_status === 'paid'
@@ -379,19 +381,22 @@ onMounted(() => {
                             "
                             class="px-3 py-1 rounded-full text-xs font-bold"
                           >
-                            {{ enrollment.payment_status === 'paid' ? '✅ Payé' : '❌ Non payé' }}
+                            {{
+                              enrollment.payment_status === 'paid'
+                                ? t('paid_status_ok')
+                                : t('unpaid_status')
+                            }}
                           </span>
                         </div>
 
-                        <!-- Warning when not paid -->
                         <div
                           v-if="enrollment.payment_status !== 'paid'"
                           class="mt-3 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg"
                         >
                           <AlertCircle :size="15" class="text-red-500 flex-shrink-0 mt-0.5" />
                           <p class="text-xs text-red-700">
-                            Le cycle mensuel est terminé. Contactez l'école pour renouveler.
-                            <strong>(Les cours sont gratuits pour le moment)</strong>
+                            {{ t('monthly_cycle_ended') }}
+                            <strong>{{ t('courses_are_free_now') }}</strong>
                           </p>
                         </div>
                       </div>
@@ -403,7 +408,6 @@ onMounted(() => {
                       </button>
                     </div>
 
-                    <!-- Schedule -->
                     <div class="grid grid-cols-2 gap-2 mb-4">
                       <div
                         :class="props.darkMode ? 'bg-gray-700' : 'bg-gray-50'"
@@ -413,7 +417,7 @@ onMounted(() => {
                           :class="props.darkMode ? 'text-gray-400' : 'text-gray-500'"
                           class="text-xs mb-0.5"
                         >
-                          Groupe
+                          {{ t('group_label') }}
                         </p>
                         <p class="font-semibold text-sm">{{ enrollment.group_name }}</p>
                       </div>
@@ -425,7 +429,7 @@ onMounted(() => {
                           :class="props.darkMode ? 'text-gray-400' : 'text-gray-500'"
                           class="text-xs mb-0.5"
                         >
-                          Horaire
+                          {{ t('schedule_label') }}
                         </p>
                         <p class="font-semibold text-xs">
                           {{ enrollment.day_of_week }} {{ enrollment.session_start_time }}–{{
@@ -435,7 +439,6 @@ onMounted(() => {
                       </div>
                     </div>
 
-                    <!-- NOTES BUTTON -->
                     <button
                       @click="toggleNotes(enrollment)"
                       :class="
@@ -446,7 +449,7 @@ onMounted(() => {
                       class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
                     >
                       <span class="flex items-center gap-2"
-                        ><FileText :size="16" /> Remarques de l'enseignant</span
+                        ><FileText :size="16" /> {{ t('teacher_notes') }}</span
                       >
                       <component
                         :is="
@@ -459,7 +462,6 @@ onMounted(() => {
                     </button>
                   </div>
 
-                  <!-- NOTES PANEL -->
                   <div
                     v-if="notesOpen === `${enrollment.group_id}-${selectedChild.id}`"
                     :class="
@@ -483,7 +485,7 @@ onMounted(() => {
                       class="text-sm text-center py-3"
                       :class="props.darkMode ? 'text-gray-400' : 'text-gray-500'"
                     >
-                      📝 Aucune remarque pour l'instant
+                      {{ t('no_notes_yet') }}
                     </p>
 
                     <div v-else class="space-y-3">
@@ -500,8 +502,10 @@ onMounted(() => {
                       >
                         <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
                           <div class="flex items-center gap-2">
-                            <span v-if="note.is_important" class="text-orange-500 text-xs font-bold"
-                              >⚠️ Important</span
+                            <span
+                              v-if="note.is_important"
+                              class="text-orange-500 text-xs font-bold"
+                              >{{ t('important_warning') }}</span
                             >
                             <span
                               :class="noteTypeColor[note.note_type] || 'bg-gray-100 text-gray-700'"
@@ -528,7 +532,11 @@ onMounted(() => {
                         >
                           — {{ note.author_name }} {{ note.author_last_name }}
                           <span class="opacity-60"
-                            >({{ note.author_role === 'admin' ? 'Admin' : 'Enseignant' }})</span
+                            >({{
+                              note.author_role === 'admin'
+                                ? t('admin_role_label')
+                                : t('teacher_role_label')
+                            }})</span
                           >
                         </p>
                       </div>
@@ -541,7 +549,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- ═══ TAB: COURS DISPONIBLES ═══ -->
       <div v-if="activeTab === 'courses'">
         <div v-if="loading" class="text-center py-16">
           <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
@@ -549,7 +556,7 @@ onMounted(() => {
         <div v-else-if="courses.length === 0" class="text-center py-16">
           <BookOpen :size="64" class="mx-auto mb-4 text-gray-400" />
           <p class="text-xl" :class="props.darkMode ? 'text-gray-400' : 'text-gray-600'">
-            Aucun cours disponible
+            {{ t('no_courses_available') }}
           </p>
         </div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -578,7 +585,8 @@ onMounted(() => {
                 <span
                   class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold"
                 >
-                  {{ educationLevelLabels[course.education_level] }} — {{ course.year_level }}ème
+                  {{ educationLevelLabels[course.education_level] }} — {{ course.year_level
+                  }}{{ t('year_suffix_short') }}
                 </span>
                 <span
                   v-if="course.branch"
@@ -599,26 +607,23 @@ onMounted(() => {
                   :class="props.darkMode ? 'bg-gray-700' : 'bg-gray-50'"
                   class="p-2 rounded-lg text-sm flex items-center gap-1"
                 >
-                  <DollarSign :size="14" /><span class="font-semibold text-green-600">Gratuit</span>
+                  <DollarSign :size="14" /><span class="font-semibold text-green-600">{{
+                    t('free')
+                  }}</span>
                 </div>
                 <div
                   :class="props.darkMode ? 'bg-gray-700' : 'bg-gray-50'"
                   class="p-2 rounded-lg text-sm flex items-center gap-1"
                 >
-                  <Users :size="14" />{{ course.open_groups || 0 }} groupes
+                  <Users :size="14" />{{ course.open_groups || 0 }} {{ t('groups_label') }}
                 </div>
               </div>
-              <!-- ENROLL BUTTON — says Gratuit clearly -->
               <button
                 @click="openEnrollModal(course)"
                 :disabled="children.length === 0"
                 class="w-full py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{
-                  children.length > 0
-                    ? '✅ Inscrire mon enfant (Gratuit)'
-                    : "Ajoutez d'abord un enfant"
-                }}
+                {{ children.length > 0 ? t('enroll_child_free') : t('add_child_first') }}
               </button>
             </div>
           </div>
