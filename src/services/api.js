@@ -1275,3 +1275,42 @@ export const getAllStudents = async () => {
   }
   return response.json()
 }
+
+// ============= ADMIN USER MANAGEMENT =============
+
+// Liste des enseignants (admin)
+export const getAdminTeachersList = async () => {
+  const response = await fetch(`${API_URL}/auth/users/teachers`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur récupération enseignants')
+  }
+  return response.json()
+}
+
+// Liste des étudiants (admin)
+export const getAdminStudentsList = async () => {
+  const response = await fetch(`${API_URL}/auth/users/students`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur récupération étudiants')
+  }
+  return response.json()
+}
+
+// Supprimer un utilisateur (admin) — supprime tout en cascade
+export const adminDeleteUser = async (userId) => {
+  const response = await fetch(`${API_URL}/auth/users/${userId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur suppression')
+  }
+  return response.json()
+}

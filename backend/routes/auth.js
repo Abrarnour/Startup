@@ -192,4 +192,105 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) =>
   }
 })
 
+// ═══════════════════════════════════════
+// GET /api/auth/users/teachers — Liste des enseignants (Admin)
+// ═══════════════════════════════════════
+router.get('/users/teachers', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        u.id,
+        u.name,
+        u.last_name,
+        u.email,
+        u.phone,
+        u.city,
+        u.gender,
+        u.birthday,
+        u.created_at,
+        COUNT(DISTINCT c.id) AS course_count,
+        COUNT(DISTINCT gs.student_id) AS student_count
+      FROM users u
+      LEFT JOIN courses c ON c.teacher_id = u.id
+      LEFT JOIN groups g ON g.course_id = c.id
+      LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+      WHERE u.role = 'teacher'
+      GROUP BY u.id
+      ORDER BY u.last_name, u.name
+    `)
+    res.json(result.rows)
+  } catch (error) {
+    console.error('Erreur liste enseignants:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// ═══════════════════════════════════════
+// GET /api/auth/users/students — Liste des étudiants (Admin)
+// ═══════════════════════════════════════
+router.get('/users/students', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        u.id,
+        u.name,
+        u.last_name,
+        u.email,
+        u.phone,
+        u.city,
+        u.gender,
+        u.birthday,
+        u.parent_phone,
+        u.created_at,
+        COUNT(DISTINCT gs.group_id) AS enrolled_courses
+      FROM users u
+      LEFT JOIN group_students gs ON gs.student_id = u.id AND gs.status = 'active'
+      WHERE u.role = 'student'
+      GROUP BY u.id
+      ORDER BY u.last_name, u.name
+    `)
+    res.json(result.rows)
+  } catch (error) {
+    console.error('Erreur liste étudiants:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// ═══════════════════════════════════════
+// DELETE /api/auth/users/:id — Supprimer un utilisateur (Admin)
+// Supprime aussi toutes ses données liées (CASCADE dans la BDD)
+// ═══════════════════════════════════════
+router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const userId = parseInt(req.params.id)
+
+  // Sécurité : ne pas se supprimer soi-même
+  if (userId === req.user.id) {
+    return res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte' })
+  }
+
+  try {
+    // Vérifier que l'utilisateur existe
+    const check = await pool.query('SELECT id, role, name, last_name FROM users WHERE id = $1', [
+      userId,
+    ])
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' })
+    }
+
+    const targetUser = check.rows[0]
+
+    // Supprimer (CASCADE géré par les FK en BDD)
+    await pool.query('DELETE FROM users WHERE id = $1', [userId])
+
+    console.log(`✅ User deleted: ${targetUser.name} ${targetUser.last_name} (${targetUser.role})`)
+    res.json({
+      success: true,
+      message: `${targetUser.name} ${targetUser.last_name} supprimé avec succès`,
+      deleted_role: targetUser.role,
+    })
+  } catch (error) {
+    console.error('Erreur suppression utilisateur:', error)
+    res.status(500).json({ error: 'Erreur lors de la suppression' })
+  }
+})
 export default router

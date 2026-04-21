@@ -15,7 +15,14 @@ import {
 import CourseCard from '../components/CourseCard.vue'
 import CourseModal from '../components/CourseModal.vue'
 import * as api from '../services/api.js'
+import { ref } from 'vue'
+import TeacherListModal from '../components/TeacherListModal.vue'
+import StudentListModal from '../components/StudentListModal.vue'
+import { useLanguage } from '../composables/useLanguage.js'
 
+const { t } = useLanguage()
+const showTeacherModal = ref(false)
+const showStudentModal = ref(false)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -305,23 +312,29 @@ onMounted(() => {
           <!-- Card 2: Étudiants (admin only) -->
           <div
             v-if="user?.role === 'admin'"
-            class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
+            @click="showStudentModal = true"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
           >
             <Users class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ stats.students }}</div>
             <div class="text-sm text-blue-100">Étudiants</div>
+            <p class="text-yellow-300 text-xs mt-1 flex items-center gap-1">
+              👆 {{ t('click_to_manage') }}
+            </p>
           </div>
 
           <!-- Card 3: Enseignants (admin, clickable) -->
           <div
             v-if="user?.role === 'admin'"
-            class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all cursor-pointer"
-            @click="openTeacherModal"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all cursor-pointer"
+            @click="showTeacherModal = true"
           >
             <User class="mx-auto mb-2" :size="28" />
             <div class="text-2xl font-bold">{{ stats.teachers }}</div>
             <div class="text-sm text-blue-100">Enseignants</div>
-            <div class="text-xs text-yellow-300 mt-1">👆 Cliquer pour gérer</div>
+            <p class="text-yellow-300 text-xs mt-1 flex items-center gap-1">
+              👆 {{ t('click_to_manage') }}
+            </p>
           </div>
 
           <!-- Card 4: Favoris -->
@@ -683,6 +696,20 @@ onMounted(() => {
       </div>
     </Transition>
   </Teleport>
+  <TeacherListModal
+    :show="showTeacherModal"
+    :darkMode="darkMode"
+    :t="t"
+    @close="showTeacherModal = false"
+  />
+
+  <StudentListModal
+    :show="showStudentModal"
+    :darkMode="darkMode"
+    :t="t"
+    @close="showStudentModal = false"
+    @student-deleted="loadStats"
+  />
 </template>
 
 <style scoped>
