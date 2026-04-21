@@ -221,7 +221,14 @@ onMounted(() => {
           {{ t('manage_children_enrollments') }}
         </p>
       </div>
-
+      <div class="mb-6">
+        <button
+          @click="showAddChildModal = true"
+          class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2 shadow-lg"
+        >
+          <UserPlus :size="20" /> {{ t('add_child_btn') }}
+        </button>
+      </div>
       <div
         class="mb-6 flex gap-4 border-b-2"
         :class="props.darkMode ? 'border-gray-700' : 'border-gray-200'"
@@ -609,14 +616,7 @@ onMounted(() => {
                   <Users :size="14" />{{ course.open_groups || 0 }} {{ t('groups_label') }}
                 </div>
               </div>
-              <button
-                @click="openEnrollModal(course)"
-                :disabled="children.length === 0"
-                class="w-full py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {{ children.length > 0 ? t('enroll_child_free') : t('add_child_first') }}
-              </button>
-            </div>
+
           </div>
         </div>
       </div>
