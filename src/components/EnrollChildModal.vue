@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { X, Users, Calendar, Clock, MapPin, DollarSign } from 'lucide-vue-next'
 import * as api from '../services/api.js'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
+
+const { t } = useLanguage() // ✅ Extract t for translations
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -23,41 +26,15 @@ const groups = ref([])
 // Formater le nom de l'enseignant
 const teacherFullName = computed(() => {
   if (!props.course) return ''
-  const prefix = props.course.teacher_gender === 'M' ? 'Mr.' : 'Mme.'
+  const prefix = props.course.teacher_gender === 'M' ? t('mister_short') : t('madam_short')
   return `${prefix} ${props.course.teacher_name} ${props.course.teacher_last_name}`
 })
 
 // Formater le prix
 const formattedPrice = computed(() => {
-  if (!props.course || !props.course.price) return 'Gratuit'
+  if (!props.course || !props.course.price) return t('free')
   return `${parseFloat(props.course.price).toLocaleString('fr-DZ')} DA`
 })
-
-// Traductions
-const educationLevelLabels = {
-  primaire: 'ابتدائي',
-  moyen: 'متوسط',
-  secondaire: 'ثانوي',
-}
-
-const branchLabels = {
-  sciences_experimentales: 'علوم تجريبية',
-  mathematiques: 'رياضيات',
-  techniques_mathematiques: 'تقني رياضي',
-  gestion_economie: 'تسيير واقتصاد',
-  lettres_philosophie: 'آداب وفلسفة',
-  langues_etrangeres: 'لغات أجنبية',
-}
-
-const dayLabels = {
-  sunday: 'الأحد (Dimanche)',
-  monday: 'الإثنين (Lundi)',
-  tuesday: 'الثلاثاء (Mardi)',
-  wednesday: 'الأربعاء (Mercredi)',
-  thursday: 'الخميس (Jeudi)',
-  friday: 'الجمعة (Vendredi)',
-  saturday: 'السبت (Samedi)',
-}
 
 // Charger les groupes du cours
 const loadGroups = async () => {
@@ -69,7 +46,7 @@ const loadGroups = async () => {
     // Filtrer seulement les groupes ouverts aux inscriptions
     groups.value = result.filter((g) => g.registration_open && g.is_active)
   } catch (err) {
-    error.value = 'Erreur lors du chargement des groupes'
+    error.value = t('error')
     console.error(err)
   } finally {
     loading.value = false
@@ -79,10 +56,20 @@ const loadGroups = async () => {
 // Formater les informations du groupe
 const formatGroupInfo = (group) => {
   if (props.course.course_type === 'continuous') {
-    return `${dayLabels[group.day_of_week]} - ${group.session_start_time} à ${group.session_end_time}`
+    // Assuming days of week are translated in standard format or API, otherwise standard day fallback
+    const dayLabelsLocal = {
+      sunday: 'الأحد (Dimanche)',
+      monday: 'الإثنين (Lundi)',
+      tuesday: 'الثلاثاء (Mardi)',
+      wednesday: 'الأربعاء (Mercredi)',
+      thursday: 'الخميس (Jeudi)',
+      friday: 'الجمعة (Vendredi)',
+      saturday: 'السبت (Samedi)',
+    }
+    return `${dayLabelsLocal[group.day_of_week] || group.day_of_week} - ${group.session_start_time} ${t('to_time')} ${group.session_end_time}`
   } else {
     const date = new Date(group.start_date).toLocaleDateString('fr-FR')
-    return `${date} - ${group.start_time} à ${group.end_time}`
+    return `${date} - ${group.start_time} ${t('to_time')} ${group.end_time}`
   }
 }
 
@@ -97,12 +84,12 @@ const handleEnroll = async () => {
   successMessage.value = ''
 
   if (!selectedChild.value) {
-    error.value = 'Veuillez sélectionner un enfant'
+    error.value = t('select_child_error')
     return
   }
 
   if (!selectedGroup.value) {
-    error.value = 'Veuillez sélectionner un groupe/horaire'
+    error.value = t('select_group_error')
     return
   }
 
@@ -110,7 +97,7 @@ const handleEnroll = async () => {
 
   try {
     await api.enrollChild(selectedChild.value, selectedGroup.value)
-    successMessage.value = '✅ Inscription réussie!'
+    successMessage.value = t('enroll_success')
     setTimeout(() => {
       emit('enrolled')
       closeModal()
@@ -142,8 +129,6 @@ onMounted(() => {
 const watchCourse = computed(() => props.course?.id)
 const watchShow = computed(() => props.show)
 
-// Watcher pour recharger les groupes
-import { watch } from 'vue'
 watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
   if (newShow && newCourseId) {
     loadGroups()
@@ -161,7 +146,6 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
       :class="darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'"
       class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-8 m-4"
     >
-      <!-- Bouton Fermer -->
       <button
         @click="closeModal"
         :class="darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'"
@@ -170,10 +154,8 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         <X :size="24" />
       </button>
 
-      <!-- Titre -->
-      <h2 class="text-3xl font-bold mb-6">Inscrire un enfant</h2>
+      <h2 class="text-3xl font-bold mb-6">{{ t('enroll_child_title') }}</h2>
 
-      <!-- Informations du cours -->
       <div
         :class="darkMode ? 'bg-gray-800' : 'bg-gray-50'"
         class="rounded-xl p-6 mb-6 border-2 border-blue-500"
@@ -184,13 +166,14 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         </p>
         <div class="flex flex-wrap gap-2 mb-3">
           <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-            {{ educationLevelLabels[course.education_level] }} - {{ course.year_level }}ème
+            {{ t(`level_${course.education_level}`) }} - {{ course.year_level
+            }}{{ t('year_suffix_short') }}
           </span>
           <span
             v-if="course.branch"
             class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold"
           >
-            {{ branchLabels[course.branch] }}
+            {{ t(`branch_${course.branch}`) || course.branch }}
           </span>
           <span
             class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold flex items-center gap-1"
@@ -208,7 +191,6 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         </p>
       </div>
 
-      <!-- Messages -->
       <div v-if="error" class="mb-4 p-4 bg-red-100 text-red-700 rounded-lg border border-red-300">
         {{ error }}
       </div>
@@ -219,15 +201,14 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         {{ successMessage }}
       </div>
 
-      <!-- Sélection de l'enfant -->
       <div class="mb-6">
         <label class="block mb-3 font-semibold text-lg flex items-center gap-2">
           <Users :size="20" />
-          Sélectionnez votre enfant *
+          {{ t('select_your_child') }}
         </label>
 
         <div v-if="children.length === 0" class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-          Vous n'avez pas encore d'enfants enregistrés. Veuillez d'abord ajouter un enfant.
+          {{ t('no_children_registered') }}
         </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -252,20 +233,19 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         </div>
       </div>
 
-      <!-- Sélection du groupe -->
       <div v-if="selectedChild" class="mb-6">
         <label class="block mb-3 font-semibold text-lg flex items-center gap-2">
           <Calendar :size="20" />
-          Choisissez un groupe / horaire *
+          {{ t('choose_group_schedule') }}
         </label>
 
         <div v-if="loading" class="text-center py-8">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p class="mt-4 text-gray-500">Chargement des groupes...</p>
+          <p class="mt-4 text-gray-500">{{ t('loading_groups') }}</p>
         </div>
 
         <div v-else-if="groups.length === 0" class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-          Aucun groupe disponible pour le moment. Les inscriptions peuvent être fermées.
+          {{ t('no_groups_available') }}
         </div>
 
         <div v-else class="space-y-3">
@@ -294,7 +274,7 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
                 "
                 class="px-2 py-1 rounded-full text-xs font-semibold"
               >
-                {{ availableSeats(group) }} places
+                {{ availableSeats(group) }} {{ t('available_seats') }}
               </span>
             </div>
             <div
@@ -316,22 +296,17 @@ watch([watchCourse, watchShow], ([newCourseId, newShow]) => {
         </div>
       </div>
 
-      <!-- Notice: free for testing -->
       <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-        <p class="text-sm text-green-700 font-semibold">
-          ✅ Tous les cours sont <strong>gratuits</strong> pour le moment. L'inscription confirme la
-          participation de votre enfant.
-        </p>
+        <p class="text-sm text-green-700 font-semibold" v-html="t('free_course_notice')"></p>
       </div>
 
-      <!-- Bouton d'inscription -->
       <button
         v-if="children.length > 0"
         @click="handleEnroll"
         :disabled="loading || !selectedChild || !selectedGroup"
         class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {{ loading ? 'Inscription en cours...' : "✅ Confirmer l'inscription (Gratuit)" }}
+        {{ loading ? t('enroll_in_progress') : t('enroll_child_free') }}
       </button>
     </div>
   </div>

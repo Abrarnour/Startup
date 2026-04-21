@@ -27,10 +27,10 @@ import {
   Info,
 } from 'lucide-vue-next'
 import * as api from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 const route = useRoute()
 const router = useRouter()
-
+const { t } = useLanguage()
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, required: true },
@@ -396,17 +396,15 @@ const handleAddGroup = async () => {
 
     await api.createGroup(groupData)
     showAddGroupModal.value = false
-    successMessage.value = 'Groupe créé avec succès!'
+    successMessage.value = t('group_created_success')
     setTimeout(() => (successMessage.value = ''), 3000)
     await loadGroups()
   } catch (err) {
-    alert('Erreur: ' + err.message)
+    alert(t('error') + ': ' + err.message)
   }
 }
-
 const handleDeleteGroup = async (groupId) => {
-  if (!confirm('Supprimer ce groupe et tous ses étudiants ?')) return
-
+  if (!confirm(t('confirm_delete_group'))) return
   try {
     await api.deleteGroup(groupId)
     await loadGroups()
@@ -414,10 +412,10 @@ const handleDeleteGroup = async (groupId) => {
       selectedGroup.value = null
       students.value = []
     }
-    successMessage.value = 'Groupe supprimé avec succès!'
+    successMessage.value = t('group_deleted_success')
     setTimeout(() => (successMessage.value = ''), 3000)
   } catch (err) {
-    alert('Erreur: ' + err.message)
+    alert(t('error') + ': ' + err.message)
   }
 }
 
@@ -750,12 +748,12 @@ onMounted(() => {
   <div v-if="loading" class="text-center py-12">
     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
-      Chargement...
+      {{ t('loading') }}
     </p>
   </div>
 
   <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
-    <p class="font-semibold">❌ Erreur: {{ error }}</p>
+    <p class="font-semibold">❌ {{ t('error') }}: {{ error }}</p>
   </div>
 
   <div v-else>
@@ -776,7 +774,7 @@ onMounted(() => {
         class="flex items-center gap-2 mb-4 font-semibold transition-colors"
       >
         <ArrowLeft :size="20" />
-        Retour
+        {{ t('back') }}
       </button>
 
       <div class="flex items-start justify-between">
@@ -810,7 +808,7 @@ onMounted(() => {
           class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg"
         >
           <Plus :size="20" />
-          Nouveau groupe
+          {{ t('new_group') }}
         </button>
       </div>
     </div>
@@ -820,7 +818,7 @@ onMounted(() => {
       <!-- Colonne groupes -->
       <div class="lg:col-span-1 space-y-4">
         <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold mb-4">
-          Groupes ({{ groups.length }})
+          {{ t('groups_label') }} ({{ groups.length }})
         </h2>
 
         <div
@@ -839,7 +837,7 @@ onMounted(() => {
             class="absolute top-2 right-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 animate-pulse"
           >
             <Zap :size="12" />
-            Modif. en attente
+            {{ t('mod_pending') }}
           </div>
 
           <div class="flex items-start justify-between mb-3">
@@ -871,13 +869,15 @@ onMounted(() => {
             <div v-else class="space-y-1">
               <div class="flex items-center gap-2">
                 <Calendar :size="16" />
-                <span class="font-semibold"> {{ group.total_sessions || '?' }} séances </span>
-                sur {{ group.total_weeks || '?' }} semaines
+                <span class="font-semibold">
+                  {{ group.total_sessions || '?' }} {{ t('session') }}
+                </span>
+                {{ t('out_of') }} {{ group.total_weeks || '?' }} {{ t('week') }}
               </div>
 
               <div v-if="group.sessions_per_week" class="flex items-center gap-2 text-xs">
                 <Clock :size="14" />
-                {{ group.sessions_per_week }} séance(s)/semaine en moyenne
+                {{ group.sessions_per_week }} {{ t('sessions_per_week_short') }}
               </div>
 
               <div v-if="group.day_of_week" class="flex items-center gap-2 text-xs">
@@ -887,13 +887,14 @@ onMounted(() => {
               </div>
               <div v-else class="flex items-center gap-2 text-xs italic">
                 <Clock :size="14" />
-                Calendrier personnalisé
+                {{ t('custom_calendar') }}
               </div>
             </div>
 
             <div class="flex items-center gap-2">
               <Users :size="16" />
-              {{ group.enrolled_students }} / {{ course.max_students_per_group }} élèves
+              {{ group.enrolled_students }} / {{ course.max_students_per_group }}
+              {{ t('bento_students') }}
             </div>
 
             <div v-if="group.salle" class="flex items-center gap-2">
@@ -918,7 +919,7 @@ onMounted(() => {
               class="w-full py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1 text-orange-800 dark:text-orange-200"
             >
               <CalendarPlus :size="14" />
-              Modifier prochain cycle
+              {{ t('modify_next_cycle') }}
             </button>
 
             <!-- Si modifications en attente -->

@@ -1,19 +1,3 @@
-<!--
-  ✅ FIX 1: CALENDAR DESIGN
-  Changes made in <style scoped>:
-  - .calendar-container: padding 2rem → 1rem (reduced outer space)
-  - .calendar-header: padding 2rem → 1rem, margin-bottom 2rem → 1rem
-  - .calendar-body: padding 2rem → 1rem
-  - .weekdays: gap 1rem → 0.5rem
-  - .days-grid: gap 1rem → 0.5rem (cells closer together)
-  - .day-cell: min-height 120px → 95px (shorter cells = fits screen)
-  - .events-list: added overflow:hidden + max-height to prevent overflow outside cell
-  - .header-content: gap 2rem → 1rem
-  - h1: font-size 2rem → 1.5rem (smaller title)
-
-  COPY THIS ENTIRE FILE to: src/views/AppCalendar.vue
--->
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -32,7 +16,9 @@ import {
   Repeat,
 } from 'lucide-vue-next'
 import * as api from '../services/api.js'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 
+const { t, currentLang } = useLanguage() // ✅ Extract translation tools
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
 })
@@ -46,24 +32,39 @@ const error = ref('')
 const selectedEvent = ref(null)
 const userRole = ref('')
 
-const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
+// Reactive translated weekdays
+const weekDays = computed(() => [
+  t('sun'),
+  t('mon'),
+  t('tue'),
+  t('wed'),
+  t('thu'),
+  t('fri'),
+  t('sat'),
+])
 
-const educationLevels = [
+const educationLevels = computed(() => [
   {
     key: 'primaire',
-    label: 'Primaire',
+    label: t('level_primary'),
     color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   },
-  { key: 'moyen', label: 'Moyen', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+  {
+    key: 'moyen',
+    label: t('level_middle'),
+    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  },
   {
     key: 'secondaire',
-    label: 'Secondaire',
+    label: t('level_secondary'),
     color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
   },
-]
+])
 
 const monthName = computed(() => {
-  return currentDate.value.toLocaleDateString('fr-FR', { month: 'long' })
+  return currentDate.value.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    month: 'long',
+  })
 })
 
 const currentYear = computed(() => {
@@ -132,17 +133,21 @@ const calendarDays = computed(() => {
 })
 
 const getEventColor = (event) => {
-  const level = educationLevels.find((l) => l.key === event.education_level)
+  const level = educationLevels.value.find((l) => l.key === event.education_level)
   return level ? level.color : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
 }
 
 const getLevelLabel = (level) => {
-  const labels = { primaire: 'Primaire', moyen: 'Moyen', secondaire: 'Secondaire' }
+  const labels = {
+    primaire: t('level_primary'),
+    moyen: t('level_middle'),
+    secondaire: t('level_secondary'),
+  }
   return labels[level] || level
 }
 
 const getSuffix = (year) => {
-  return year === 1 ? 'ère' : 'ème'
+  return year === 1 && currentLang.value !== 'ar' ? 'ère' : 'ème'
 }
 
 const formatTime = (time) => {
@@ -152,7 +157,7 @@ const formatTime = (time) => {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
+  return date.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -204,7 +209,7 @@ const fetchEvents = async () => {
     }))
   } catch (err) {
     console.error('Erreur chargement calendrier:', err)
-    error.value = err.message || 'Erreur lors du chargement du calendrier'
+    error.value = err.message || t('error_loading_calendar')
   } finally {
     loading.value = false
   }
@@ -222,7 +227,7 @@ onMounted(() => {
         <div class="title-section">
           <Calendar class="icon" :size="28" />
           <div>
-            <h1>Emploi du Temps</h1>
+            <h1>{{ t('timetable_title') }}</h1>
             <p class="subtitle">{{ monthName }} {{ currentYear }}</p>
           </div>
         </div>
@@ -231,7 +236,7 @@ onMounted(() => {
           <button @click="previousMonth" class="nav-btn">
             <ChevronLeft :size="20" />
           </button>
-          <button @click="today" class="today-btn">Aujourd'hui</button>
+          <button @click="today" class="today-btn">{{ t('today') }}</button>
           <button @click="nextMonth" class="nav-btn">
             <ChevronRight :size="20" />
           </button>
@@ -248,13 +253,13 @@ onMounted(() => {
 
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>Chargement du calendrier...</p>
+      <p>{{ t('loading_calendar') }}</p>
     </div>
 
     <div v-else-if="error" class="error-state">
       <AlertCircle :size="48" />
       <p>{{ error }}</p>
-      <button @click="fetchEvents" class="retry-btn">Réessayer</button>
+      <button @click="fetchEvents" class="retry-btn">{{ t('retry') }}</button>
     </div>
 
     <div v-else class="calendar-body">
@@ -297,9 +302,8 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- ✅ Show "+N more" if more than 2 events to prevent overflow -->
             <div v-if="day.events.length > 2" class="more-events" @click="showDayEvents(day)">
-              +{{ day.events.length - 2 }} plus
+              +{{ day.events.length - 2 }} {{ t('more_suffix') }}
             </div>
           </div>
         </div>
@@ -327,7 +331,7 @@ onMounted(() => {
             <div class="detail-row">
               <Clock :size="20" />
               <div>
-                <strong>Horaire</strong>
+                <strong>{{ t('schedule_label') }}</strong>
                 <p>
                   {{ formatDate(selectedEvent.date) }} •
                   {{ formatTime(selectedEvent.start_time) }} -
@@ -339,7 +343,7 @@ onMounted(() => {
             <div v-if="selectedEvent.teacher_name" class="detail-row">
               <User :size="20" />
               <div>
-                <strong>Enseignant</strong>
+                <strong>{{ t('teacher_label') }}</strong>
                 <p>{{ selectedEvent.teacher_name }}</p>
               </div>
             </div>
@@ -347,7 +351,7 @@ onMounted(() => {
             <div v-if="selectedEvent.salle" class="detail-row">
               <MapPin :size="20" />
               <div>
-                <strong>Salle</strong>
+                <strong>{{ t('room') }}</strong>
                 <p>{{ selectedEvent.salle }}</p>
               </div>
             </div>
@@ -355,10 +359,11 @@ onMounted(() => {
             <div class="detail-row">
               <GraduationCap :size="20" />
               <div>
-                <strong>Niveau</strong>
+                <strong>{{ t('level') }}</strong>
                 <p>
                   {{ getLevelLabel(selectedEvent.education_level) }} - {{ selectedEvent.year_level
-                  }}{{ getSuffix(selectedEvent.year_level) }} année
+                  }}{{ currentLang === 'ar' ? ' ' : getSuffix(selectedEvent.year_level) }}
+                  {{ t('year_label') }}
                   <span v-if="selectedEvent.branch"> ({{ selectedEvent.branch }})</span>
                 </p>
               </div>
@@ -367,7 +372,7 @@ onMounted(() => {
             <div v-if="userRole === 'Parent' && selectedEvent.student_name" class="detail-row">
               <Users :size="20" />
               <div>
-                <strong>Élève</strong>
+                <strong>{{ t('student_label') }}</strong>
                 <p>{{ selectedEvent.student_name }}</p>
               </div>
             </div>
@@ -375,18 +380,22 @@ onMounted(() => {
             <div v-if="['admin', 'teacher'].includes(userRole)" class="detail-row">
               <Users :size="20" />
               <div>
-                <strong>Effectif</strong>
+                <strong>{{ t('class_size') }}</strong>
                 <p>
                   {{ selectedEvent.current_students || 0 }} /
-                  {{ selectedEvent.max_students || 30 }} élèves
+                  {{ selectedEvent.max_students || 30 }} {{ t('students_count') }}
                 </p>
               </div>
             </div>
 
             <div class="type-badge">
-              {{ selectedEvent.course_type === 'continuous' ? 'Cours Continu' : 'Cours Unique' }}
+              {{
+                selectedEvent.course_type === 'continuous'
+                  ? t('continuous_course')
+                  : t('single_session')
+              }}
               <span v-if="selectedEvent.is_recurring" class="recurring-badge">
-                <Repeat :size="14" /> Récurrent
+                <Repeat :size="14" /> {{ t('recurring') }}
               </span>
             </div>
           </div>
