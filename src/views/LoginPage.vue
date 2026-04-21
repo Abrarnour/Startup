@@ -17,7 +17,9 @@ import {
 } from 'lucide-vue-next'
 import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
+import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام اللغة
 
+const { t } = useLanguage() // ✅ استدعاء دالة الترجمة
 const router = useRouter()
 
 // props لـ Dark Mode
@@ -65,7 +67,7 @@ const toggleMode = () => {
 const handleLogin = async () => {
   error.value = ''
   if (!email.value || !password.value) {
-    error.value = 'Veuillez remplir tous les champs'
+    error.value = t('fill_all_fields')
     return
   }
   loading.value = true
@@ -90,7 +92,7 @@ const handleLogin = async () => {
       router.push('/courses') // المسار الافتراضي
     }
   } catch (err) {
-    error.value = err.message || 'Erreur de connexion'
+    error.value = err.message || t('error_login')
   } finally {
     loading.value = false
   }
@@ -101,9 +103,12 @@ const handleRegister = async () => {
   loading.value = true
   try {
     // إرسال البيانات للـ Backend (تأكد من أن المسار صحيح في الـ API الخاص بك)
-    await axios.post('https://belmahi-school-production.up.railway.app/api/auth/register', registerData)
+    await axios.post(
+      'https://belmahi-school-production.up.railway.app/api/auth/register',
+      registerData,
+    )
 
-    successMessage.value = 'Compte créé avec succès !'
+    successMessage.value = t('registration_success')
 
     // الانتظار قليلاً ثم العودة لصفحة الدخول بالأنيميشن
     setTimeout(() => {
@@ -111,7 +116,7 @@ const handleRegister = async () => {
       email.value = registerData.email // ملء الإيميل تلقائياً لتسهيل الدخول
     }, 1000)
   } catch (err) {
-    error.value = err.response?.data?.error || 'Erreur lors de l’inscription'
+    error.value = err.response?.data?.error || t('error_registration')
   } finally {
     loading.value = false
   }
@@ -129,19 +134,19 @@ const handleRegister = async () => {
         :class="isSignUp ? 'translate-x-full' : 'translate-x-0'"
       >
         <div v-if="!isSignUp" class="space-y-6">
-          <h2 class="text-4xl font-bold">Bienvenue !</h2>
+          <h2 class="text-4xl font-bold">{{ t('welcome_title') }}</h2>
           <p class="text-blue-100 leading-relaxed">
-            Connectez-vous pour accéder à votre portail de cours et gérer vos apprentissages.
+            {{ t('login_subtitle') }}
           </p>
 
           <div class="space-y-4 text-left hidden md:block">
             <div class="flex items-center gap-3">
               <div class="bg-white/20 p-2 rounded-lg"><LogIn :size="20" /></div>
-              <p class="text-sm">Connexion sécurisée</p>
+              <p class="text-sm">{{ t('secure_login') }}</p>
             </div>
             <div class="flex items-center gap-3">
               <div class="bg-white/20 p-2 rounded-lg">📚</div>
-              <p class="text-sm">Cours Personnalisés</p>
+              <p class="text-sm">{{ t('personalized_courses') }}</p>
             </div>
           </div>
 
@@ -149,20 +154,20 @@ const handleRegister = async () => {
             @click="toggleMode"
             class="mt-8 px-10 py-3 border-2 border-white/50 rounded-full font-bold hover:bg-white hover:text-blue-600 transition-all"
           >
-            Créer un compte
+            {{ t('create_account') }}
           </button>
         </div>
 
         <div v-else class="space-y-6">
-          <h2 class="text-4xl font-bold">Bon retour !</h2>
+          <h2 class="text-4xl font-bold">{{ t('welcome_back') }}</h2>
           <p class="text-blue-100 leading-relaxed">
-            Vous avez déjà un compte ? Connectez-vous pour reprendre là où vous vous êtes arrêté.
+            {{ t('have_account_text') }}
           </p>
           <button
             @click="toggleMode"
             class="mt-8 px-10 py-3 border-2 border-white/50 rounded-full font-bold hover:bg-white hover:text-blue-600 transition-all"
           >
-            Se Connecter
+            {{ t('login_button') }}
           </button>
         </div>
 
@@ -179,22 +184,22 @@ const handleRegister = async () => {
         :class="isSignUp ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
       >
         <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
-          Inscription
+          {{ t('register_title') }}
         </h2>
-        <p class="text-gray-500 mb-6 text-sm">Créez votre compte en quelques secondes</p>
+        <p class="text-gray-500 mb-6 text-sm">{{ t('register_subtitle') }}</p>
 
         <form @submit.prevent="handleRegister" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <input
               v-model="registerData.name"
               type="text"
-              placeholder="Prénom"
+              :placeholder="t('first_name')"
               class="p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:ring-2 focus:ring-blue-500"
             />
             <input
               v-model="registerData.last_name"
               type="text"
-              placeholder="Nom"
+              :placeholder="t('last_name')"
               class="p-2.5 border rounded-xl bg-gray-50 outline-none text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -212,7 +217,7 @@ const handleRegister = async () => {
               class="relative z-10 flex-1 py-2 text-xs font-bold flex items-center justify-center gap-2"
               :class="registerData.role === 'student' ? 'text-blue-600' : 'text-gray-500'"
             >
-              <GraduationCap size="16" /> Étudiant
+              <GraduationCap size="16" /> {{ t('student_role') }}
             </button>
             <button
               type="button"
@@ -220,14 +225,14 @@ const handleRegister = async () => {
               class="relative z-10 flex-1 py-2 text-xs font-bold flex items-center justify-center gap-2"
               :class="registerData.role === 'Parent' ? 'text-blue-600' : 'text-gray-500'"
             >
-              <Users size="16" /> Parent
+              <Users size="16" /> {{ t('parent_role') }}
             </button>
           </div>
 
           <input
             v-model="registerData.email"
             type="email"
-            placeholder="Email"
+            :placeholder="t('email')"
             class="w-full p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
           />
           <div class="grid grid-cols-2 gap-3">
@@ -239,14 +244,14 @@ const handleRegister = async () => {
             <input
               v-model="registerData.city"
               type="text"
-              placeholder="Ville"
+              :placeholder="t('city')"
               class="p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <input
             v-model="registerData.password"
             type="password"
-            placeholder="Mot de passe"
+            :placeholder="t('password')"
             class="w-full p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
           />
 
@@ -255,7 +260,7 @@ const handleRegister = async () => {
             :disabled="loading"
             class="w-full py-3 deep-blue-gradient text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
           >
-            {{ loading ? "S'inscrire..." : "S'inscrire" }}
+            {{ loading ? t('loading_inscription') : t('register_button') }}
           </button>
         </form>
       </div>
@@ -265,7 +270,7 @@ const handleRegister = async () => {
         :class="isSignUp ? 'opacity-0 z-0 pointer-events-none' : 'opacity-100 z-10'"
       >
         <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
-          Connexion
+          {{ t('login_title') }}
         </h2>
 
         <div v-if="error" class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
@@ -281,7 +286,7 @@ const handleRegister = async () => {
             <input
               v-model="email"
               type="email"
-              placeholder="Email"
+              :placeholder="t('email')"
               class="w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               :class="
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
@@ -293,7 +298,7 @@ const handleRegister = async () => {
             <input
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
-              placeholder="Mot de passe"
+              :placeholder="t('password')"
               class="w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
               :class="
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
@@ -313,15 +318,15 @@ const handleRegister = async () => {
             :disabled="loading"
             class="w-full py-3 deep-blue-gradient text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
           >
-            {{ loading ? 'Connexion...' : 'Se Connecter' }}
+            {{ loading ? t('loading_connexion') : t('login_button') }}
           </button>
         </form>
 
         <div class="text-center mt-6">
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-            Pas encore de compte ?
+            {{ t('no_account') }}
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
-              Inscrivez-vous
+              {{ t('register_link') }}
             </button>
           </p>
         </div>

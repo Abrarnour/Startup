@@ -17,18 +17,13 @@ import { useNotifications } from '../composables/useNotifications.js'
 
 // ✅ FIX 1: defineProps AVANT d'utiliser props
 const props = defineProps({
-  darkMode: {
-    type: Boolean,
-    required: true,
-  },
-  user: {
-    type: Object,
-    default: null,
-  },
+  darkMode: { type: Boolean, default: false },
+  user: { type: Object, default: null },
+  t: { type: Function, default: (k) => k }, // ⬅️ AJOUTER
+  currentLang: { type: String, default: 'fr' }, // ⬅️ AJOUTER
 })
 
-const emit = defineEmits(['logout', 'add-child', 'toggle-dark-mode'])
-
+const emit = defineEmits(['logout', 'toggle-dark-mode', 'toggle-lang']) // ⬅️ ajouter 'toggle-lang'
 // ✅ FIX 2: computed importé + props correctement défini AVANT cette ligne
 const { notifications, unreadCount, showNotifPanel, toastNotif, togglePanel } = useNotifications(
   computed(() => props.user),
@@ -76,6 +71,22 @@ const isActive = (path) => {
           >
             <Sun v-if="darkMode" :size="24" />
             <Moon v-else :size="24" />
+          </button>
+          <!-- 🌐 BOUTON CHANGEMENT DE LANGUE — juste après le bouton dark mode -->
+          <button
+            @click="$emit('toggle-lang')"
+            :title="props.t('language')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-sm font-bold tracking-wide"
+          >
+            <!-- Drapeau / texte selon la langue active -->
+            <span v-if="currentLang === 'fr'" class="flex items-center gap-1">
+              <span>🇫🇷</span>
+              <span class="hidden sm:inline text-xs">FR</span>
+            </span>
+            <span v-else class="flex items-center gap-1">
+              <span>🇩🇿</span>
+              <span class="hidden sm:inline text-xs">AR</span>
+            </span>
           </button>
 
           <!-- 🔔 BOUTON NOTIFICATIONS -->

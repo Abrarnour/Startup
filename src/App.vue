@@ -3,6 +3,15 @@ import { ref, onMounted } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { getCurrentUser, logout as apiLogout } from './services/api.js' // ✅ Import API
+import { useLanguage } from './composables/useLanguage.js'
+
+const { t, currentLang, toggleLang, initLang, isRTL } = useLanguage()
+
+// Initialiser la langue au démarrage
+onMounted(() => {
+  user.value = getCurrentUser()
+  initLang() // ⬅️ AJOUTER CETTE LIGNE
+})
 const router = useRouter()
 const user = ref(null)
 // État global
@@ -40,8 +49,11 @@ const toggleDarkMode = () => {
     <NavBar
       :darkMode="darkMode"
       :user="user"
+      :t="t"
+      :currentLang="currentLang"
       @logout="handleLogout"
       @toggle-dark-mode="toggleDarkMode"
+      @toggle-lang="toggleLang"
     />
 
     <main class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-4 md:py-8">
