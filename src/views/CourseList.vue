@@ -15,13 +15,11 @@ import {
 import CourseCard from '../components/CourseCard.vue'
 import CourseModal from '../components/CourseModal.vue'
 import * as api from '../services/api.js'
-import { ref } from 'vue'
 import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js'
 
 const { t } = useLanguage()
-const showTeacherModal = ref(false)
 const showStudentModal = ref(false)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
