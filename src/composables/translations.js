@@ -359,6 +359,22 @@ export const translations = {
     note_type_progress: 'Progrès',
     note_type_attendance: 'Présence',
     note_type_payment: 'Paiement',
+
+    manage_courses_materials: 'Gérez vos cours et matériels pédagogiques',
+    info_label: 'Info:',
+    teacher_info_msg:
+      'Vous pouvez maintenant ajouter vos propres cours et télécharger des matériels pédagogiques pour vos étudiants.',
+    assigned_courses: 'Cours assignés',
+    enrolled_students_count: 'Élèves inscrits',
+    no_courses_yet_title: 'Aucun cours encore',
+    click_add_course_msg: 'Cliquez sur "Ajouter un cours" pour créer votre premier cours.',
+    upload_course_btn: 'Upload Source',
+    view_documents_btn: 'Voir documents',
+    no_description_available: 'Aucune description disponible',
+    course_type_label: 'Type de cours',
+    tariff_label: 'Tarif',
+    error_loading_courses: 'Erreur lors du chargement des cours',
+    material_uploaded_success: 'Matériel téléchargé avec succès !',
   },
 
   // ════════════════════════════════════════
@@ -711,5 +727,20 @@ export const translations = {
     note_type_progress: 'تقدم',
     note_type_attendance: 'حضور',
     note_type_payment: 'دفع',
+
+    manage_courses_materials: 'قم بإدارة دروسك والمواد التعليمية',
+    info_label: 'معلومة:',
+    teacher_info_msg: 'يمكنك الآن إضافة دروسك الخاصة وتحميل المواد التعليمية لطلابك.',
+    assigned_courses: 'الدروس المعينة',
+    enrolled_students_count: 'الطلاب المسجلين',
+    no_courses_yet_title: 'لا توجد دروس بعد',
+    click_add_course_msg: 'انقر على "إضافة درس" لإنشاء درسك الأول.',
+    upload_course_btn: 'رفع مصدر',
+    view_documents_btn: 'عرض المستندات',
+    no_description_available: 'لا يوجد وصف متاح',
+    course_type_label: 'نوع الدرس',
+    tariff_label: 'السعر',
+    error_loading_courses: 'خطأ أثناء تحميل الدروس',
+    material_uploaded_success: 'تم رفع المادة بنجاح!',
   },
 }

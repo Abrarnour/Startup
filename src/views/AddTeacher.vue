@@ -2,6 +2,7 @@
 import { ref, reactive, defineProps } from 'vue'
 import { useRouter } from 'vue-router'
 import { UserPlus, Mail, Lock, Phone, User, Calendar, MapPin } from 'lucide-vue-next'
+// Add these to your imports
 
 const router = useRouter()
 
@@ -50,14 +51,17 @@ const handleSubmit = async () => {
 
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('https://belmahi-school-production.up.railway.app/api/auth/register-teacher', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const response = await fetch(
+      'https://belmahi-school-production.up.railway.app/api/auth/register-teacher',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(teacherData),
       },
-      body: JSON.stringify(teacherData),
-    })
+    )
 
     if (!response.ok) {
       const data = await response.json()

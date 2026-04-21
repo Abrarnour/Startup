@@ -6,11 +6,15 @@ import CourseModal from '../components/CourseModal.vue'
 import UploadMaterialModal from '../components/UploadMaterialModal.vue'
 import * as api from '../services/api.js'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
 })
+
+const { t } = useLanguage() // ✅ Extract t for translations
+
 const showMaterialsModal = ref(false)
 const selectedCourseForMaterials = ref(null)
 
@@ -56,9 +60,9 @@ const coursesByLevel = computed(() => {
 // Labels des niveaux
 const getLevelLabel = (level) => {
   const labels = {
-    primaire: 'Primaire (ابتدائي)',
-    moyen: 'Moyen (متوسط)',
-    secondaire: 'Secondaire (ثانوي)',
+    primaire: t('level_primary_full'),
+    moyen: t('level_middle_full'),
+    secondaire: t('level_secondary_full'),
   }
   return labels[level] || level
 }
@@ -105,7 +109,7 @@ const loadCourses = async () => {
     }
   } catch (err) {
     console.error('Erreur chargement cours:', err)
-    error.value = err.message || 'Erreur lors du chargement des cours'
+    error.value = err.message || t('error_loading_courses') // ✅ Dynamic translation
   } finally {
     loading.value = false
   }
@@ -132,7 +136,7 @@ const handleCourseAdded = async () => {
 const handleUploadSuccess = () => {
   showUploadModal.value = false
   // Optionally show success notification
-  alert('Material uploaded successfully!')
+  alert(t('material_uploaded_success')) // ✅ Dynamic translation
 }
 
 onMounted(() => {
@@ -141,30 +145,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <!-- Message de chargement -->
   <div v-if="loading" class="text-center py-12">
     <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
-      Chargement de vos cours...
+      {{ t('loading_your_courses') }}
     </p>
   </div>
 
-  <!-- Message d'erreur -->
   <div
     v-else-if="error"
     class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6"
   >
-    <p class="font-semibold">❌ Erreur: {{ error }}</p>
+    <p class="font-semibold">{{ t('error_prefix') }} {{ error }}</p>
     <button
       @click="loadCourses"
       class="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
     >
-      Réessayer
+      {{ t('retry') }}
     </button>
   </div>
 
   <div v-else>
-    <!-- En-tête avec message de bienvenue -->
     <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
       <div class="flex items-start gap-4">
         <div class="p-4 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl">
@@ -172,24 +173,22 @@ onMounted(() => {
         </div>
         <div class="flex-1">
           <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
-            Bienvenue, {{ user?.name }}
+            {{ t('welcome_comma') }}{{ user?.name }}
             {{ user?.last_name }}
           </h1>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
-            Gérez vos cours et matériels pédagogiques
+            {{ t('manage_courses_materials') }}
           </p>
         </div>
       </div>
 
-      <!-- Bannière informative -->
       <div
         class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-lg flex items-start gap-3"
       >
         <AlertCircle :size="20" class="text-blue-600 dark:text-blue-400 mt-0.5" />
         <div>
           <p :class="darkMode ? 'text-blue-200' : 'text-blue-800'" class="text-sm font-medium">
-            <strong>Info:</strong> Vous pouvez maintenant ajouter vos propres cours et télécharger
-            des matériels pédagogiques pour vos étudiants.
+            <strong>{{ t('info_label') }}</strong> {{ t('teacher_info_msg') }}
           </p>
         </div>
       </div>
@@ -206,7 +205,7 @@ onMounted(() => {
           {{ stats.totalCourses }}
         </div>
         <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-          Cours assignés
+          {{ t('assigned_courses') }}
         </div>
       </div>
 
@@ -218,7 +217,9 @@ onMounted(() => {
         <div :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-1">
           {{ stats.totalGroups }}
         </div>
-        <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">Groupes</div>
+        <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
+          {{ t('group_label') }}
+        </div>
       </div>
 
       <div
@@ -230,7 +231,7 @@ onMounted(() => {
           {{ stats.totalStudents }}
         </div>
         <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-          Élèves inscrits
+          {{ t('enrolled_students_count') }}
         </div>
       </div>
 
@@ -243,12 +244,11 @@ onMounted(() => {
           {{ stats.availableSeats }}
         </div>
         <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-          Places disponibles
+          {{ t('available_seats') }}
         </div>
       </div>
     </div>
 
-    <!-- ⭐ NEW: Add Course Button -->
     <div class="mb-6">
       <button
         @click="showCourseModal = true"
@@ -270,11 +270,10 @@ onMounted(() => {
           <path d="M5 12h14"></path>
           <path d="M12 5v14"></path>
         </svg>
-        Ajouter un cours
+        {{ t('add_course') }}
       </button>
     </div>
 
-    <!-- Message si aucun cours -->
     <div
       v-if="courses.length === 0"
       :class="darkMode ? 'bg-gray-800' : 'bg-white'"
@@ -286,14 +285,13 @@ onMounted(() => {
         class="mx-auto mb-4"
       />
       <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold mb-2">
-        Aucun cours encore
+        {{ t('no_courses_yet_title') }}
       </h3>
       <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg mb-4">
-        Cliquez sur "Add New Course" pour créer votre premier cours.
+        {{ t('click_add_course_msg') }}
       </p>
     </div>
 
-    <!-- Liste des cours groupés par niveau -->
     <div v-else class="space-y-8">
       <div
         v-for="(levelCourses, level) in coursesByLevel"
@@ -315,7 +313,6 @@ onMounted(() => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- ⭐ MODIFIED: Added upload button wrapper -->
           <div v-for="course in levelCourses" :key="course.id" class="relative">
             <CourseCard
               :course="course"
@@ -324,14 +321,13 @@ onMounted(() => {
               @view-details="viewDetails"
             />
 
-            <!-- ⭐ NEW: Upload Materials Button (positioned over the card) -->
             <div class="mt-3">
               <button
                 @click="openUploadModal(course.id)"
                 class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-purple-700 transition-all shadow-md"
               >
                 <span class="text-xl">📤</span>
-                Upload Sourse
+                {{ t('upload_course_btn') }}
               </button>
               <button
                 @click="openMaterialsModal(course.id)"
@@ -342,7 +338,7 @@ onMounted(() => {
                 "
                 class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2"
               >
-                📂 Voir documents ({{ course.materials_count || 0 }})
+                📂 {{ t('view_documents_btn') }} ({{ course.materials_count || 0 }})
               </button>
             </div>
           </div>
@@ -367,8 +363,8 @@ onMounted(() => {
               {{ selectedCourse.title }}
             </h3>
             <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-              {{ getLevelLabel(selectedCourse.education_level) }} -
-              {{ selectedCourse.year_level }}ème année
+              {{ getLevelLabel(selectedCourse.education_level) }} - {{ selectedCourse.year_level
+              }}{{ t('year_suffix') }}
             </p>
           </div>
           <button
@@ -383,10 +379,10 @@ onMounted(() => {
         <div class="space-y-4">
           <div>
             <h4 :class="darkMode ? 'text-gray-300' : 'text-gray-700'" class="font-semibold mb-2">
-              Description
+              {{ t('description') }}
             </h4>
             <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'">
-              {{ selectedCourse.description || 'Aucune description disponible' }}
+              {{ selectedCourse.description || t('no_description_available') }}
             </p>
           </div>
 
@@ -396,19 +392,19 @@ onMounted(() => {
           >
             <div>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-1">
-                Groupes
+                {{ t('group_label') }}
               </p>
               <p :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold">
                 {{
                   selectedCourse.sessions_per_week || selectedCourse.course_type === 'one_time'
                     ? '1'
-                    : 'Variable'
+                    : t('variable')
                 }}
               </p>
             </div>
             <div>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-1">
-                Élèves inscrits
+                {{ t('enrolled_students_count') }}
               </p>
               <p :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold">
                 {{ selectedCourse.current_students }} / {{ selectedCourse.max_students }}
@@ -416,23 +412,25 @@ onMounted(() => {
             </div>
             <div>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-1">
-                Type de cours
+                {{ t('course_type_label') }}
               </p>
               <p :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-semibold">
                 {{
-                  selectedCourse.course_type === 'continuous' ? 'Cours continu' : 'Session unique'
+                  selectedCourse.course_type === 'continuous'
+                    ? t('continuous_course')
+                    : t('single_session')
                 }}
               </p>
             </div>
             <div>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mb-1">
-                Tarif
+                {{ t('tariff_label') }}
               </p>
               <p :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-semibold">
                 {{
                   selectedCourse.price
                     ? `${parseFloat(selectedCourse.price).toLocaleString('fr-DZ')} DA`
-                    : 'Gratuit'
+                    : t('free')
                 }}
               </p>
             </div>
@@ -441,7 +439,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ⭐ NEW: Course Modal (for adding courses) -->
     <CourseModal
       :show="showCourseModal"
       :dark-mode="darkMode"
@@ -453,7 +450,6 @@ onMounted(() => {
       @course-saved="handleCourseAdded"
     />
 
-    <!-- ⭐ NEW: Upload Material Modal -->
     <UploadMaterialModal
       :is-open="showUploadModal"
       :course-id="selectedCourseForUpload"
