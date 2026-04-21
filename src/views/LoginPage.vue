@@ -21,7 +21,15 @@ import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام ال
 
 const { t, locale } = useLanguage() // ✅ استدعاء دالة الترجمة
 const router = useRouter()
-
+// دالة لتحديد اتجاه حركة الطبقة الزرقاء بدقة بناءً على اتجاه المتصفح
+const getTransformStyle = () => {
+  if (!isSignUp.value) {
+    return 'translateX(0)' // مكانها الطبيعي
+  }
+  // هنا نفحص الاتجاه مباشرة من ملف الـ HTML
+  const isRtl = document.documentElement.dir === 'rtl'
+  return isRtl ? 'translateX(-100%)' : 'translateX(100%)'
+}
 // props لـ Dark Mode
 defineProps({
   darkMode: {
@@ -131,9 +139,7 @@ const handleRegister = async () => {
     >
       <div
         class="absolute top-0 start-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
-        :class="
-          isSignUp ? (locale === 'ar' ? '-translate-x-full' : 'translate-x-full') : 'translate-x-0'
-        "
+        :style="{ transform: getTransformStyle() }"
       >
         <div v-if="!isSignUp" class="space-y-6">
           <h2 class="text-4xl font-bold">{{ t('welcome_title') }}</h2>
