@@ -1677,5 +1677,17 @@ ALTER TABLE ONLY public.student_notes
 -- PostgreSQL database dump complete
 --
 
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  notif_key VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  type VARCHAR(30) DEFAULT 'upcoming_session',
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, notif_key)
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
 \unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
 

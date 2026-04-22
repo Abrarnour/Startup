@@ -5,20 +5,30 @@ const API_URL =
   import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
 
 export function useNotifications(user) {
-  const notifications = ref([]) // notifications du jour
+  const notifications = ref([])
   const unreadCount = ref(0)
   const showNotifPanel = ref(false)
-  const toastNotif = ref(null) // toast affiché
+  const toastNotif = ref(null)
   let pollingInterval = null
 
-  // ── Clés déjà affichées aujourd'hui (localStorage) ──
+  // 1. Demande de permission au système d'exploitation
+  const requestOsNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      console.warn('Ce navigateur ne supporte pas les notifications système.')
+      return
+    }
+    // Demander la permission si elle n'a pas encore été accordée ou refusée
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      await Notification.requestPermission()
+    }
+  }
+
   const getSeenKeys = () => {
     const today = new Date().toDateString()
     const raw = localStorage.getItem('notif_seen')
     if (!raw) return {}
     try {
       const data = JSON.parse(raw)
-      // Effacer si c'est un autre jour
       if (data.date !== today) return {}
       return data.keys || {}
     } catch {
@@ -33,15 +43,23 @@ export function useNotifications(user) {
     localStorage.setItem('notif_seen', JSON.stringify({ date: today, keys: seen }))
   }
 
-  // ── Afficher un toast temporaire ──
+  // 2. Afficher la notification dans la plateforme ET sur le bureau (OS)
   const showToast = (message) => {
     toastNotif.value = message
     setTimeout(() => {
       toastNotif.value = null
     }, 7000)
+
+    // Déclenchement de la notification native
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Belmahi School', {
+        body: message,
+        icon: '/belmahilogo.jpg', // L'icône de l'école
+        requireInteraction: false,
+      })
+    }
   }
 
-  // ── Requête backend ──
   const checkUpcoming = async () => {
     if (!user?.value?.id) return
     const token = localStorage.getItem('token')
@@ -54,16 +72,18 @@ export function useNotifications(user) {
           Authorization: `Bearer ${token}`,
         },
       })
+
       if (!res.ok) return
       const data = await res.json()
       const seen = getSeenKeys()
 
+      // Déterminer la langue actuelle pour afficher le bon message
+      const currentLang = localStorage.getItem('app_lang') || 'fr'
+
       for (const notif of data.notifications) {
         if (!seen[notif.key]) {
-          // Nouvelle notification !
           markKeySeen(notif.key)
 
-          // Ajouter à la liste locale
           notifications.value.unshift({
             ...notif,
             id: Date.now() + Math.random(),
@@ -71,10 +91,11 @@ export function useNotifications(user) {
           })
           unreadCount.value++
 
-          // Afficher le toast
-          showToast(notif.message)
+          // 3. Sélectionner le message selon la langue (Arabe ou Français)
+          const displayMessage =
+            currentLang === 'ar' && notif.ar_message ? notif.ar_message : notif.message
+          showToast(displayMessage)
 
-          // Sauvegarder en BDD (sans bloquer)
           fetch(`${API_URL}/notifications/save`, {
             method: 'POST',
             headers: {
@@ -83,17 +104,16 @@ export function useNotifications(user) {
             },
             body: JSON.stringify({
               notif_key: notif.key,
-              message: notif.message,
+              message: displayMessage,
             }),
           }).catch(() => {})
         }
       }
     } catch (e) {
-      // Erreur silencieuse (pas de connexion, etc.)
+      console.error(e)
     }
   }
 
-  // ── Charger l'historique du jour ──
   const loadHistory = async () => {
     if (!user?.value?.id) return
     const token = localStorage.getItem('token')
@@ -122,9 +142,11 @@ export function useNotifications(user) {
   }
 
   onMounted(() => {
+    // Demander l'autorisation dès que le composant est monté
+    requestOsNotificationPermission()
     loadHistory()
-    checkUpcoming() // Check immédiat
-    pollingInterval = setInterval(checkUpcoming, 60 * 1000) // Chaque minute
+    checkUpcoming()
+    pollingInterval = setInterval(checkUpcoming, 60 * 1000)
   })
 
   onUnmounted(() => {

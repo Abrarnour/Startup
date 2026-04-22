@@ -167,6 +167,41 @@ router.get('/upcoming', authMiddleware, async (req, res) => {
       })
     }
 
+    // ──────────────────────────────────────────
+    // CAS 4 : ADMIN (Nouveau)
+    // ──────────────────────────────────────────
+    else if (userRole === 'admin') {
+      const result = await pool.query(
+        `
+        SELECT
+          g.id          AS group_id,
+          g.group_name,
+          g.session_start_time,
+          g.salle,
+          c.title       AS course_title,
+          u.name        AS teacher_name,
+          u.last_name   AS teacher_last_name
+        FROM groups g
+        JOIN courses c ON g.course_id = c.id
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE g.day_of_week = $1
+          AND g.session_start_time::TIME >= $2::TIME
+          AND g.session_start_time::TIME <= $3::TIME
+      `,
+        [todayDay, timeStart, timeEnd],
+      )
+
+      notifications = result.rows.map((row) => ({
+        key: `admin_${row.group_id}_${todayDay}_${row.session_start_time}`,
+        message: `🛡️ Alerte: Le cours "${row.course_title}" par ${row.teacher_name} commence dans 30 minutes (Salle ${row.salle || 'N/A'}).`,
+        ar_message: `اقترب موعد الدرس أيها المشرف! درس "${row.course_title}" للأستاذ ${row.teacher_name} يبدأ خلال 30 دقيقة — القاعة: ${row.salle || 'غير محدد'}`,
+        group_id: row.group_id,
+        course: row.course_title,
+        time: row.session_start_time,
+        salle: row.salle,
+      }))
+    }
+
     res.json({ notifications })
   } catch (error) {
     console.error('Erreur notifications upcoming:', error)
