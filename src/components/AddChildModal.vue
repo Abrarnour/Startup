@@ -2,7 +2,9 @@
 import { ref, reactive } from 'vue'
 import { X, UserPlus, Link, Calendar, MapPin, Mail, Lock, User } from 'lucide-vue-next'
 import * as api from '../services/api.js'
-
+// Inside <script setup>
+import { useLanguage } from '../composables/useLanguage.js' // Add this
+const { t } = useLanguage()
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
@@ -27,7 +29,7 @@ const newChildForm = reactive({
   gender: 'M',
 })
 
-// Formulaire enfant existant
+// Formulaire {{ t('mode_existing_child') }}
 const existingChildEmail = ref('')
 
 // Réinitialiser le formulaire
@@ -80,7 +82,7 @@ const handleCreateNewChild = async () => {
   }
 }
 
-// Lier un enfant existant
+// Lier un {{ t('mode_existing_child') }}
 const handleLinkExistingChild = async () => {
   error.value = ''
   successMessage.value = ''
@@ -97,7 +99,7 @@ const handleLinkExistingChild = async () => {
     const checkResult = await api.checkStudentEmail(existingChildEmail.value)
 
     if (!checkResult.exists) {
-      error.value = 'Aucun étudiant trouvé avec cet email. Voulez-vous créer un nouveau compte?'
+      error.value = 'Aucun étudiant trouvé avec cet email. Voulez-vous créer un Nouveau child ?'
       loading.value = false
       return
     }
@@ -146,7 +148,7 @@ const closeModal = () => {
       <!-- Titre -->
       <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
         <UserPlus :size="32" class="text-blue-500" />
-        Ajouter un enfant
+        {{ t('add_child_title') }}
       </h2>
 
       <!-- Messages -->
@@ -195,7 +197,7 @@ const closeModal = () => {
         >
           <UserPlus :size="32" class="text-green-500" />
           <div class="text-left">
-            <h3 class="text-xl font-bold">Non, créer un nouveau compte</h3>
+            <h3 class="text-xl font-bold">Non, créer un {{ t('mode_new_child') }}</h3>
             <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mt-1">
               Créer un compte étudiant pour mon enfant
             </p>
@@ -203,7 +205,7 @@ const closeModal = () => {
         </button>
       </div>
 
-      <!-- Formulaire enfant existant -->
+      <!-- Formulaire {{ t('mode_existing_child') }} -->
       <div v-if="mode === 'existing'" class="space-y-6">
         <button
           @click="mode = 'choose'"
@@ -254,12 +256,12 @@ const closeModal = () => {
           <div>
             <label class="block mb-2 font-semibold flex items-center gap-2">
               <User :size="18" />
-              Prénom *
+              {{ t('first_name') }} *
             </label>
             <input
               v-model="newChildForm.name"
               type="text"
-              placeholder="Prénom"
+              placeholder="{{ t('first_name') }}"
               :class="
                 darkMode
                   ? 'bg-gray-800 border-gray-700 text-white'
@@ -309,7 +311,7 @@ const closeModal = () => {
         <div>
           <label class="block mb-2 font-semibold flex items-center gap-2">
             <Lock :size="18" />
-            Mot de passe *
+            {{ t('password') }} *
           </label>
           <input
             v-model="newChildForm.password"
@@ -328,7 +330,7 @@ const closeModal = () => {
           <div>
             <label class="block mb-2 font-semibold flex items-center gap-2">
               <Calendar :size="18" />
-              Date de naissance *
+              {{ t('birthday') }} *
             </label>
             <input
               v-model="newChildForm.birthday"
@@ -343,7 +345,7 @@ const closeModal = () => {
           </div>
 
           <div>
-            <label class="block mb-2 font-semibold">Genre *</label>
+            <label class="block mb-2 font-semibold">{{ t('gender') }} *</label>
             <select
               v-model="newChildForm.gender"
               :class="
@@ -353,8 +355,8 @@ const closeModal = () => {
               "
               class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="M">Garçon</option>
-              <option value="F">Fille</option>
+              <option value="M">{{ t('gender_m') }}</option>
+              <option value="F">{{ t('gender_f') }}</option>
             </select>
           </div>
         </div>
@@ -362,7 +364,7 @@ const closeModal = () => {
         <div>
           <label class="block mb-2 font-semibold flex items-center gap-2">
             <MapPin :size="18" />
-            Ville
+            {{ t('city') }}
           </label>
           <input
             v-model="newChildForm.city"

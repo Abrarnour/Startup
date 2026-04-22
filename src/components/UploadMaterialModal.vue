@@ -19,7 +19,7 @@
 
       <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
         <span class="text-4xl">📤</span>
-        Upload Course Material
+        {{ t('upload_material_title') }}
       </h2>
 
       <form @submit.prevent="handleUpload" class="space-y-6">
@@ -29,7 +29,7 @@
             :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-bold mb-2"
           >
-            Material Title *
+            {{ t('material_title_label') }}
           </label>
           <input
             v-model="formData.title"
@@ -51,7 +51,7 @@
             :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-bold mb-2"
           >
-            Description
+            {{ t('description_label') }}
           </label>
           <textarea
             v-model="formData.description"
@@ -72,7 +72,7 @@
             :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
             class="block text-sm font-bold mb-2"
           >
-            Select File *
+            {{ t('select_file_btn') }}
           </label>
           <div
             :class="
@@ -120,7 +120,9 @@
               :style="{ width: uploadProgress + '%' }"
             ></div>
           </div>
-          <p class="text-center text-blue-600 font-bold">Uploading... {{ uploadProgress }}%</p>
+          <p class="text-center text-blue-600 font-bold">
+            {{ t('uploading_btn') }}{{ uploadProgress }}%
+          </p>
         </div>
 
         <!-- Error Message -->
@@ -156,7 +158,7 @@
             :disabled="uploading || !selectedFile"
             class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ uploading ? 'Uploading...' : 'Upload Material' }}
+            {{ uploading ? t('uploading_btn') : t('upload_btn') }}
           </button>
         </div>
       </form>
@@ -167,7 +169,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import * as api from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js'
+const { t } = useLanguage()
 const props = defineProps({
   isOpen: Boolean,
   courseId: Number,
@@ -220,12 +223,12 @@ const formatFileSize = (bytes) => {
 
 const handleUpload = async () => {
   if (!selectedFile.value) {
-    error.value = 'Please select a file'
+    error.value = t('error_select_file')
     return
   }
 
   if (!formData.title.trim()) {
-    error.value = 'Please enter a title'
+    error.value = t('error_enter_title')
     return
   }
 

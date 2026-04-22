@@ -1034,37 +1034,37 @@ onMounted(() => {
                     class="px-4 py-3 text-left text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Nom & Prénom
+                    {{ t('name') }}
                   </th>
                   <th
                     class="px-4 py-3 text-left text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Tél. Parent
+                    {{ t('parent_phone') }}
                   </th>
                   <th
                     class="px-4 py-3 text-left text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Paiement
+                    {{ t('payment') }}
                   </th>
                   <th
                     class="px-4 py-3 text-left text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Statut
+                    {{ t('status') }}
                   </th>
                   <th
                     class="px-4 py-3 text-left text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Notes
+                    {{ t('notes') }}
                   </th>
                   <th
                     class="px-4 py-3 text-right text-xs font-semibold"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Actions
+                    {{ t('actions') }}
                   </th>
                 </tr>
               </thead>
@@ -1098,8 +1098,8 @@ onMounted(() => {
                       class="px-3 py-1 rounded-full text-xs font-bold hover:opacity-75 transition-opacity cursor-pointer"
                       :title="
                         student.payment_status === 'paid'
-                          ? 'Cliquer pour marquer Non payé'
-                          : 'Cliquer pour marquer Payé'
+                          ? t('click_to_mark_unpaid')
+                          : t('click_to_mark_paid')
                       "
                     >
                       {{ formatPaymentStatus(student.payment_status) }}
@@ -1158,7 +1158,7 @@ onMounted(() => {
               class="text-center py-8"
               :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
             >
-              Aucun étudiant inscrit dans ce groupe
+              {{ t('no_student_in_group') }}
             </div>
           </div>
         </div>
@@ -1179,7 +1179,7 @@ onMounted(() => {
         >
           <div class="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 pb-4">
             <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
-              Nouveau groupe
+              {{ t('new_group') }}
             </h3>
             <button @click="showAddGroupModal = false" class="p-2">
               <X :size="24" />
@@ -1214,7 +1214,7 @@ onMounted(() => {
                   class="block text-sm font-medium mb-2"
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                 >
-                  Salle
+                  {{ t('room') }}
                 </label>
                 <input
                   v-model="groupForm.salle"
@@ -1237,7 +1237,7 @@ onMounted(() => {
                 :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
               >
                 <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold mb-3">
-                  Horaire de la séance
+                  {{ t('session_schedule') }}
                 </h4>
 
                 <div
@@ -1249,7 +1249,7 @@ onMounted(() => {
                       class="block text-sm font-medium mb-2"
                       :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                     >
-                      Jour de la semaine <span class="text-red-500">*</span>
+                      {{ t('day_of_week') }}<span class="text-red-500">*</span>
                     </label>
                     <select
                       v-model="groupForm.weekly_schedule[0].day_of_week"
@@ -1273,7 +1273,7 @@ onMounted(() => {
                       class="block text-sm font-medium mb-2"
                       :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                     >
-                      Heure début <span class="text-red-500">*</span>
+                      {{ t('day_of_week') }} <span class="text-red-500">*</span>
                     </label>
                     <input
                       v-model="groupForm.weekly_schedule[0].start_time"
@@ -1318,7 +1318,7 @@ onMounted(() => {
                   class="block text-sm font-medium mb-2"
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                 >
-                  Type de calendrier
+                  {{ t('calendar_type') }}
                 </label>
                 <select
                   v-model="groupForm.calendar_type"
@@ -1343,7 +1343,7 @@ onMounted(() => {
                       class="block text-sm font-medium mb-2"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Nombre de semaines
+                      {{ t('number_of_weeks') }}
                     </label>
                     <select
                       v-model.number="groupForm.total_weeks"
@@ -1368,7 +1368,7 @@ onMounted(() => {
                       class="block text-sm font-medium mb-2"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Séances par semaine
+                      {{ t('sessions_per_week') }}
                     </label>
                     <select
                       v-model.number="groupForm.sessions_per_week"
@@ -1392,7 +1392,7 @@ onMounted(() => {
                       class="block text-sm font-medium mb-2"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Total séances
+                      {{ t('total_sessions') }}
                     </label>
                     <input
                       :value="groupForm.total_sessions"
@@ -1420,7 +1420,7 @@ onMounted(() => {
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     class="cursor-pointer"
                   >
-                    Répéter ce calendrier automatiquement
+                    {{ t('repeat_calendar') }}
                   </label>
                 </div>
 
@@ -1431,11 +1431,11 @@ onMounted(() => {
                 >
                   <div class="flex items-center justify-between mb-4">
                     <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold">
-                      Planifier les {{ groupForm.total_sessions }} séances
+                      {{ t('plan_sessions') }} {{ groupForm.total_sessions }} séances
                     </h4>
                     <span class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">
                       {{ groupForm.sessions.filter((s) => s.date).length }} /
-                      {{ groupForm.total_sessions }} complétées
+                      {{ groupForm.total_sessions }} {{ t('completed') }}
                     </span>
                   </div>
 
@@ -1449,14 +1449,14 @@ onMounted(() => {
                           class="font-bold text-sm"
                           :class="darkMode ? 'text-white' : 'text-gray-900'"
                         >
-                          📅 Semaine {{ week }}
+                          📅 {{ t('week') }}{{ week }}
                         </h5>
                         <button
                           type="button"
                           @click="addSessionToWeek(week)"
                           class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                         >
-                          + Ajouter séance
+                          +{{ t('add_session') }}
                         </button>
                       </div>
 
@@ -1482,7 +1482,7 @@ onMounted(() => {
                             class="block text-xs mb-1"
                             :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                           >
-                            Titre
+                            {{ t('title') || 'Titre' }}
                           </label>
                           <input
                             v-model="session.title"
@@ -1521,7 +1521,7 @@ onMounted(() => {
                             class="block text-xs mb-1"
                             :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                           >
-                            Début
+                            {{ t('start_time') }}
                           </label>
                           <input
                             v-model="session.start_time"
@@ -1540,7 +1540,7 @@ onMounted(() => {
                             class="block text-xs mb-1"
                             :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                           >
-                            Fin
+                            {{ t('end_time') }}
                           </label>
                           <input
                             v-model="session.end_time"
@@ -1572,8 +1572,7 @@ onMounted(() => {
                     :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'"
                   >
                     <p class="text-sm" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                      💡 <strong>Astuce:</strong> Les séances sans date ne seront pas créées
-                      immédiatement. Vous pourrez les compléter plus tard.
+                      💡 <strong>{{ t('tip') }}:</strong> {{ t('sessions_without_date_tip') }}
                     </p>
                   </div>
                 </div>
@@ -1586,7 +1585,7 @@ onMounted(() => {
                     class="block text-sm font-medium mb-2"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Séances par semaine <span class="text-red-500">*</span>
+                    {{ t('sessions_per_week') }}<span class="text-red-500">*</span>
                   </label>
                   <select
                     v-model.number="groupForm.sessions_per_week"
@@ -1612,7 +1611,7 @@ onMounted(() => {
                   :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
                 >
                   <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold mb-3">
-                    Horaires des {{ groupForm.sessions_per_week }} séance(s) par semaine
+                    {{ t('schedules_of') }}{{ groupForm.sessions_per_week }} séance(s) par semaine
                   </h4>
 
                   <div class="space-y-3">
@@ -1636,7 +1635,7 @@ onMounted(() => {
                           class="block text-xs mb-1"
                           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                         >
-                          Jour de la semaine <span class="text-red-500">*</span>
+                          {{ t('day_of_week') }} <span class="text-red-500">*</span>
                         </label>
                         <select
                           v-model="schedule.day_of_week"
@@ -1648,7 +1647,9 @@ onMounted(() => {
                           "
                           class="w-full px-3 py-2 border rounded-lg text-sm"
                         >
-                          <option value="">Choisir...</option>
+                          <option value="">
+                            {{ t('select_child_to_view_courses').replace(/ .*/, '...') }}
+                          </option>
                           <option v-for="day in daysOfWeek" :key="day.value" :value="day.value">
                             {{ day.label }}
                           </option>
@@ -1660,7 +1661,7 @@ onMounted(() => {
                           class="block text-xs mb-1"
                           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                         >
-                          Heure début <span class="text-red-500">*</span>
+                          {{ t('start_time') }} <span class="text-red-500">*</span>
                         </label>
                         <input
                           v-model="schedule.start_time"
@@ -1680,7 +1681,7 @@ onMounted(() => {
                           class="block text-xs mb-1"
                           :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                         >
-                          Heure fin <span class="text-red-500">*</span>
+                          {{ t('end_time') }} <span class="text-red-500">*</span>
                         </label>
                         <input
                           v-model="schedule.end_time"
@@ -1702,8 +1703,8 @@ onMounted(() => {
                     :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'"
                   >
                     <p class="text-sm" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                      💡 <strong>Exemple:</strong> Pour 2 séances/semaine → Séance #1: Lundi
-                      09:00-11:00, Séance #2: Mercredi 14:00-16:00
+                      💡 <strong>{{ t('example') }}</strong> Pour 2 séances/semaine → Séance #1:
+                      Lundi 09:00-11:00, Séance #2: Mercredi 14:00-16:00
                     </p>
                   </div>
                 </div>
@@ -1716,7 +1717,7 @@ onMounted(() => {
                 class="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
               >
                 <Save :size="20" />
-                Créer le groupe
+                {{ t('create_group') }}
               </button>
 
               <button
@@ -1727,7 +1728,7 @@ onMounted(() => {
                 "
                 class="px-8 py-3 rounded-xl font-semibold transition-all"
               >
-                Annuler
+                {{ t('cancel') }}
               </button>
             </div>
           </form>
@@ -1754,7 +1755,7 @@ onMounted(() => {
                 class="text-2xl font-bold flex items-center gap-2"
               >
                 <CalendarPlus :size="28" class="text-orange-500" />
-                Modifier le prochain cycle
+                {{ t('modify_next_cycle') }}
               </h3>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm mt-1">
                 {{ selectedGroup?.group_name }}
@@ -1796,7 +1797,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Raison de la modification <span class="text-red-500">*</span>
+                {{ t('reason_for_modification') }}<span class="text-red-500">*</span>
               </label>
               <input
                 v-model="cycleModForm.reason"
@@ -1815,7 +1816,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Type de calendrier
+                {{ t('calendar_type') }}
               </label>
               <select
                 v-model="cycleModForm.calendar_type"
@@ -1838,7 +1839,7 @@ onMounted(() => {
                     class="block text-sm font-medium mb-2"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Semaines
+                    {{ t('week') }}s
                   </label>
                   <select
                     v-model.number="cycleModForm.total_weeks"
@@ -1850,10 +1851,10 @@ onMounted(() => {
                     class="w-full px-4 py-3 border-2 rounded-xl outline-none"
                     @change="initializeCycleModSessions"
                   >
-                    <option :value="4">4 semaines</option>
-                    <option :value="6">6 semaines</option>
-                    <option :value="8">8 semaines</option>
-                    <option :value="10">10 semaines</option>
+                    <option :value="4">4 {{ t('week') }}s</option>
+                    <option :value="6">6 {{ t('week') }}s</option>
+                    <option :value="8">8 {{ t('week') }}s</option>
+                    <option :value="10">10 {{ t('week') }}s</option>
                   </select>
                 </div>
 
@@ -1862,7 +1863,7 @@ onMounted(() => {
                     class="block text-sm font-medium mb-2"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Séances/semaine
+                    {{ t('sessions_per_week') }}
                   </label>
                   <select
                     v-model.number="cycleModForm.sessions_per_week"
@@ -1874,10 +1875,10 @@ onMounted(() => {
                     class="w-full px-4 py-3 border-2 rounded-xl outline-none"
                     @change="initializeCycleModSessions"
                   >
-                    <option :value="1">1 séance</option>
-                    <option :value="2">2 séances</option>
-                    <option :value="3">3 séances</option>
-                    <option :value="4">4 séances</option>
+                    <option :value="1">1 {{ t('session') }}</option>
+                    <option :value="2">2 {{ t('session') }}s</option>
+                    <option :value="3">3 {{ t('session') }}s</option>
+                    <option :value="4">4 {{ t('session') }}s</option>
                   </select>
                 </div>
 
@@ -1886,7 +1887,7 @@ onMounted(() => {
                     class="block text-sm font-medium mb-2"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Total séances
+                    {{ t('total_sessions') }}
                   </label>
                   <input
                     :value="cycleModForm.total_sessions"
@@ -1921,14 +1922,14 @@ onMounted(() => {
                         class="font-semibold text-sm"
                         :class="darkMode ? 'text-orange-300' : 'text-orange-700'"
                       >
-                        Semaine {{ week }}
+                        {{ t('week') }}
                       </h5>
                       <button
                         type="button"
                         @click="addCycleSessionToWeek(week)"
                         class="text-xs px-2 py-1 bg-orange-500 text-white rounded hover:bg-orange-600"
                       >
-                        + Ajouter séance
+                        +{{ t('add_session') }}
                       </button>
                     </div>
                     <div
@@ -2023,7 +2024,7 @@ onMounted(() => {
                   class="block text-sm font-medium mb-2"
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                 >
-                  Séances par semaine <span class="text-red-500">*</span>
+                  {{ t('sessions_per_week') }} <span class="text-red-500">*</span>
                 </label>
                 <select
                   v-model.number="cycleModForm.sessions_per_week"
@@ -2036,10 +2037,10 @@ onMounted(() => {
                   class="w-full px-4 py-3 border-2 rounded-xl outline-none"
                   @change="initializeCycleWeeklySchedule"
                 >
-                  <option :value="1">1 séance/semaine</option>
-                  <option :value="2">2 séances/semaine</option>
-                  <option :value="3">3 séances/semaine</option>
-                  <option :value="4">4 séances/semaine</option>
+                  <option :value="1">1 {{ t('session') }}/{{ t('week') }}</option>
+                  <option :value="2">2 {{ t('session') }}/{{ t('week') }}</option>
+                  <option :value="3">3 {{ t('session') }}/{{ t('week') }}</option>
+                  <option :value="4">4 {{ t('session') }}/{{ t('week') }}</option>
                 </select>
               </div>
 
@@ -2049,7 +2050,7 @@ onMounted(() => {
                 :class="darkMode ? 'border-orange-700' : 'border-orange-200'"
               >
                 <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold mb-3">
-                  Horaires des {{ cycleModForm.sessions_per_week }} séance(s) par semaine
+                  {{ t('schedules_of') }} {{ cycleModForm.sessions_per_week }} séance(s) par semaine
                 </h4>
 
                 <div class="space-y-3">
@@ -2073,7 +2074,7 @@ onMounted(() => {
                         class="block text-xs mb-1"
                         :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                       >
-                        Jour de la semaine <span class="text-red-500">*</span>
+                        {{ t('day_of_week') }} <span class="text-red-500">*</span>
                       </label>
                       <select
                         v-model="schedule.day_of_week"
@@ -2085,7 +2086,9 @@ onMounted(() => {
                         "
                         class="w-full px-3 py-2 border rounded-lg text-sm"
                       >
-                        <option value="">Choisir...</option>
+                        <option value="">
+                          {{ t('select_child_to_view_courses').replace(/ .*/, '...') }}
+                        </option>
                         <option v-for="day in daysOfWeek" :key="day.value" :value="day.value">
                           {{ day.label }}
                         </option>
@@ -2097,7 +2100,7 @@ onMounted(() => {
                         class="block text-xs mb-1"
                         :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                       >
-                        Heure début <span class="text-red-500">*</span>
+                        {{ t('start_time') }}<span class="text-red-500">*</span>
                       </label>
                       <input
                         v-model="schedule.start_time"
@@ -2117,7 +2120,7 @@ onMounted(() => {
                         class="block text-xs mb-1"
                         :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
                       >
-                        Heure fin <span class="text-red-500">*</span>
+                        {{ t('end_time') }}<span class="text-red-500">*</span>
                       </label>
                       <input
                         v-model="schedule.end_time"
@@ -2139,8 +2142,8 @@ onMounted(() => {
                   :class="darkMode ? 'bg-orange-900/20' : 'bg-orange-100'"
                 >
                   <p class="text-sm" :class="darkMode ? 'text-orange-300' : 'text-orange-800'">
-                    💡 <strong>Exemple:</strong> Pour 3 séances/semaine → #1: Lundi 09:00-11:00, #2:
-                    Mercredi 14:00-16:00, #3: Vendredi 16:00-18:00
+                    💡 <strong>{{ t('example') }}:</strong> Pour 3 séances/semaine → #1: Lundi
+                    09:00-11:00, #2: Mercredi 14:00-16:00, #3: Vendredi 16:00-18:00
                   </p>
                 </div>
               </div>
@@ -2161,7 +2164,7 @@ onMounted(() => {
                 :class="darkMode ? 'text-orange-300' : 'text-orange-700'"
                 class="cursor-pointer font-semibold"
               >
-                Retourner au cycle normal après ce cycle modifié
+                {{ t('return_to_normal_cycle') }}
               </label>
             </div>
 
@@ -2171,7 +2174,7 @@ onMounted(() => {
                 class="flex-1 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl font-bold hover:from-orange-700 hover:to-red-700 transition-all shadow-lg flex items-center justify-center gap-2"
               >
                 <Save :size="20" />
-                Enregistrer les modifications
+                {{ t('save_modifications') }}
               </button>
 
               <button
@@ -2182,7 +2185,7 @@ onMounted(() => {
                 "
                 class="px-8 py-3 rounded-xl font-semibold transition-all"
               >
-                Annuler
+                {{ t('cancel') }}
               </button>
             </div>
           </form>
@@ -2208,7 +2211,7 @@ onMounted(() => {
               class="text-2xl font-bold flex items-center gap-2"
             >
               <Settings :size="24" />
-              Configuration
+              {{ t('configuration') }}
             </h3>
             <button @click="showEditConfigModal = false" class="p-2">
               <X :size="24" />
@@ -2221,7 +2224,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Nombre total de séances
+                {{ t('total_sessions') }}
               </label>
               <input
                 v-model.number="configForm.total_sessions"
@@ -2239,7 +2242,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Nombre de semaines
+                {{ t('number_of_weeks') }}
               </label>
               <input
                 v-model.number="configForm.total_weeks"
@@ -2257,7 +2260,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Séances par semaine
+                {{ t('sessions_per_week') }}
               </label>
               <input
                 v-model.number="configForm.sessions_per_week"
@@ -2275,7 +2278,7 @@ onMounted(() => {
                 class="block text-sm font-medium mb-2"
                 :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
               >
-                Maximum d'étudiants
+                {{ t('max_students') }}
               </label>
               <input
                 v-model.number="configForm.max_students"
@@ -2287,7 +2290,7 @@ onMounted(() => {
                 class="w-full px-4 py-3 border-2 rounded-xl outline-none"
               />
               <p class="text-xs mt-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-                Actuellement: {{ selectedGroup?.enrolled_students || 0 }} étudiants inscrits
+                {{ t('currently') }}: {{ selectedGroup?.enrolled_students || 0 }} étudiants inscrits
               </p>
             </div>
 
@@ -2296,7 +2299,7 @@ onMounted(() => {
                 type="submit"
                 class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all"
               >
-                Enregistrer
+                {{ t('save') }}
               </button>
 
               <button
@@ -2307,7 +2310,7 @@ onMounted(() => {
                 "
                 class="px-8 py-3 rounded-xl font-semibold transition-all"
               >
-                Annuler
+                {{ t('cancel') }}
               </button>
             </div>
           </form>
@@ -2329,7 +2332,7 @@ onMounted(() => {
         >
           <div class="flex justify-between items-center mb-6">
             <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
-              Ajouter un étudiant
+              {{ t('add_student') }}
             </h3>
             <button @click="showAddStudentModal = false" class="p-2">
               <X :size="24" />
@@ -2343,7 +2346,7 @@ onMounted(() => {
               :class="darkMode ? 'border-gray-700 bg-gray-700/50' : 'border-gray-200 bg-gray-50'"
             >
               <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold mb-3">
-                Option 1: Étudiant existant
+                {{ t('option_1_existing') }}
               </h4>
               <select
                 v-model.number="studentForm.student_id"
@@ -2353,7 +2356,7 @@ onMounted(() => {
                 class="w-full px-4 py-3 border-2 rounded-xl outline-none"
                 @change="studentForm.create_if_not_exists = false"
               >
-                <option :value="null">Sélectionner un étudiant...</option>
+                <option :value="null">{{ t('select_student') }}</option>
                 <option v-for="student in availableStudents" :key="student.id" :value="student.id">
                   {{ student.name }} {{ student.last_name }} ({{ student.email }})
                 </option>
@@ -2371,7 +2374,7 @@ onMounted(() => {
             >
               <div class="flex items-center justify-between mb-3">
                 <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold">
-                  Option 2: Créer un nouveau compte
+                  {{ t('option_2_new') }}
                 </h4>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
@@ -2381,7 +2384,7 @@ onMounted(() => {
                     class="w-4 h-4"
                   />
                   <span :class="darkMode ? 'text-gray-300' : 'text-gray-700'" class="text-sm">
-                    Activer
+                    {{ t('enable') }}
                   </span>
                 </label>
               </div>
@@ -2393,7 +2396,7 @@ onMounted(() => {
                       class="block text-sm mb-1"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Prénom <span class="text-red-500">*</span>
+                      {{ t('first_name_label') }}<span class="text-red-500">*</span>
                     </label>
                     <input
                       v-model="studentForm.name"
@@ -2413,7 +2416,7 @@ onMounted(() => {
                       class="block text-sm mb-1"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Nom <span class="text-red-500">*</span>
+                      {{ t('last_name') }}<span class="text-red-500">*</span>
                     </label>
                     <input
                       v-model="studentForm.last_name"
@@ -2435,7 +2438,7 @@ onMounted(() => {
                     class="block text-sm mb-1"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Email <span class="text-red-500">*</span>
+                    {{ t('email') }}<span class="text-red-500">*</span>
                   </label>
                   <input
                     v-model="studentForm.email"
@@ -2457,7 +2460,7 @@ onMounted(() => {
                       class="block text-sm mb-1"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Date de naissance
+                      {{ t('birthday') }}
                     </label>
                     <input
                       v-model="studentForm.birthday"
@@ -2475,7 +2478,7 @@ onMounted(() => {
                       class="block text-sm mb-1"
                       :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     >
-                      Genre
+                      {{ t('gender') }}
                     </label>
                     <select
                       v-model="studentForm.gender"
@@ -2486,8 +2489,8 @@ onMounted(() => {
                       "
                       class="w-full px-3 py-2 border rounded-lg"
                     >
-                      <option value="M">Garçon</option>
-                      <option value="F">Fille</option>
+                      <option value="M">{{ t('boy') }}</option>
+                      <option value="F">{{ t('girl') }}</option>
                     </select>
                   </div>
                 </div>
@@ -2497,7 +2500,7 @@ onMounted(() => {
                     class="block text-sm mb-1"
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   >
-                    Tél. Parent
+                    {{ t('parent_phone') }}
                   </label>
                   <input
                     v-model="studentForm.parent_phone"
@@ -2514,7 +2517,7 @@ onMounted(() => {
 
                 <div class="p-3 rounded-lg" :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'">
                   <p class="text-xs" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                    ℹ️ Un compte sera automatiquement créé avec un mot de passe temporaire.
+                    ℹ️ {{ t('auto_account_creation') }}
                   </p>
                 </div>
               </div>
@@ -2526,7 +2529,7 @@ onMounted(() => {
                 class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-lg flex items-center justify-center gap-2"
               >
                 <UserPlus :size="20" />
-                Ajouter
+                {{ t('save') }}
               </button>
 
               <button
@@ -2537,7 +2540,7 @@ onMounted(() => {
                 "
                 class="px-8 py-3 rounded-xl font-semibold transition-all"
               >
-                Annuler
+                {{ t('cancel') }}
               </button>
             </div>
           </form>
@@ -2560,7 +2563,7 @@ onMounted(() => {
           <div class="flex justify-between items-center mb-6">
             <div>
               <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
-                Remarques - {{ selectedStudent?.name }} {{ selectedStudent?.last_name }}
+                {{ t('notes') }}- {{ selectedStudent?.name }} {{ selectedStudent?.last_name }}
               </h3>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
                 {{ selectedStudent?.email }}
@@ -2578,7 +2581,7 @@ onMounted(() => {
             :class="darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200 bg-gray-50'"
           >
             <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold mb-3">
-              Ajouter une remarque
+              {{ t('add_note') }}
             </h4>
             <form @submit.prevent="handleAddNote" class="space-y-3">
               <div>
@@ -2589,8 +2592,8 @@ onMounted(() => {
                   "
                   class="w-full px-3 py-2 border rounded-lg text-sm"
                 >
-                  <option v-for="type in noteTypes" :key="type.value" :value="type.value">
-                    {{ type.label }}
+                  <option Remarque v-for="type in noteTypes" :key="type.value" :value="type.value">
+                    {{ t(`note_type_${type.value}`) || type.label }}
                   </option>
                 </select>
               </div>
@@ -2612,14 +2615,14 @@ onMounted(() => {
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" v-model="noteForm.is_important" class="w-4 h-4" />
                   <span :class="darkMode ? 'text-gray-300' : 'text-gray-700'" class="text-sm">
-                    Importante
+                    {{ t('important') }}
                   </span>
                 </label>
 
                 <label v-if="isAdmin" class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" v-model="noteForm.is_private" class="w-4 h-4" />
                   <span :class="darkMode ? 'text-gray-300' : 'text-gray-700'" class="text-sm">
-                    Privée (admin seulement)
+                    {{ t('private_admin_only') }}
                   </span>
                 </label>
               </div>
@@ -2629,7 +2632,7 @@ onMounted(() => {
                 class="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
               >
                 <Save :size="18" />
-                Enregistrer
+                {{ t('save') }}
               </button>
             </form>
           </div>
@@ -2637,7 +2640,7 @@ onMounted(() => {
           <!-- Liste des remarques -->
           <div class="space-y-3">
             <h4 :class="darkMode ? 'text-white' : 'text-gray-900'" class="font-bold">
-              Historique ({{ selectedStudentNotes.length }})
+              {{ t('history') }}({{ selectedStudentNotes.length }})
             </h4>
 
             <div
@@ -2645,7 +2648,7 @@ onMounted(() => {
               class="text-center py-8"
               :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
             >
-              Aucune remarque pour cet étudiant
+              {{ t('no_note_for_student') }}
             </div>
 
             <div
@@ -2670,19 +2673,23 @@ onMounted(() => {
                     class="text-xs px-2 py-1 rounded-full"
                     :class="darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'"
                   >
-                    {{ noteTypes.find((t) => t.value === note.note_type)?.label || note.note_type }}
+                    {{
+                      t(`note_type_${note.note_type}`) ||
+                      noteTypes.find((t) => t.value === note.note_type)?.label ||
+                      note.note_type
+                    }}
                   </span>
                   <span
                     v-if="note.is_important"
                     class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800"
                   >
-                    Important
+                    {{ t('important') }}
                   </span>
                   <span
                     v-if="note.is_private"
                     class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800"
                   >
-                    Privé
+                    {{ t('private_admin_only').replace(' (admin seulement)', '') }}
                   </span>
                 </div>
                 <div class="flex items-center gap-2">

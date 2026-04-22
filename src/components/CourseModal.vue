@@ -2,7 +2,8 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { X, Save, BookOpen, User, Calendar, Lock } from 'lucide-vue-next'
 import * as api from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js'
+const { t, currentLang } = useLanguage()
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
@@ -38,7 +39,7 @@ const formData = reactive({
 // ── Education system structure (unchanged) ──────────
 const educationSystem = {
   primaire: {
-    label: 'الابتدائي (Primaire)',
+    label: t('level_primaire'),
     years: [
       { value: 1, label: 'السنة الأولى ابتدائي (1ère année)' },
       { value: 2, label: 'السنة الثانية ابتدائي (2ème année)' },
@@ -132,7 +133,7 @@ const handleSubmit = async () => {
   error.value = ''
 
   if (!formData.title || formData.title.trim() === '') {
-    error.value = 'Veuillez remplir le titre du cours'
+    error.value = 'Veuillez remplir le titre de coure'
     return
   }
 
@@ -267,7 +268,7 @@ onMounted(() => {
               </div>
               <div>
                 <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
-                  {{ editingCourse ? 'Modifier le cours' : 'Nouveau cours' }}
+                  {{ editingCourse ? t('edit_course') : t('create_course') }}
                 </h2>
                 <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
                   {{
@@ -317,7 +318,7 @@ onMounted(() => {
                 <div class="grid grid-cols-3 gap-3 text-sm">
                   <div>
                     <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-xs mb-0.5">
-                      Enseignant
+                      {{ t('teacher_label') }}
                     </p>
                     <p :class="darkMode ? 'text-white' : 'text-gray-800'" class="font-semibold">
                       {{ teacherLabel }}
@@ -348,7 +349,7 @@ onMounted(() => {
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   class="block text-sm font-medium mb-2"
                 >
-                  Titre du cours <span class="text-red-500">*</span>
+                  {{ t('course_title') }} <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="formData.title"
@@ -392,7 +393,7 @@ onMounted(() => {
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     class="block text-sm font-medium mb-2"
                   >
-                    Salle
+                    {{ t('classroom') }}
                   </label>
                   <input
                     v-model="formData.salle"
@@ -440,7 +441,7 @@ onMounted(() => {
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   class="block text-sm font-medium mb-2"
                 >
-                  Titre du cours <span class="text-red-500">*</span>
+                  {{ t('course_title') }} <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="formData.title"
@@ -462,7 +463,7 @@ onMounted(() => {
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   class="block text-sm font-medium mb-2"
                 >
-                  Enseignant <span class="text-red-500">*</span>
+                  {{ t('teacher_label') }} <span class="text-red-500">*</span>
                 </label>
                 <div v-if="isTeacherMode">
                   <input
@@ -488,7 +489,7 @@ onMounted(() => {
                   "
                   class="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                  <option :value="null" disabled>Choisir un enseignant...</option>
+                  <option :value="null" disabled>Choisir un{{ t('teacher_label') }}...</option>
                   <option v-for="teacher in teachers" :key="teacher.id" :value="teacher.id">
                     {{ formatTeacherName(teacher) }}
                   </option>
@@ -502,7 +503,7 @@ onMounted(() => {
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     class="block text-sm font-medium mb-2"
                   >
-                    Niveau d'éducation <span class="text-red-500">*</span>
+                    {{ t('education_level') }} <span class="text-red-500">*</span>
                   </label>
                   <select
                     v-model="formData.education_level"
@@ -524,7 +525,7 @@ onMounted(() => {
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     class="block text-sm font-medium mb-2"
                   >
-                    Année <span class="text-red-500">*</span>
+                    {{ t('year_level') }} <span class="text-red-500">*</span>
                   </label>
                   <select
                     v-model="formData.year_level"
@@ -549,7 +550,7 @@ onMounted(() => {
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   class="block text-sm font-medium mb-2"
                 >
-                  Filière (شعبة) <span class="text-red-500">*</span>
+                  {{ t('branch_label') }} <span class="text-red-500">*</span>
                 </label>
                 <select
                   v-model="formData.branch"
@@ -578,7 +579,7 @@ onMounted(() => {
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                   class="block text-sm font-medium mb-3"
                 >
-                  Type de cours <span class="text-red-500">*</span>
+                  {{ t('course_type') }} <span class="text-red-500">*</span>
                 </label>
                 <div class="grid grid-cols-2 gap-4">
                   <label class="relative cursor-pointer">
@@ -676,7 +677,7 @@ onMounted(() => {
                   <label
                     :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                     class="block text-sm font-medium mb-2"
-                    >Prix (DA)</label
+                    >{{ t('price_da') }}</label
                   >
                   <input
                     v-model="formData.price"
@@ -767,9 +768,7 @@ onMounted(() => {
                 class="flex-1 py-3 text-white rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Save :size="20" />
-                {{
-                  loading ? 'Enregistrement...' : editingCourse ? 'Sauvegarder' : 'Créer le cours'
-                }}
+                {{ loading ? 'Enregistrement...' : editingCourse ? t('saving') : t('save_btn') }}
               </button>
 
               <button

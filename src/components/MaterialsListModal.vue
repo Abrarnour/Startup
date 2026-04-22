@@ -19,12 +19,12 @@
 
       <h2 class="text-3xl font-bold mb-2 flex items-center gap-3">
         <span class="text-4xl">📚</span>
-        Course Materials
+        {{ t('materials_list_title') }}
       </h2>
 
       <!-- Teacher badge -->
       <p v-if="isTeacher" class="mb-6 text-sm text-purple-500 font-semibold">
-        🎓 Mode Enseignant — vous pouvez supprimer des documents
+        {{ t('teacher_mode_badge') }}
       </p>
       <div v-else class="mb-6"></div>
 
@@ -117,7 +117,7 @@
                 @click.stop="downloadFile(material)"
                 class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all flex items-center gap-2 text-sm"
               >
-                <span>⬇️</span> Télécharger
+                <span>⬇️</span> {{ t('download_btn') }}
               </button>
 
               <!-- Watch button for video -->
@@ -136,7 +136,7 @@
                 @click.stop="confirmDelete(material)"
                 class="px-4 py-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-xl font-bold transition-all flex items-center gap-2 text-sm"
               >
-                <span>🗑️</span> Supprimer
+                <span>🗑️</span>{{ t('delete_btn') }}
               </button>
             </div>
           </div>
@@ -179,8 +179,8 @@
         >
           <h3 class="text-xl font-bold mb-3">⚠️ Confirmer la suppression</h3>
           <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="mb-6">
-            Voulez-vous vraiment supprimer <strong>« {{ deleteTarget.title }} »</strong> ? Cette
-            action est irréversible.
+            {{ t('confirm_delete_title') }} <strong>« {{ deleteTarget.title }} »</strong>
+            {{ t('confirm_delete_text') }}
           </p>
           <div class="flex gap-4">
             <button
@@ -192,7 +192,7 @@
               "
               class="flex-1 py-3 rounded-xl font-bold transition-all"
             >
-              Annuler
+              {{ t('cancel') }}
             </button>
             <button
               @click="doDelete"
@@ -277,10 +277,13 @@ const getStreamUrl = (materialId) => {
 
 const getFileIcon = (fileType) => {
   if (!fileType) return '📄'
+
   if (fileType.includes('pdf')) return '📕'
-  if (fileType.includes('word') || fileType.includes('document')) return '📘'
+  if (fileType.includes('word') || fileType.includest('type_document')) return '📘'
+
   if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊'
   if (fileType.includes('video')) return '🎬'
+
   if (fileType.includes('image')) return '🖼️'
   return '📄'
 }
