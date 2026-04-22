@@ -1,8 +1,9 @@
-// src/composables/useNotifications.js
 import { ref, onMounted, onUnmounted } from 'vue'
-
-const API_URL =
-  import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+import {
+  getNotifications,
+  markNotificationsAsRead,
+  deleteNotificationApi,
+} from '../services/api.js'
 
 export function useNotifications(user) {
   const notifications = ref([])
@@ -11,142 +12,72 @@ export function useNotifications(user) {
   const toastNotif = ref(null)
   let pollingInterval = null
 
-  // 1. Demande de permission au système d'exploitation
-  const requestOsNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      console.warn('Ce navigateur ne supporte pas les notifications système.')
-      return
-    }
-    // Demander la permission si elle n'a pas encore été accordée ou refusée
-    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+  const requestPermission = async () => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
       await Notification.requestPermission()
     }
   }
 
-  const getSeenKeys = () => {
-    const today = new Date().toDateString()
-    const raw = localStorage.getItem('notif_seen')
-    if (!raw) return {}
-    try {
-      const data = JSON.parse(raw)
-      if (data.date !== today) return {}
-      return data.keys || {}
-    } catch {
-      return {}
-    }
-  }
-
-  const markKeySeen = (key) => {
-    const today = new Date().toDateString()
-    const seen = getSeenKeys()
-    seen[key] = true
-    localStorage.setItem('notif_seen', JSON.stringify({ date: today, keys: seen }))
-  }
-
-  // 2. Afficher la notification dans la plateforme ET sur le bureau (OS)
-  const showToast = (message) => {
+  const showOsNotification = (message) => {
     toastNotif.value = message
     setTimeout(() => {
       toastNotif.value = null
     }, 7000)
 
-    // Déclenchement de la notification native
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Belmahi School', {
+      new Notification('مدرسة بلماحي', {
         body: message,
-        icon: '/belmahilogo.jpg', // L'icône de l'école
-        requireInteraction: false,
+        icon: '/belmahilogo.jpg',
       })
     }
   }
 
-  const checkUpcoming = async () => {
+  const fetchAndSyncNotifications = async () => {
     if (!user?.value?.id) return
-    const token = localStorage.getItem('token')
-    if (!token) return
-
     try {
-      const res = await fetch(`${API_URL}/notifications/upcoming`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+      const data = await getNotifications()
+
+      // الكشف عن الإشعارات الجديدة لعرضها في نظام التشغيل
+      const existingIds = new Set(notifications.value.map((n) => n.id))
+      data.forEach((notif) => {
+        if (!existingIds.has(notif.id) && !notif.is_read) {
+          showOsNotification(notif.message)
+        }
       })
 
-      if (!res.ok) return
-      const data = await res.json()
-      const seen = getSeenKeys()
-
-      // Déterminer la langue actuelle pour afficher le bon message
-      const currentLang = localStorage.getItem('app_lang') || 'fr'
-
-      for (const notif of data.notifications) {
-        if (!seen[notif.key]) {
-          markKeySeen(notif.key)
-
-          notifications.value.unshift({
-            ...notif,
-            id: Date.now() + Math.random(),
-            is_read: false,
-          })
-          unreadCount.value++
-
-          // 3. Sélectionner le message selon la langue (Arabe ou Français)
-          const displayMessage =
-            currentLang === 'ar' && notif.ar_message ? notif.ar_message : notif.message
-          showToast(displayMessage)
-
-          fetch(`${API_URL}/notifications/save`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              notif_key: notif.key,
-              message: displayMessage,
-            }),
-          }).catch(() => {})
-        }
-      }
+      notifications.value = data
+      unreadCount.value = data.filter((n) => !n.is_read).length
     } catch (e) {
       console.error(e)
     }
   }
 
-  const loadHistory = async () => {
-    if (!user?.value?.id) return
-    const token = localStorage.getItem('token')
-    if (!token) return
-    try {
-      const res = await fetch(`${API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      notifications.value = data
-      unreadCount.value = data.filter((n) => !n.is_read).length
-    } catch {}
-  }
-
-  const markAllRead = () => {
-    notifications.value.forEach((n) => {
-      n.is_read = true
-    })
-    unreadCount.value = 0
-  }
-
-  const togglePanel = () => {
+  const togglePanel = async () => {
     showNotifPanel.value = !showNotifPanel.value
-    if (showNotifPanel.value) markAllRead()
+    if (showNotifPanel.value && unreadCount.value > 0) {
+      // إذا فتحنا القائمة، نعلمها كمقروءة فوراً ونصفر العداد الأحمر
+      unreadCount.value = 0
+      notifications.value.forEach((n) => (n.is_read = true))
+      await markNotificationsAsRead()
+    }
+  }
+
+  const removeNotification = async (notifId) => {
+    try {
+      // إزالة من الواجهة فوراً (Optimistic UI Update)
+      notifications.value = notifications.value.filter((n) => n.id !== notifId)
+      unreadCount.value = notifications.value.filter((n) => !n.is_read).length
+      // إرسال طلب الحذف للخادم
+      await deleteNotificationApi(notifId)
+    } catch (e) {
+      console.error('Erreur suppression', e)
+    }
   }
 
   onMounted(() => {
-    // Demander l'autorisation dès que le composant est monté
-    requestOsNotificationPermission()
-    loadHistory()
-    checkUpcoming()
-    pollingInterval = setInterval(checkUpcoming, 60 * 1000)
+    requestPermission()
+    fetchAndSyncNotifications()
+    pollingInterval = setInterval(fetchAndSyncNotifications, 30000) // فحص كل 30 ثانية
   })
 
   onUnmounted(() => {
@@ -159,6 +90,6 @@ export function useNotifications(user) {
     showNotifPanel,
     toastNotif,
     togglePanel,
-    markAllRead,
+    removeNotification,
   }
 }

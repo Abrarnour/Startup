@@ -1329,3 +1329,24 @@ export const adminCleanupInactiveStudents = async () => {
   }
   return response.json()
 }
+
+// src/services/api.js
+
+export const getNotifications = async () => {
+  const response = await fetch(`${API_URL}/notifications`, { headers: getHeaders() })
+  if (!response.ok) throw new Error('Erreur de récupération des notifications')
+  return response.json()
+}
+
+export const markNotificationsAsRead = async () => {
+  await fetch(`${API_URL}/notifications/mark-read`, { method: 'POST', headers: getHeaders() })
+}
+
+export const deleteNotificationApi = async (notifId) => {
+  const response = await fetch(`${API_URL}/notifications/${notifId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  })
+  if (!response.ok) throw new Error('Erreur de suppression')
+  return response.json()
+}

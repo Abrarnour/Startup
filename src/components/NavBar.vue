@@ -93,7 +93,7 @@ const isActive = (path) => {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-white"
+                class="h-6 w-6 text-white"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -107,7 +107,8 @@ const isActive = (path) => {
               </svg>
               <span
                 v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse"
+                class="absolute top-1 right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white"
+                style="transform: translate(25%, -25%)"
               >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
               </span>
@@ -115,24 +116,55 @@ const isActive = (path) => {
 
             <div
               v-if="showNotifPanel"
-              class="absolute left-0 top-12 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200 z-50"
+              class="absolute left-0 mt-3 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200 z-50"
             >
-              <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+              <div
+                class="p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10"
+              >
                 <h3 class="font-bold text-gray-800">{{ props.t('nav_notifications_header') }}</h3>
-                <span class="text-xs text-gray-500">{{ props.t('today') }}</span>
               </div>
+
               <div v-if="notifications.length === 0" class="p-6 text-center text-gray-500 text-sm">
                 {{ props.t('no_notif') }}
               </div>
+
               <div
                 v-for="notif in notifications"
-                :key="notif.id || notif.key"
-                class="p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                :key="notif.id"
+                class="relative p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors group"
+                :class="!notif.is_read ? 'bg-blue-50/50' : ''"
               >
-                <p class="text-sm text-gray-700">{{ notif.message }}</p>
-                <p class="text-xs text-gray-400 mt-1">
-                  {{ notif.time ? notif.time.slice(0, 5) : '' }}
-                </p>
+                <div class="pr-6">
+                  <p class="text-sm text-gray-800 font-medium">{{ notif.message }}</p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    {{
+                      new Date(notif.created_at).toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    }}
+                  </p>
+                </div>
+                <button
+                  @click.stop="removeNotification(notif.id)"
+                  class="absolute top-4 right-3 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                  title="حذف الإشعار"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
