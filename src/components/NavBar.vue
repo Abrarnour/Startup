@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   User as UserIcon,
@@ -28,15 +28,15 @@ const props = defineProps({
 
 const emit = defineEmits(['logout', 'toggle-dark-mode', 'toggle-lang'])
 
-// ✅ ALL returned values from useNotifications are destructured, including removeNotification
 const {
   notifications,
   unreadCount,
   showNotifPanel,
   toastNotif,
   togglePanel,
-  removeNotification, // ← BUG FIX: was missing before
+  removeNotification,
   clearAllNotifications,
+  closeToast, // ✅ FIX: use the new exposed closeToast function instead of direct ref assignment
 } = useNotifications(computed(() => props.user))
 
 const route = useRoute()
@@ -81,7 +81,6 @@ const notifStyle = (type) => {
 
 <template>
   <!-- ─── In-app Toast Notification ─────────────────────────────────────────── -->
-  <!-- Shows as floating banner when a new notification arrives -->
   <Transition name="toast-slide">
     <div v-if="toastNotif" class="fixed bottom-6 right-6 z-[9999] max-w-sm w-full">
       <div
@@ -94,8 +93,9 @@ const notifStyle = (type) => {
           <p class="text-xs font-bold text-blue-600 mb-1">Belmahi School</p>
           <p class="text-sm text-gray-800 leading-snug">{{ toastNotif.message }}</p>
         </div>
+        <!-- ✅ FIX: Use closeToast() function instead of direct ref assignment in template -->
         <button
-          @click="toastNotif = null"
+          @click="closeToast"
           class="absolute top-3 right-3 text-gray-300 hover:text-gray-600 transition-colors"
         >
           <X :size="16" />
@@ -153,7 +153,6 @@ const notifStyle = (type) => {
           </button>
 
           <!-- ─── NOTIFICATION BELL — only shown when user is logged in ──────── -->
-          <!-- BUG FIX: Added v-if="user" — bell must NOT appear for guests -->
           <div v-if="user" class="relative">
             <button
               @click="togglePanel"
@@ -219,38 +218,36 @@ const notifStyle = (type) => {
                   <div
                     v-for="notif in notifications"
                     :key="notif.id"
-                    class="relative flex items-start gap-3 p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors group"
-                    :class="!notif.is_read ? notifStyle(notif.type).bg : ''"
+                    :class="[
+                      'flex items-start gap-3 p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors group',
+                      notifStyle(notif.type).bg,
+                      !notif.is_read ? 'font-medium' : '',
+                    ]"
                   >
-                    <!-- Type indicator dot + emoji -->
-                    <div class="shrink-0 flex flex-col items-center gap-1 mt-0.5">
-                      <span class="text-base">{{ notifStyle(notif.type).emoji }}</span>
-                      <span
-                        v-if="!notif.is_read"
-                        class="w-2 h-2 rounded-full"
-                        :class="notifStyle(notif.type).dot"
-                      ></span>
-                    </div>
+                    <!-- Type emoji -->
+                    <span class="text-lg shrink-0 mt-0.5">{{ notifStyle(notif.type).emoji }}</span>
 
                     <!-- Content -->
-                    <div class="flex-1 min-w-0 pr-6">
-                      <p
-                        class="text-sm text-gray-800 leading-snug"
-                        :class="!notif.is_read ? 'font-medium' : ''"
-                      >
-                        {{ notif.message }}
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs text-gray-800 leading-snug">{{ notif.message }}</p>
+                      <p class="text-[10px] text-gray-400 mt-1">
+                        {{ formatTime(notif.created_at) }}
                       </p>
-                      <p class="text-xs text-gray-400 mt-1">{{ formatTime(notif.created_at) }}</p>
                     </div>
 
-                    <!-- Delete button (visible on hover) -->
-                    <button
-                      @click.stop="removeNotification(notif.id)"
-                      class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-50"
-                      :title="currentLang === 'ar' ? 'حذف' : 'Supprimer'"
-                    >
-                      <X :size="14" />
-                    </button>
+                    <!-- Unread dot + delete button -->
+                    <div class="flex flex-col items-center gap-1 shrink-0">
+                      <span
+                        v-if="!notif.is_read"
+                        :class="['w-2 h-2 rounded-full', notifStyle(notif.type).dot]"
+                      ></span>
+                      <button
+                        @click="removeNotification(notif.id)"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300 hover:text-red-400"
+                      >
+                        <X :size="14" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 

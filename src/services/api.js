@@ -1330,7 +1330,7 @@ export const adminCleanupInactiveStudents = async () => {
   return response.json()
 }
 
-// src/services/api.js
+// ============= NOTIFICATIONS =============
 
 export const getNotifications = async () => {
   const response = await fetch(`${API_URL}/notifications`, { headers: getHeaders() })
@@ -1348,5 +1348,15 @@ export const deleteNotificationApi = async (notifId) => {
     headers: getHeaders(),
   })
   if (!response.ok) throw new Error('Erreur de suppression')
+  return response.json()
+}
+
+// ✅ FIX: This function was imported in useNotifications.js but was MISSING from api.js
+export const clearAllNotificationsApi = async () => {
+  const response = await fetch(`${API_URL}/notifications`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  })
+  if (!response.ok) throw new Error('Erreur suppression de toutes les notifications')
   return response.json()
 }

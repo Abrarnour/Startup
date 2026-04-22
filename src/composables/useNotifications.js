@@ -22,6 +22,17 @@ export function useNotifications(user) {
     }
   }
 
+  // ✅ FIX: Expose closeToast as a proper function so NavBar template can call it
+  // (Direct `toastNotif = null` in template doesn't work because Vue only
+  // auto-unwraps refs for reading, not for assignment in event handlers)
+  const closeToast = () => {
+    toastNotif.value = null
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+      toastTimer = null
+    }
+  }
+
   // ─── Show in-app toast + native OS notification ─────────────────────────────
   const showOsNotification = (message, type = 'default') => {
     // In-app toast (floating banner inside the app)
@@ -29,9 +40,10 @@ export function useNotifications(user) {
     if (toastTimer) clearTimeout(toastTimer)
     toastTimer = setTimeout(() => {
       toastNotif.value = null
+      toastTimer = null
     }, 7000)
 
-    // OS/Device notification (works when tab is open; Service Worker needed for background)
+    // OS/Device notification (works when tab is open or via Service Worker when closed)
     if ('Notification' in window && Notification.permission === 'granted') {
       const icon = '/belmahilogo.jpg'
       const title =
@@ -40,7 +52,26 @@ export function useNotifications(user) {
           : type === 'reminder'
             ? '⏰ تذكير بالدرس — Belmahi School'
             : '🔔 Belmahi School'
-      new Notification(title, { body: message, icon })
+
+      // Use Service Worker to show notification if available (works when tab is closed)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((registration) => {
+            registration.showNotification(title, {
+              body: message,
+              icon,
+              badge: icon,
+              tag: `belmahi-${Date.now()}`,
+              requireInteraction: false,
+            })
+          })
+          .catch(() => {
+            // Fallback to standard Notification API if SW not available
+            new Notification(title, { body: message, icon })
+          })
+      } else {
+        new Notification(title, { body: message, icon })
+      }
     }
   }
 
@@ -128,7 +159,7 @@ export function useNotifications(user) {
         stopPolling()
       }
     },
-    { immediate: true }, // Run immediately on mount
+    { immediate: true },
   )
 
   // ─── Clean up on component unmount ──────────────────────────────────────────
@@ -145,5 +176,6 @@ export function useNotifications(user) {
     togglePanel,
     removeNotification,
     clearAllNotifications,
+    closeToast, // ✅ NEW: exposed so NavBar can call it cleanly
   }
 }

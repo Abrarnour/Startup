@@ -1691,5 +1691,71 @@ CREATE TABLE IF NOT EXISTS notifications (
 ALTER TABLE notifications ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
+
+-- migration_fix_notifications.sql
+-- Run this once on your PostgreSQL database to fix the conflicting UNIQUE constraints
+-- on the notifications table.
+--
+-- THE PROBLEM:
+--   You have TWO unique constraints that conflict with each other:
+--     1. UNIQUE(user_id, notif_key)  — pair must be unique
+--     2. UNIQUE(notif_key)           — notif_key alone must be globally unique
+--
+--   The server.js cron was using ON CONFLICT (notif_key) DO NOTHING, which only
+--   works if notif_key is globally unique — but the same notif_key was being reused
+--   for different users (e.g. student_15min_group5_2026-04-22 for BOTH student and teacher).
+--   This caused silent insert failures.
+--
+-- THE FIX:
+--   1. Drop the global notif_key unique constraint (keep only user_id + notif_key pair)
+--   2. The new server.js now generates per-user notif_keys (e.g. _s42, _t7, _a1 suffix)
+--      so ON CONFLICT (notif_key) works correctly with the global unique constraint.
+--
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Step 1: Drop the problematic global unique constraint on notif_key alone
+-- (The constraint name from your bdd.sql is notifications_notif_key_unique)
+ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_notif_key_unique;
+
+-- Step 2: Ensure the composite unique constraint exists (user_id + notif_key pair)
+-- This was already defined in CREATE TABLE as UNIQUE(user_id, notif_key)
+-- We just make sure it exists with a known name:
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'notifications_user_notif_key_unique'
+    AND conrelid = 'notifications'::regclass
+  ) THEN
+    ALTER TABLE notifications
+      ADD CONSTRAINT notifications_user_notif_key_unique UNIQUE (user_id, notif_key);
+  END IF;
+END $$;
+
+-- Step 3: Add the global notif_key unique constraint BACK
+-- Now it works because server.js generates user-specific keys (suffix _s{id}, _t{id} etc.)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'notifications_notif_key_unique'
+    AND conrelid = 'notifications'::regclass
+  ) THEN
+    ALTER TABLE notifications
+      ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
+  END IF;
+END $$;
+
+-- Step 4: Add the 'type' column default for 'reminder' (in case it's missing)
+ALTER TABLE notifications
+  ALTER COLUMN type SET DEFAULT 'upcoming_session';
+
+-- Step 5: Verify indexes exist
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
+
+-- Done!
+SELECT 'Migration complete. Notification constraints are now correct.' AS status;
 \unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
 
