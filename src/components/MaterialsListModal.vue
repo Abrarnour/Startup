@@ -33,7 +33,7 @@
         <div
           class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"
         ></div>
-        <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'">Loading materials...</p>
+        <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'">{{ t('materials_loading') }}</p>
       </div>
 
       <!-- Error -->
@@ -58,8 +58,8 @@
         :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
       >
         <span class="text-6xl mb-4 block">📭</span>
-        <p class="text-xl font-bold mb-2">No materials yet</p>
-        <p>The teacher hasn't uploaded any materials for this course.</p>
+        <p class="text-xl font-bold mb-2">{{ t('materials_empty_title') }}</p>
+        <p>{{ t('materials_empty_desc') }}.</p>
       </div>
 
       <!-- Materials List -->

@@ -102,11 +102,11 @@
             </div>
             <div v-else>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="mb-2">
-                Click to select a file or drag and drop
+                {{ t('drag_drop_files') }}
               </p>
               <!-- ✅ CHANGED: 250MB -->
               <p :class="darkMode ? 'text-gray-500' : 'text-gray-500'" class="text-xs">
-                PDF, DOC, DOCX, PPT, MP4, WEBM, Images (Max 250MB)
+                {{ t('file_limits') }}
               </p>
             </div>
           </div>

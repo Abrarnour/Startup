@@ -120,7 +120,7 @@ const generateUpcomingNotifications = async () => {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     const now = new Date()
     // نبحث عن الحصص التي تبدأ بعد 30 دقيقة بالضبط
-    const targetTime = new Date(now.getTime() + 30 * 60 * 1000)
+    const targetTime = new Date(now.getTime() + 15 * 60 * 1000)
     const targetDay = days[targetTime.getDay()]
 
     // تنسيق الوقت HH:MM للبحث في قاعدة البيانات
@@ -146,7 +146,7 @@ const generateUpcomingNotifications = async () => {
     )
 
     for (const session of sessions.rows) {
-      const notifKey = `session_${session.group_id}_${now.toISOString().split('T')[0]}`
+      const notifKey = `session_15min_${session.group_id}_${now.toISOString().split('T')[0]}`
       const roomStr = session.salle ? `القاعة: ${session.salle}` : 'القاعة غير محددة'
 
       // 1. إشعارات الطلاب
@@ -155,7 +155,7 @@ const generateUpcomingNotifications = async () => {
         [session.group_id],
       )
       for (const st of students.rows) {
-        const msg = `اقترب موعد الدرس أيها الطالب! درس "${session.course_title}" يبدأ خلال 30 دقيقة — ${roomStr}`
+        const msg = `اقترب موعد الدرس أيها الطالب! درس "${session.course_title}" يبدأ خلال 15 دقيقة — ${roomStr}`
         await pool.query(
           `INSERT INTO notifications (user_id, notif_key, message) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
           [st.student_id, notifKey, msg],

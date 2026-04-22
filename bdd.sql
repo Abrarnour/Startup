@@ -1687,6 +1687,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, notif_key)
 );
+
+ALTER TABLE notifications ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
 \unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K

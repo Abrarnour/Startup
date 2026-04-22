@@ -10,24 +10,34 @@ import {
   UserPlus,
   Layout,
   LayoutDashboard,
+  Bell,
+  Trash2,
+  X,
 } from 'lucide-vue-next'
 import { Sun, Moon } from 'lucide-vue-next'
 import { Calendar } from 'lucide-vue-next'
 import { useNotifications } from '../composables/useNotifications.js'
 
-// ✅ FIX 1: defineProps AVANT d'utiliser props
+// ✅ defineProps BEFORE using props
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
-  t: { type: Function, default: (k) => k }, // ⬅️ AJOUTER
-  currentLang: { type: String, default: 'fr' }, // ⬅️ AJOUTER
+  t: { type: Function, default: (k) => k },
+  currentLang: { type: String, default: 'fr' },
 })
 
-const emit = defineEmits(['logout', 'toggle-dark-mode', 'toggle-lang']) // ⬅️ ajouter 'toggle-lang'
-// ✅ FIX 2: computed importé + props correctement défini AVANT cette ligne
-const { notifications, unreadCount, showNotifPanel, toastNotif, togglePanel } = useNotifications(
-  computed(() => props.user),
-)
+const emit = defineEmits(['logout', 'toggle-dark-mode', 'toggle-lang'])
+
+// ✅ ALL returned values from useNotifications are destructured, including removeNotification
+const {
+  notifications,
+  unreadCount,
+  showNotifPanel,
+  toastNotif,
+  togglePanel,
+  removeNotification, // ← BUG FIX: was missing before
+  clearAllNotifications,
+} = useNotifications(computed(() => props.user))
 
 const route = useRoute()
 
@@ -35,141 +45,233 @@ const handleLogout = () => {
   emit('logout')
 }
 
-const isActive = (path) => {
-  return route.path === path
+const isActive = (path) => route.path === path
+
+// Format notification timestamp
+const formatTime = (dateStr) => {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now - d
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+
+  if (diffMins < 1) return props.currentLang === 'ar' ? 'الآن' : "À l'instant"
+  if (diffMins < 60)
+    return props.currentLang === 'ar' ? `منذ ${diffMins} دقيقة` : `Il y a ${diffMins} min`
+  if (diffHours < 24)
+    return props.currentLang === 'ar' ? `منذ ${diffHours} ساعة` : `Il y a ${diffHours}h`
+  return d.toLocaleDateString(props.currentLang === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    day: '2-digit',
+    month: 'short',
+  })
+}
+
+// Notification type icon/color
+const notifStyle = (type) => {
+  switch (type) {
+    case 'welcome':
+      return { bg: 'bg-green-50', dot: 'bg-green-500', emoji: '👋' }
+    case 'reminder':
+      return { bg: 'bg-amber-50', dot: 'bg-amber-500', emoji: '⏰' }
+    default:
+      return { bg: 'bg-blue-50', dot: 'bg-blue-500', emoji: '🔔' }
+  }
 }
 </script>
 
 <template>
+  <!-- ─── In-app Toast Notification ─────────────────────────────────────────── -->
+  <!-- Shows as floating banner when a new notification arrives -->
+  <Transition name="toast-slide">
+    <div v-if="toastNotif" class="fixed bottom-6 right-6 z-[9999] max-w-sm w-full">
+      <div
+        class="flex items-start gap-3 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 pr-10"
+      >
+        <span class="text-2xl shrink-0">
+          {{ toastNotif.type === 'welcome' ? '👋' : toastNotif.type === 'reminder' ? '⏰' : '🔔' }}
+        </span>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-bold text-blue-600 mb-1">Belmahi School</p>
+          <p class="text-sm text-gray-800 leading-snug">{{ toastNotif.message }}</p>
+        </div>
+        <button
+          @click="toastNotif = null"
+          class="absolute top-3 right-3 text-gray-300 hover:text-gray-600 transition-colors"
+        >
+          <X :size="16" />
+        </button>
+      </div>
+    </div>
+  </Transition>
+
+  <!-- ─── Main NavBar ────────────────────────────────────────────────────────── -->
   <nav
     :class="darkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : 'deep-blue-gradient'"
     class="shadow-2xl sticky top-0 z-50"
   >
     <div class="max-w-7xl mx-auto px-4">
       <div class="flex items-center justify-between h-16">
+        <!-- LEFT: Logo + controls -->
         <div class="flex items-center gap-3">
+          <!-- Logo -->
           <RouterLink
             to="/"
             class="flex items-center gap-3 text-white hover:text-blue-200 transition-colors"
           >
             <img
               src="/belmahilogo.jpg"
-              alt="Notre ecole"
+              alt="Belmahi School"
               class="w-12 h-12 object-cover rounded-full border-2 border-white shadow-lg"
             />
             <div class="hidden md:block">
-              <h1 class="text-xm font-bold">{{ props.t('nav_portal_title') }}</h1>
+              <h1 class="text-sm font-bold">{{ props.t('nav_portal_title') }}</h1>
               <p class="text-xs text-blue-100">{{ props.t('nav_school_subtitle') }}</p>
             </div>
           </RouterLink>
 
+          <!-- Dark mode toggle -->
           <button
             @click="$emit('toggle-dark-mode')"
             class="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all transform hover:scale-110"
           >
-            <Sun v-if="darkMode" :size="24" />
-            <Moon v-else :size="24" />
+            <Sun v-if="darkMode" :size="24" class="text-white" />
+            <Moon v-else :size="24" class="text-white" />
           </button>
+
+          <!-- Language toggle -->
           <button
             @click="$emit('toggle-lang')"
             :title="props.t('language')"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-sm font-bold tracking-wide"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-sm font-bold"
           >
             <span v-if="currentLang === 'fr'" class="flex items-center gap-1">
-              <span>🇫🇷</span>
-              <span class="hidden sm:inline text-xs">FR</span>
+              <span>🇫🇷</span><span class="hidden sm:inline text-xs">FR</span>
             </span>
             <span v-else class="flex items-center gap-1">
-              <span>🇩🇿</span>
-              <span class="hidden sm:inline text-xs">AR</span>
+              <span>🇩🇿</span><span class="hidden sm:inline text-xs">AR</span>
             </span>
           </button>
 
-          <div class="relative">
+          <!-- ─── NOTIFICATION BELL — only shown when user is logged in ──────── -->
+          <!-- BUG FIX: Added v-if="user" — bell must NOT appear for guests -->
+          <div v-if="user" class="relative">
             <button
               @click="togglePanel"
               class="relative p-2 rounded-full hover:bg-white/10 transition-all"
               :title="props.t('notifications')"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
+              <Bell :size="24" class="text-white" />
+
+              <!-- Red badge — only shown when there are unread notifications -->
               <span
                 v-if="unreadCount > 0"
-                class="absolute top-1 right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white"
-                style="transform: translate(25%, -25%)"
+                class="absolute top-0.5 right-0.5 bg-red-600 text-white text-[10px] min-w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold border-2 border-white px-0.5"
               >
                 {{ unreadCount > 9 ? '9+' : unreadCount }}
               </span>
             </button>
 
-            <div
-              v-if="showNotifPanel"
-              class="absolute left-0 mt-3 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-200 z-50"
-            >
+            <!-- ─── Notification Panel (dropdown) ──────────────────────────────── -->
+            <Transition name="panel-drop">
               <div
-                class="p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10"
+                v-if="showNotifPanel"
+                class="absolute left-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                style="max-height: 480px; display: flex; flex-direction: column"
               >
-                <h3 class="font-bold text-gray-800">{{ props.t('nav_notifications_header') }}</h3>
-              </div>
+                <!-- Panel header -->
+                <div
+                  class="p-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white"
+                >
+                  <div class="flex items-center gap-2">
+                    <Bell :size="18" class="text-blue-600" />
+                    <h3 class="font-bold text-gray-800 text-sm">
+                      {{ currentLang === 'ar' ? 'الإشعارات' : 'Notifications' }}
+                    </h3>
+                    <span
+                      v-if="unreadCount > 0"
+                      class="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full"
+                      >{{ unreadCount }}</span
+                    >
+                  </div>
+                  <!-- Clear all button -->
+                  <button
+                    v-if="notifications.length > 0"
+                    @click="clearAllNotifications"
+                    class="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                    :title="currentLang === 'ar' ? 'مسح الكل' : 'Tout supprimer'"
+                  >
+                    <Trash2 :size="12" />
+                    {{ currentLang === 'ar' ? 'مسح الكل' : 'Tout effacer' }}
+                  </button>
+                </div>
 
-              <div v-if="notifications.length === 0" class="p-6 text-center text-gray-500 text-sm">
-                {{ props.t('no_notif') }}
-              </div>
+                <!-- Empty state -->
+                <div
+                  v-if="notifications.length === 0"
+                  class="p-8 text-center text-gray-400 text-sm flex flex-col items-center gap-3"
+                >
+                  <Bell :size="32" class="text-gray-200" />
+                  <p>{{ currentLang === 'ar' ? 'لا توجد إشعارات' : 'Aucune notification' }}</p>
+                </div>
 
-              <div
-                v-for="notif in notifications"
-                :key="notif.id"
-                class="relative p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors group"
-                :class="!notif.is_read ? 'bg-blue-50/50' : ''"
-              >
-                <div class="pr-6">
-                  <p class="text-sm text-gray-800 font-medium">{{ notif.message }}</p>
-                  <p class="text-xs text-gray-400 mt-1">
+                <!-- Notifications list -->
+                <div v-else class="overflow-y-auto flex-1">
+                  <div
+                    v-for="notif in notifications"
+                    :key="notif.id"
+                    class="relative flex items-start gap-3 p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors group"
+                    :class="!notif.is_read ? notifStyle(notif.type).bg : ''"
+                  >
+                    <!-- Type indicator dot + emoji -->
+                    <div class="shrink-0 flex flex-col items-center gap-1 mt-0.5">
+                      <span class="text-base">{{ notifStyle(notif.type).emoji }}</span>
+                      <span
+                        v-if="!notif.is_read"
+                        class="w-2 h-2 rounded-full"
+                        :class="notifStyle(notif.type).dot"
+                      ></span>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0 pr-6">
+                      <p
+                        class="text-sm text-gray-800 leading-snug"
+                        :class="!notif.is_read ? 'font-medium' : ''"
+                      >
+                        {{ notif.message }}
+                      </p>
+                      <p class="text-xs text-gray-400 mt-1">{{ formatTime(notif.created_at) }}</p>
+                    </div>
+
+                    <!-- Delete button (visible on hover) -->
+                    <button
+                      @click.stop="removeNotification(notif.id)"
+                      class="absolute top-3 right-3 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-50"
+                      :title="currentLang === 'ar' ? 'حذف' : 'Supprimer'"
+                    >
+                      <X :size="14" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Panel footer -->
+                <div class="p-3 border-t border-gray-100 text-center shrink-0">
+                  <p class="text-xs text-gray-400">
                     {{
-                      new Date(notif.created_at).toLocaleTimeString('fr-FR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
+                      currentLang === 'ar'
+                        ? `${notifications.length} إشعار`
+                        : `${notifications.length} notification${notifications.length !== 1 ? 's' : ''}`
                     }}
                   </p>
                 </div>
-                <button
-                  @click.stop="removeNotification(notif.id)"
-                  class="absolute top-4 right-3 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                  title="حذف الإشعار"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
               </div>
-            </div>
+            </Transition>
           </div>
+          <!-- END notification bell — only for logged-in users -->
         </div>
+        <!-- END LEFT -->
 
+        <!-- CENTER: Navigation links -->
         <ul class="flex items-center gap-2">
           <li>
             <RouterLink
@@ -273,6 +375,7 @@ const isActive = (path) => {
           </li>
         </ul>
 
+        <!-- RIGHT: User info + logout / login -->
         <div class="flex items-center gap-3">
           <div v-if="user" class="flex items-center gap-3">
             <div class="hidden md:flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
@@ -281,23 +384,27 @@ const isActive = (path) => {
               <span
                 v-if="user.role === 'admin'"
                 class="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold"
-                >{{ props.t('Admin') }}</span
               >
+                Admin
+              </span>
               <span
                 v-else-if="user.role === 'Parent'"
                 class="ml-2 px-2 py-0.5 bg-blue-400 text-blue-900 rounded-full text-xs font-bold"
-                >{{ props.t('parent_badge') }}</span
               >
+                Parent
+              </span>
               <span
                 v-else-if="user.role === 'teacher'"
                 class="ml-2 px-2 py-0.5 bg-purple-400 text-purple-900 rounded-full text-xs font-bold"
-                >{{ props.t('teacher_badge') }}</span
               >
+                Prof
+              </span>
               <span
                 v-else
                 class="ml-2 px-2 py-0.5 bg-green-400 text-green-900 rounded-full text-xs font-bold"
-                >{{ props.t('student_badge') }}</span
               >
+                Élève
+              </span>
             </div>
 
             <button
@@ -329,22 +436,35 @@ const isActive = (path) => {
 </template>
 
 <style scoped>
-.router-link-active {
-  position: relative;
-}
-
-.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: white;
-  border-radius: 2px;
-}
-
 .deep-blue-gradient {
   background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+}
+
+/* Toast slide-up animation */
+.toast-slide-enter-active,
+.toast-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast-slide-enter-from {
+  opacity: 0;
+  transform: translateY(24px) scale(0.96);
+}
+.toast-slide-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+
+/* Panel drop-down animation */
+.panel-drop-enter-active,
+.panel-drop-leave-active {
+  transition: all 0.2s ease;
+}
+.panel-drop-enter-from {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+.panel-drop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 </style>

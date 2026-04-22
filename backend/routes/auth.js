@@ -97,6 +97,31 @@ router.post('/login', async (req, res) => {
     )
 
     // إرسال البيانات (بدون كلمة المرور)
+    // Insert a "welcome" notification once per day per user
+    // ON CONFLICT DO NOTHING prevents duplicates if they log in multiple times today
+    const today = new Date().toISOString().split('T')[0] // e.g. "2026-04-22"
+    const notifKey = `welcome_${user.id}_${today}`
+
+    const welcomeMessages = {
+      admin: `👋 مرحباً بك في لوحة الإدارة! يمكنك الآن رؤية إشعاراتك هنا وعلى جهازك.`,
+      teacher: `👋 مرحباً أستاذ ${user.name}! ستصلك إشعارات الحصص قبل 15 دقيقة من بدئها.`,
+      student: `👋 مرحباً ${user.name}! ستصلك تذكيرات دروسك قبل 15 دقيقة. يمكنك رؤية إشعاراتك هنا.`,
+      Parent: `👋 مرحباً! ستصلك إشعارات مواعيد دروس أبنائك قبل 15 دقيقة.`,
+    }
+    const welcomeMsg = welcomeMessages[user.role] || `👋 مرحباً بك في مدرسة بلماحي!`
+
+    try {
+      await pool.query(
+        `INSERT INTO notifications (user_id, notif_key, message, type)
+         VALUES ($1, $2, $3, 'welcome')
+         ON CONFLICT (notif_key) DO NOTHING`,
+        [user.id, notifKey, welcomeMsg],
+      )
+    } catch (notifErr) {
+      // Never block login due to notification error
+      console.warn('Welcome notification skipped:', notifErr.message)
+    }
+
     res.json({
       token,
       user: {

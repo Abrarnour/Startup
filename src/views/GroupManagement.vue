@@ -1193,7 +1193,7 @@ onMounted(() => {
                   class="block text-sm font-medium mb-2"
                   :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
                 >
-                  Nom du groupe <span class="text-red-500">*</span>
+                  {{ t('group_name_label_full') }} <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="groupForm.group_name"
@@ -1355,8 +1355,8 @@ onMounted(() => {
                       class="w-full px-4 py-3 border-2 rounded-xl outline-none"
                       @change="initializeManualSessions"
                     >
-                      <option :value="4">4 semaines</option>
-                      <option :value="6">6 semaines</option>
+                      <option :value="4">{{ t('four_weeks') }}</option>
+                      <option :value="6">{{ t('six_weeks') }}</option>
                       <option :value="8">8 semaines</option>
                       <option :value="10">10 semaines</option>
                       <option :value="12">12 semaines</option>
