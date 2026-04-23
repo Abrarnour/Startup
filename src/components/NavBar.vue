@@ -145,10 +145,10 @@ const notifStyle = (type) => {
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-sm font-bold"
           >
             <span v-if="currentLang === 'fr'" class="flex items-center gap-1">
-              <span>🇫🇷</span><span class="hidden sm:inline text-xs">FR</span>
+              <span class="hidden sm:inline text-xs">FR</span>
             </span>
             <span v-else class="flex items-center gap-1">
-              <span>🇩🇿</span><span class="hidden sm:inline text-xs">AR</span>
+              <span class="hidden sm:inline text-xs">AR</span>
             </span>
           </button>
 
