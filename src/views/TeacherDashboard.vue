@@ -326,7 +326,7 @@ onMounted(() => {
                 @click="openUploadModal(course.id)"
                 class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-purple-700 transition-all shadow-md"
               >
-                <span class="text-xl">📤</span>
+                <span class="text-xl"></span>
                 {{ t('upload_course_btn') }}
               </button>
               <button
@@ -338,7 +338,7 @@ onMounted(() => {
                 "
                 class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2"
               >
-                📂 {{ t('view_documents_btn') }} ({{ course.materials_count || 0 }})
+                {{ t('view_documents_btn') }} ({{ course.materials_count || 0 }})
               </button>
             </div>
           </div>

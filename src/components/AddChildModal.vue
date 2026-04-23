@@ -70,7 +70,7 @@ const handleCreateNewChild = async () => {
 
   try {
     await api.registerChild(newChildForm)
-    successMessage.value = '✅ Enfant créé et ajouté avec succès!'
+    successMessage.value = ' Enfant créé et ajouté avec succès!'
     setTimeout(() => {
       emit('child-added')
       closeModal()
@@ -106,7 +106,7 @@ const handleLinkExistingChild = async () => {
 
     // Lier l'enfant
     await api.linkExistingChild(existingChildEmail.value)
-    successMessage.value = '✅ Enfant lié avec succès!'
+    successMessage.value = ' Enfant lié avec succès!'
     setTimeout(() => {
       emit('child-added')
       closeModal()

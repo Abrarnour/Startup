@@ -493,7 +493,7 @@ onMounted(() => {
 
     <div class="mb-4 flex justify-between items-center">
       <h2 :class="props.darkMode ? 'text-white' : 'text-gray-800'" class="text-2xl font-bold">
-        📚 {{ filteredCourses.length }} {{ t('courses_word') }}
+        {{ filteredCourses.length }} {{ t('courses_word') }}
         <span v-if="filteredCourses.length !== courses.length"
           >{{ t('out_of') }} {{ courses.length }}</span
         >

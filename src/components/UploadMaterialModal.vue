@@ -18,7 +18,7 @@
       </button>
 
       <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
-        <span class="text-4xl">📤</span>
+        <span class="text-4xl"></span>
         {{ t('upload_material_title') }}
       </h2>
 

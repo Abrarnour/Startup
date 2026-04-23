@@ -719,7 +719,7 @@ const formatDayOfWeek = (day) => {
 }
 
 const formatPaymentStatus = (status) => {
-  return status === 'paid' ? '✅ Payé' : '❌ Non payé'
+  return status === 'paid' ? ' Payé' : ' Non payé'
 }
 
 const getPaymentStatusClass = (status) => {
@@ -1449,7 +1449,7 @@ onMounted(() => {
                           class="font-bold text-sm"
                           :class="darkMode ? 'text-white' : 'text-gray-900'"
                         >
-                          📅 {{ t('week') }}{{ week }}
+                          {{ t('week') }}{{ week }}
                         </h5>
                         <button
                           type="button"
@@ -1572,7 +1572,7 @@ onMounted(() => {
                     :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'"
                   >
                     <p class="text-sm" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                      💡 <strong>{{ t('tip') }}:</strong> {{ t('sessions_without_date_tip') }}
+                      <strong>{{ t('tip') }}:</strong> {{ t('sessions_without_date_tip') }}
                     </p>
                   </div>
                 </div>
@@ -1703,8 +1703,8 @@ onMounted(() => {
                     :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'"
                   >
                     <p class="text-sm" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                      💡 <strong>{{ t('example') }}</strong> Pour 2 séances/semaine → Séance #1:
-                      Lundi 09:00-11:00, Séance #2: Mercredi 14:00-16:00
+                      <strong>{{ t('example') }}</strong> Pour 2 séances/semaine → Séance #1: Lundi
+                      09:00-11:00, Séance #2: Mercredi 14:00-16:00
                     </p>
                   </div>
                 </div>
@@ -2142,7 +2142,7 @@ onMounted(() => {
                   :class="darkMode ? 'bg-orange-900/20' : 'bg-orange-100'"
                 >
                   <p class="text-sm" :class="darkMode ? 'text-orange-300' : 'text-orange-800'">
-                    💡 <strong>{{ t('example') }}:</strong> Pour 3 séances/semaine → #1: Lundi
+                    <strong>{{ t('example') }}:</strong> Pour 3 séances/semaine → #1: Lundi
                     09:00-11:00, #2: Mercredi 14:00-16:00, #3: Vendredi 16:00-18:00
                   </p>
                 </div>
@@ -2517,7 +2517,7 @@ onMounted(() => {
 
                 <div class="p-3 rounded-lg" :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'">
                   <p class="text-xs" :class="darkMode ? 'text-blue-300' : 'text-blue-800'">
-                    ℹ️ {{ t('auto_account_creation') }}
+                    {{ t('auto_account_creation') }}
                   </p>
                 </div>
               </div>
