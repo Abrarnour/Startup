@@ -55,12 +55,12 @@ onUnmounted(() => io?.disconnect())
 
 // ── Features ──────────────────────────────────────────────────
 const features = computed(() => [
-  { icon: '🎯', num: '01', title: t('f1_title'), desc: t('f1_desc') },
-  { icon: '📅', num: '02', title: t('f2_title'), desc: t('f2_desc') },
-  { icon: '👨‍🏫', num: '03', title: t('f3_title'), desc: t('f3_desc') },
-  { icon: '📊', num: '04', title: t('f4_title'), desc: t('f4_desc') },
-  { icon: '📚', num: '05', title: t('f5_title'), desc: t('f5_desc') },
-  { icon: '🏆', num: '06', title: t('f6_title'), desc: t('f6_desc') },
+  { icon: '', num: '01', title: t('f1_title'), desc: t('f1_desc') },
+  { icon: '', num: '02', title: t('f2_title'), desc: t('f2_desc') },
+  { icon: '', num: '03', title: t('f3_title'), desc: t('f3_desc') },
+  { icon: '', num: '04', title: t('f4_title'), desc: t('f4_desc') },
+  { icon: '', num: '05', title: t('f5_title'), desc: t('f5_desc') },
+  { icon: '', num: '06', title: t('f6_title'), desc: t('f6_desc') },
 ])
 
 // ── Levels ────────────────────────────────────────────────────
