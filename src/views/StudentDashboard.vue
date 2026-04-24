@@ -245,9 +245,11 @@ onMounted(() => {
     </div>
 
     <MaterialsListModal
+      v-if="showMaterialsModal"
       :is-open="showMaterialsModal"
       :course-id="selectedCourseId"
       :dark-mode="darkMode"
+      :user-role="user?.role"
       @close="showMaterialsModal = false"
     />
   </div>
