@@ -245,7 +245,7 @@ router.post('/enroll-child', authMiddleware, parentMiddleware, async (req, res) 
 
     const enrollment = await pool.query(
       `INSERT INTO group_students (group_id, student_id, status, payment_status, enrollment_type, requested_by, request_date, last_payment_date)
-       VALUES ($1,$2,'active','paid','parent_request',$3,CURRENT_TIMESTAMP,CURRENT_DATE) RETURNING *`,
+       VALUES ($1,$2,'inactive','pending','parent_request',$3,CURRENT_TIMESTAMP,CURRENT_DATE) RETURNING *`,
       [group_id, student_id, parentId],
     )
 

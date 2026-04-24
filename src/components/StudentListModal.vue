@@ -46,6 +46,13 @@
 
           <div class="flex items-center gap-2">
             <button
+              @click="handleCleanupPending"
+              class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium mr-2"
+            >
+              إلغاء المعلقين (>14 يوم)
+            </button>
+
+            <button
               @click="handleCleanup"
               class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
             >
@@ -153,26 +160,18 @@
                     {{ student.enrolled_courses }} {{ t('courses_label') }}
                   </span>
                 </td>
-                <td class="p-3">
+                <td class="p-3 text-right flex justify-end gap-2">
+                  <button
+                    @click="manageStudentEnrollments(student)"
+                    class="px-3 py-1.5 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all"
+                  >
+                    إدارة الدورات
+                  </button>
                   <button
                     @click="initiateDelete(student)"
                     class="px-3 py-1.5 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    {{ t('delete') }}
+                    حذف الطالب
                   </button>
                 </td>
               </tr>
@@ -234,6 +233,80 @@
           >
             {{ deleting ? t('deleting') : t('confirm') }}
           </button>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="managingStudent"
+      class="fixed inset-0 flex items-center justify-center bg-black/60 z-[70]"
+    >
+      <div
+        :class="darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'"
+        class="rounded-2xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">
+            دورات: {{ managingStudent.name }} {{ managingStudent.last_name }}
+          </h3>
+          <button @click="managingStudent = null" class="p-2 bg-gray-200 rounded-full text-black">
+            X
+          </button>
+        </div>
+
+        <div v-if="studentEnrollments.length === 0" class="text-center text-gray-500 py-4">
+          لا توجد دورات مسجلة.
+        </div>
+
+        <div
+          v-for="enr in studentEnrollments"
+          :key="enr.enrollment_id"
+          class="border rounded-lg p-4 mb-3"
+          :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="font-bold">{{ enr.course_title }} ({{ enr.group_name }})</h4>
+              <p class="text-sm mt-1">
+                الحالة:
+                <span v-if="enr.status === 'inactive'" class="text-orange-500 font-bold"
+                  >مسجل (مغلق)</span
+                >
+                <span v-else-if="enr.payment_status === 'paid'" class="text-green-500 font-bold"
+                  >مدفوع (مفعل)</span
+                >
+                <span v-else class="text-yellow-500 font-bold">غير مدفوع (مفعل بالثقة)</span>
+              </p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <button
+                v-if="enr.status === 'inactive' || enr.payment_status === 'pending'"
+                @click="updateEnrollment(enr, 'active', 'paid')"
+                class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600"
+              >
+                تأكيد الدفع 🔓
+              </button>
+              <button
+                v-if="enr.payment_status === 'paid' || enr.status === 'inactive'"
+                @click="updateEnrollment(enr, 'active', 'pending')"
+                class="px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded hover:bg-yellow-600"
+              >
+                مفعل (لم يدفع) 🤝
+              </button>
+              <button
+                v-if="enr.status === 'active'"
+                @click="updateEnrollment(enr, 'inactive', 'pending')"
+                class="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded hover:bg-orange-600"
+              >
+                قفل (مسجل) 🔒
+              </button>
+              <button
+                @click="deleteEnrollment(enr)"
+                class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600"
+              >
+                إلغاء التسجيل ❌
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -331,4 +404,80 @@ watch(
     }
   },
 )
+
+const managingStudent = ref(null)
+const studentEnrollments = ref([])
+
+const manageStudentEnrollments = async (student) => {
+  managingStudent.value = student
+  await fetchEnrollments(student.id)
+}
+
+const fetchEnrollments = async (studentId) => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(
+      `https://belmahi-school-production.up.railway.app/api/students/${studentId}/admin-enrollments`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+    studentEnrollments.value = await res.json()
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const updateEnrollment = async (enr, newStatus, newPayment) => {
+  try {
+    const token = localStorage.getItem('token')
+    await fetch(
+      `https://belmahi-school-production.up.railway.app/api/groups/${enr.group_id}/students/${enr.student_id}/state`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus, payment_status: newPayment }),
+      },
+    )
+    await fetchEnrollments(managingStudent.value.id) // Refresh
+  } catch (e) {
+    alert('خطأ في التحديث')
+  }
+}
+
+const deleteEnrollment = async (enr) => {
+  if (!confirm('هل أنت متأكد من إلغاء تسجيل الطالب من هذه الدورة؟')) return
+  try {
+    const token = localStorage.getItem('token')
+    await fetch(
+      `https://belmahi-school-production.up.railway.app/api/groups/${enr.group_id}/students/${enr.student_id}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+    await fetchEnrollments(managingStudent.value.id) // Refresh
+  } catch (e) {
+    alert('خطأ في الحذف')
+  }
+}
+
+const handleCleanupPending = async () => {
+  if (!confirm('هل أنت متأكد من حذف جميع التسجيلات المعلقة (مسجل) منذ أكثر من 14 يوماً ولم تدفع؟'))
+    return
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(
+      `https://belmahi-school-production.up.railway.app/api/groups/cleanup/pending-enrollments`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+    const data = await res.json()
+    alert(`تم إزالة ${data.deleted} تسجيل(ات) بنجاح.`)
+  } catch (e) {
+    alert('خطأ في التنظيف')
+  }
+}
 </script>

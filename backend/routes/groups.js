@@ -1091,4 +1091,41 @@ router.patch('/:id/sessions', authMiddleware, adminOrTeacherMiddleware, async (r
   }
 })
 
+// 1. مسار تغيير حالة الطالب من الإدارة
+router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
+  const { groupId, studentId } = req.params
+  const { status, payment_status } = req.body
+  try {
+    await pool.query(
+      `UPDATE group_students SET status = $1, payment_status = $2
+       WHERE group_id = $3 AND student_id = $4`,
+      [status, payment_status, groupId, studentId],
+    )
+    // تحديث عدد الطلاب الفعليين (النشطين فقط يحجزون مكاناً)
+    await pool.query(
+      `UPDATE groups SET current_students = (SELECT COUNT(*) FROM group_students WHERE group_id = $1 AND status = 'active') WHERE id = $1`,
+      [groupId],
+    )
+    res.json({ success: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// 2. مسار التنظيف الشامل للطلاب المعلقين أكثر من 14 يوم
+router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
+  try {
+    const result = await pool.query(`
+      DELETE FROM group_students
+      WHERE status = 'inactive'
+      AND enrollment_date < NOW() - INTERVAL '14 days'
+    `)
+    res.json({ deleted: result.rowCount })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 export default router

@@ -204,7 +204,16 @@ onMounted(() => {
           {{ course.description }}
         </p>
 
+        <div
+          v-if="course.enrollment_status === 'inactive'"
+          class="mt-4 p-3 bg-orange-100 text-orange-800 rounded-lg text-center text-sm font-bold flex items-center justify-center gap-2"
+        >
+          <Lock :size="16" />
+          مسجل (في انتظار تأكيد الدفع)
+        </div>
+
         <button
+          v-else
           @click="openMaterialsModal(course.course_id)"
           class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md"
         >
@@ -216,17 +225,18 @@ onMounted(() => {
           <span
             :class="{
               'bg-green-100 text-green-800': course.payment_status === 'paid',
-              'bg-yellow-100 text-yellow-800': course.payment_status === 'partial',
-              'bg-red-100 text-red-800': course.payment_status === 'pending',
+              'bg-yellow-100 text-yellow-800':
+                course.payment_status === 'pending' && course.enrollment_status === 'active',
+              'bg-orange-100 text-orange-800': course.enrollment_status === 'inactive',
             }"
             class="text-xs px-3 py-1 rounded-full font-semibold"
           >
             {{
-              course.payment_status === 'paid'
-                ? t('paid_status')
-                : course.payment_status === 'partial'
-                  ? t('partial_status')
-                  : t('pending_status')
+              course.enrollment_status === 'inactive'
+                ? 'مسجل (مغلق)'
+                : course.payment_status === 'paid'
+                  ? t('paid_status')
+                  : 'غير مدفوع (مفعل)'
             }}
           </span>
         </div>
