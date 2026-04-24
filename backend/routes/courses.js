@@ -2,40 +2,34 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import pool from '../db.js'
+import { sendNotif, notifyAllAdmins } from '../notifHelper.js'
 
 const router = express.Router()
 
 // ===== MIDDLEWARES =====
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]
-  if (!token) {
-    return res.status(401).json({ error: 'Token manquant' })
-  }
+  if (!token) return res.status(401).json({ error: 'Token manquant' })
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.user = decoded
     next()
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: 'Token invalide' })
   }
 }
 
 const adminMiddleware = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'admin')
     return res.status(403).json({ error: 'Accès refusé - Admin uniquement' })
-  }
   next()
 }
 
-// ===== ROUTES GET =====
-// 📋 GET /api/courses - Récupérer tous les cours (ou filtrer par enseignant)
+// ===== GET ALL COURSES =====
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id
     const userRole = req.user.role
-
-    // FILE: backend/routes/courses.js
-    // FIND the let query = ` block in GET / route (~line 601) and replace it:
 
     let query = `
       SELECT
@@ -64,17 +58,14 @@ router.get('/', authMiddleware, async (req, res) => {
       FROM courses c
       LEFT JOIN users u ON c.teacher_id = u.id
     `
-
     let params = [userId]
 
-    // Si c'est un enseignant, ne montrer QUE ses cours
     if (userRole === 'teacher') {
       query += ' WHERE c.teacher_id = $1'
       params = [userId]
     }
 
     query += ' ORDER BY c.created_at DESC'
-
     const result = await pool.query(query, params)
     res.json(result.rows)
   } catch (error) {
@@ -83,54 +74,38 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 })
 
-// 📖 GET /api/courses/:id - Récupérer un cours spécifique
+// ===== GET ONE COURSE =====
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `
-      SELECT
-        c.*,
-        u.name as teacher_name,
-        u.last_name as teacher_last_name,
-        u.gender as teacher_gender
-      FROM courses c
-      LEFT JOIN users u ON c.teacher_id = u.id
-      WHERE c.id = $1
-    `,
+      `SELECT c.*, u.name as teacher_name, u.last_name as teacher_last_name, u.gender as teacher_gender
+       FROM courses c LEFT JOIN users u ON c.teacher_id = u.id WHERE c.id = $1`,
       [req.params.id],
     )
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cours non trouvé' })
-    }
-
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Cours non trouvé' })
     res.json(result.rows[0])
   } catch (error) {
-    console.error('Erreur récupération cours:', error)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
 
-// 👨‍🏫 GET /api/courses/teachers/list - Liste des enseignants
+// ===== GET TEACHERS LIST =====
 router.get('/teachers/list', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id, name, last_name, gender, email
-      FROM users
-      WHERE role = 'teacher'
-      ORDER BY last_name, name
-    `)
+    const result = await pool.query(
+      `SELECT id, name, last_name, gender, email FROM users WHERE role = 'teacher' ORDER BY last_name, name`,
+    )
     res.json(result.rows)
   } catch (error) {
-    console.error('Erreur récupération enseignants:', error)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
 
-// ===== ROUTES POST =====
-
+// ===== CREATE COURSE =====
+// 🔔 NOTIFICATIONS:
+//   → Teacher assigned: "Admin assigned you to a new course"
+//   → All admins:       "New course created"
 router.post('/', authMiddleware, async (req, res) => {
-  // ✅ Both admin AND teacher can create courses
   if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
     return res.status(403).json({ error: 'Accès refusé' })
   }
@@ -152,37 +127,26 @@ router.post('/', authMiddleware, async (req, res) => {
 
   try {
     if (!title || !teacher_id || !education_level || !year_level || !course_type) {
-      return res.status(400).json({
-        error: 'Champs obligatoires manquants',
-        required: ['title', 'teacher_id', 'education_level', 'year_level', 'course_type'],
-      })
+      return res.status(400).json({ error: 'Champs obligatoires manquants' })
     }
 
-    const teacherCheck = await pool.query('SELECT id FROM users WHERE id = $1 AND role = $2', [
-      teacher_id,
-      'teacher',
-    ])
+    const teacherCheck = await pool.query(
+      'SELECT id, name, last_name FROM users WHERE id = $1 AND role = $2',
+      [teacher_id, 'teacher'],
+    )
     if (teacherCheck.rows.length === 0) {
       return res.status(400).json({ error: 'Enseignant non trouvé' })
     }
 
     const maxYear = { primaire: 5, moyen: 4, secondaire: 3 }
     if (year_level < 1 || year_level > maxYear[education_level]) {
-      return res.status(400).json({
-        error: `Année invalide pour ${education_level}. Doit être entre 1 et ${maxYear[education_level]}`,
-      })
+      return res.status(400).json({ error: `Année invalide pour ${education_level}` })
     }
 
     const result = await pool.query(
-      `
-      INSERT INTO courses (
-        title, teacher_id, description, education_level, year_level,
-        branch, course_type, sessions_per_month, duration_hours,
-        price, max_students_per_group, salle
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-      RETURNING *
-      `,
+      `INSERT INTO courses (title, teacher_id, description, education_level, year_level,
+        branch, course_type, sessions_per_month, duration_hours, price, max_students_per_group, salle)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
         title,
         teacher_id,
@@ -199,42 +163,82 @@ router.post('/', authMiddleware, async (req, res) => {
       ],
     )
 
-    res.status(201).json(result.rows[0])
+    const newCourse = result.rows[0]
+    const teacher = teacherCheck.rows[0]
+    const ts = Date.now()
+
+    // ─── 🔔 Notify the assigned teacher ──────────────────────────────────────
+    if (parseInt(teacher_id) !== req.user.id) {
+      // Admin created and assigned to teacher
+      await sendNotif(
+        pool,
+        teacher_id,
+        `course_assigned_${newCourse.id}_${ts}`,
+        `📚 تم تعيينك كأستاذ لمادة جديدة: "${title}" — يمكنك الآن رؤيتها في لوحة القيادة.`,
+        'assignment',
+      )
+    } else {
+      // Teacher created their own course — notify admins
+      await notifyAllAdmins(
+        pool,
+        `course_created_teacher_${newCourse.id}_${ts}`,
+        `📚 الأستاذ ${teacher.name} ${teacher.last_name} أنشأ مادة جديدة: "${title}".`,
+        'info',
+      )
+    }
+
+    // ─── 🔔 Notify all admins when admin creates a course ────────────────────
+    if (req.user.role === 'admin') {
+      await notifyAllAdmins(
+        pool,
+        `course_new_admin_${newCourse.id}_${ts}`,
+        `✅ تم إنشاء مادة جديدة: "${title}" وتعيينها للأستاذ ${teacher.name} ${teacher.last_name}.`,
+        'info',
+      )
+    }
+
+    res.status(201).json(newCourse)
   } catch (error) {
     console.error('Erreur création cours:', error)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
+
+// ===== UPDATE COURSE =====
+// 🔔 NOTIFICATIONS:
+//   → Teacher: "Your course details were updated"
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { title, description, salle, price } = req.body
 
   try {
-    // Validate required field
     if (!title || title.trim() === '') {
       return res.status(400).json({ error: 'Le titre du cours est obligatoire' })
     }
 
-    // Check the course exists first
-    const existing = await pool.query('SELECT id FROM courses WHERE id = $1', [req.params.id])
-    if (existing.rows.length === 0) {
-      return res.status(404).json({ error: 'Cours non trouvé' })
-    }
+    const existing = await pool.query('SELECT id, title, teacher_id FROM courses WHERE id = $1', [
+      req.params.id,
+    ])
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'Cours non trouvé' })
 
-    // Only update the 4 safe fields — no risk of touching nonexistent columns
     const result = await pool.query(
-      `
-      UPDATE courses
-      SET
-        title       = $1,
-        description = $2,
-        salle       = $3,
-        price       = $4,
-        updated_at  = CURRENT_TIMESTAMP
-      WHERE id = $5
-      RETURNING *
-      `,
+      `UPDATE courses SET title=$1, description=$2, salle=$3, price=$4, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$5 RETURNING *`,
       [title.trim(), description || '', salle || null, parseFloat(price) || 0, req.params.id],
     )
+
+    const oldCourse = existing.rows[0]
+    const ts = Date.now()
+
+    // 🔔 Notify the teacher that their course was modified
+    if (oldCourse.teacher_id) {
+      await sendNotif(
+        pool,
+        oldCourse.teacher_id,
+        `course_updated_${req.params.id}_${ts}`,
+        `✏️ تم تعديل بيانات مادتك "${oldCourse.title}" من قبل الإدارة. تحقق من التفاصيل الجديدة.`,
+        'info',
+      )
+    }
 
     res.json(result.rows[0])
   } catch (error) {
@@ -243,15 +247,66 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// 🗑️ DELETE /api/courses/:id - Supprimer un cours (Admin uniquement)
+// ===== DELETE COURSE =====
+// 🔔 NOTIFICATIONS:
+//   → Teacher: "Your course was removed"
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('DELETE FROM courses WHERE id = $1 RETURNING *', [
+    // Get course info before deleting
+    const info = await pool.query('SELECT id, title, teacher_id FROM courses WHERE id = $1', [
       req.params.id,
     ])
+    if (info.rows.length === 0) return res.status(404).json({ error: 'Cours non trouvé' })
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cours non trouvé' })
+    const course = info.rows[0]
+
+    // Get all students enrolled in this course's groups to notify them
+    const enrolledStudents = await pool.query(
+      `SELECT DISTINCT gs.student_id
+       FROM group_students gs
+       JOIN groups g ON gs.group_id = g.id
+       WHERE g.course_id = $1 AND gs.status = 'active'`,
+      [req.params.id],
+    )
+
+    await pool.query('DELETE FROM courses WHERE id = $1', [req.params.id])
+
+    const ts = Date.now()
+
+    // 🔔 Notify teacher
+    if (course.teacher_id) {
+      await sendNotif(
+        pool,
+        course.teacher_id,
+        `course_deleted_${req.params.id}_${ts}`,
+        `🗑️ تم حذف المادة "${course.title}" من قبل الإدارة.`,
+        'warning',
+      )
+    }
+
+    // 🔔 Notify enrolled students and their parents
+    for (const st of enrolledStudents.rows) {
+      await sendNotif(
+        pool,
+        st.student_id,
+        `course_deleted_student_${req.params.id}_${st.student_id}_${ts}`,
+        `⚠️ المادة "${course.title}" التي كنت مسجلاً فيها تم حذفها من قبل الإدارة.`,
+        'warning',
+      )
+      // Notify their parents too
+      const parents = await pool.query(
+        `SELECT parent_id FROM parent_students WHERE student_id = $1`,
+        [st.student_id],
+      )
+      for (const p of parents.rows) {
+        await sendNotif(
+          pool,
+          p.parent_id,
+          `course_deleted_parent_${req.params.id}_${p.parent_id}_${ts}`,
+          `⚠️ المادة "${course.title}" التي كان ابنك مسجلاً فيها تم حذفها من قبل الإدارة.`,
+          'warning',
+        )
+      }
     }
 
     res.json({ message: 'Cours supprimé avec succès' })
@@ -261,17 +316,13 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   }
 })
 
-// ❤️ POST /api/courses/:id/favorite - Ajouter/Retirer des favoris
+// ===== TOGGLE FAVORITE =====
 router.post('/:id/favorite', authMiddleware, async (req, res) => {
   const courseId = req.params.id
   const userId = req.user.id
-
   try {
     const courseExists = await pool.query('SELECT id FROM courses WHERE id = $1', [courseId])
-
-    if (courseExists.rows.length === 0) {
-      return res.status(404).json({ error: 'Cours non trouvé' })
-    }
+    if (courseExists.rows.length === 0) return res.status(404).json({ error: 'Cours non trouvé' })
 
     const existing = await pool.query(
       'SELECT * FROM favorites WHERE user_id = $1 AND course_id = $2',
@@ -283,16 +334,15 @@ router.post('/:id/favorite', authMiddleware, async (req, res) => {
         userId,
         courseId,
       ])
-      res.json({ isFavorite: false, message: 'Retiré des favoris' })
+      res.json({ isFavorite: false })
     } else {
       await pool.query('INSERT INTO favorites (user_id, course_id) VALUES ($1, $2)', [
         userId,
         courseId,
       ])
-      res.json({ isFavorite: true, message: 'Ajouté aux favoris' })
+      res.json({ isFavorite: true })
     }
   } catch (error) {
-    console.error('Erreur gestion favoris:', error)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
