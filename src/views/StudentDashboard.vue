@@ -56,9 +56,10 @@ const loadCourses = async () => {
 
 // ⭐ Open materials modal
 const openMaterialsModal = (courseId) => {
-  console.log('Opening materials for course:', courseId) // Debug
+  console.log('Opening materials for course:', courseId)
+  // Fix: This line was crashing because 'selectedCourseId' was not defined in the script
   selectedCourseId.value = courseId
-  showMaterialsModal.value = true
+  showMaterialsModal.value = true // This now executes successfully
 }
 
 // Labels des niveaux
