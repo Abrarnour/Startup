@@ -14,38 +14,56 @@ const studentMiddleware = (req, res, next) => {
 }
 
 // GET /api/students/my-courses - جلب دروس الطالب
-// ✅ التعديل المطلوب في backend/routes/students.js
-router.get('/my-courses', authMiddleware, async (req, res) => {
+router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) => {
   try {
     const studentId = req.user.id
+
+    // قمت بإزالة الأعمدة التي قد لا تكون موجودة في جدولك (enrollment_type, requested_by)
+    // لضمان نجاح الاستعلام حتى لو كان الجدول بسيطاً
     const query = `
       SELECT
         c.id as course_id,
         c.title,
         c.description,
+        c.education_level,
+        c.year_level,
+        c.branch,
         c.price,
+        c.course_type,
         t.name as teacher_name,
         t.last_name as teacher_last_name,
+        t.gender as teacher_gender,
         g.id as group_id,
         g.group_name,
         g.day_of_week,
         g.session_start_time,
+        g.session_end_time,
+        g.start_date,
+        g.start_time,
+        g.end_time,
+        g.salle,
         gs.id as enrollment_id,
-        gs.payment_status,
-        gs.status as enrollment_status  -- ⬅️ تأكد من إضافة هذا السطر
+        gs.enrollment_date,
+        gs.payment_status
+        gs.status as enrollment_status
       FROM group_students gs
       JOIN groups g ON gs.group_id = g.id
       JOIN courses c ON g.course_id = c.id
       LEFT JOIN users t ON c.teacher_id = t.id
       WHERE gs.student_id = $1
-      ORDER BY gs.enrollment_date DESC
+      ORDER BY c.title, g.group_name
     `
 
     const result = await pool.query(query, [studentId])
+
+    // إضافة تحقق بسيط في الكونسول للسيرفر للتأكد من البيانات
+    console.log(`Student ${studentId} fetching courses. Found: ${result.rows.length}`)
+
     res.json(result.rows)
   } catch (error) {
-    console.error('API ERROR:', error.message)
-    res.status(500).json({ error: 'Internal Server Error' })
+    // هذا السطر سيطبع تفاصيل الخطأ الحقيقي في تيرمينال فيزوال ستوديو كود
+    console.error('CRITICAL SQL ERROR in students.js:', error.message)
+    res.status(500).json({ error: 'Erreur serveur lors de la récupération des cours' })
   }
 })
 
