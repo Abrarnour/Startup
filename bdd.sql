@@ -1754,7 +1754,7 @@ ALTER TABLE notifications
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
-
+ALTER TABLE group_students ADD COLUMN status VARCHAR(20) DEFAULT 'active';
 -- Done!
 SELECT 'Migration complete. Notification constraints are now correct.' AS status;
 \unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
