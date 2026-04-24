@@ -1,6 +1,6 @@
 // backend/routes/students.js
 import express from 'express'
-import pool from '../db.js' // التأكد من استيراد الاتصال الموحد
+import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 
 const router = express.Router()
@@ -18,8 +18,6 @@ router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) =>
   try {
     const studentId = req.user.id
 
-    // قمت بإزالة الأعمدة التي قد لا تكون موجودة في جدولك (enrollment_type, requested_by)
-    // لضمان نجاح الاستعلام حتى لو كان الجدول بسيطاً
     const query = `
       SELECT
         c.id as course_id,
@@ -44,7 +42,7 @@ router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) =>
         g.salle,
         gs.id as enrollment_id,
         gs.enrollment_date,
-        gs.payment_status
+        gs.payment_status,
         gs.status as enrollment_status
       FROM group_students gs
       JOIN groups g ON gs.group_id = g.id
@@ -56,12 +54,10 @@ router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) =>
 
     const result = await pool.query(query, [studentId])
 
-    // إضافة تحقق بسيط في الكونسول للسيرفر للتأكد من البيانات
     console.log(`Student ${studentId} fetching courses. Found: ${result.rows.length}`)
 
     res.json(result.rows)
   } catch (error) {
-    // هذا السطر سيطبع تفاصيل الخطأ الحقيقي في تيرمينال فيزوال ستوديو كود
     console.error('CRITICAL SQL ERROR in students.js:', error.message)
     res.status(500).json({ error: 'Erreur serveur lors de la récupération des cours' })
   }
