@@ -81,7 +81,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 flex-wrap mb-1">
                 <h3 class="text-lg font-bold">{{ material.title }}</h3>
-                <!-- ✅ SEEN badge -->
+                <!-- Seen badge -->
                 <span
                   v-if="seenIds.has(material.id)"
                   class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-semibold"
@@ -130,7 +130,7 @@
                 {{ expandedVideoId === material.id ? 'Fermer' : 'Regarder' }}
               </button>
 
-              <!-- ✅ DELETE — teacher or admin only -->
+              <!-- DELETE — teacher or admin only -->
               <button
                 v-if="isTeacher"
                 @click.stop="confirmDelete(material)"
@@ -141,7 +141,7 @@
             </div>
           </div>
 
-          <!-- ✅ INLINE VIDEO PLAYER — only shown when expanded -->
+          <!-- INLINE VIDEO PLAYER — only shown when expanded -->
           <div
             v-if="isVideo(material.file_type) && expandedVideoId === material.id"
             class="px-5 pb-5"
@@ -223,8 +223,11 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue' // ✅ FIX 3: added onMounted
 import * as api from '../services/api.js'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ FIX 1: was missing entirely
+
+const { t } = useLanguage() // ✅ FIX 1: t() is now defined — fixes "L.t is not a function"
 
 const API_URL = 'https://belmahi-school-production.up.railway.app/api'
 
@@ -232,7 +235,6 @@ const props = defineProps({
   isOpen: Boolean,
   courseId: Number,
   darkMode: Boolean,
-  // ✅ NEW: pass the user role so teacher can see delete button
   userRole: { type: String, default: 'student' },
 })
 
@@ -241,12 +243,11 @@ const emit = defineEmits(['close'])
 const materials = ref([])
 const loading = ref(false)
 const error = ref(null)
-const expandedVideoId = ref(null) // which video is currently open
-const seenIds = ref(new Set()) // track which materials were seen this session
-const deleteTarget = ref(null) // material pending deletion confirmation
+const expandedVideoId = ref(null)
+const seenIds = ref(new Set())
+const deleteTarget = ref(null)
 const deleting = ref(false)
 
-// Is the current user a teacher or admin?
 const isTeacher = computed(() => props.userRole === 'teacher' || props.userRole === 'admin')
 
 const fetchMaterials = async () => {
@@ -271,19 +272,15 @@ const isVideo = (fileType) => fileType && fileType.startsWith('video/')
 
 const getStreamUrl = (materialId) => {
   const token = localStorage.getItem('token')
-  // We embed the token as a query param so the <video> src works directly
   return `${API_URL}/materials/stream/${materialId}?token=${token}`
 }
 
 const getFileIcon = (fileType) => {
   if (!fileType) return '📄'
-
   if (fileType.includes('pdf')) return '📕'
-  if (fileType.includes('word') || fileType.includest('type_document')) return '📘'
-
+  if (fileType.includes('word') || fileType.includes('document')) return '📘' // ✅ FIX 2: was "includest"
   if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊'
   if (fileType.includes('video')) return '🎬'
-
   if (fileType.includes('image')) return '🖼️'
   return '📄'
 }
@@ -390,7 +387,15 @@ const closeModal = () => {
   emit('close')
 }
 
-// ─── Watch ──────────────────────────────────────────────
+// ─── Watch + Mount ──────────────────────────────────────
+
+// ✅ FIX 3: fetch immediately on mount (handles v-if remount pattern)
+onMounted(() => {
+  if (props.isOpen) {
+    seenIds.value = new Set()
+    fetchMaterials()
+  }
+})
 
 watch(
   () => props.isOpen,
