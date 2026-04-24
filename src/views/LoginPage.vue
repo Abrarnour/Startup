@@ -22,14 +22,13 @@ import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام ال
 const { t, locale } = useLanguage() // ✅ استدعاء دالة الترجمة
 const router = useRouter()
 // دالة لتحديد اتجاه حركة الطبقة الزرقاء بدقة بناءً على اتجاه المتصفح
-const getTransformStyle = () => {
-  if (!isSignUp.value) {
-    return 'translateX(0)' // مكانها الطبيعي
-  }
-  // هنا نفحص الاتجاه مباشرة من ملف الـ HTML
-  const isRtl = document.documentElement.dir === 'rtl'
-  return isRtl ? 'translateX(-100%)' : 'translateX(100%)'
-}
+import { computed } from 'vue'
+const { t, isRTL } = useLanguage()
+
+const overlayTransform = computed(() => {
+  if (!isSignUp.value) return 'translateX(0)'
+  return isRTL.value ? 'translateX(-100%)' : 'translateX(100%)'
+})
 // props لـ Dark Mode
 defineProps({
   darkMode: {
@@ -57,10 +56,72 @@ const registerData = reactive({
   last_name: '',
   email: '',
   password: '',
-  role: 'student', // القيمة الافتراضية
+  role: 'student',
   birthday: '',
   city: '',
+  phone: '',
 })
+
+const algeriaWilayas = [
+  'Adrar',
+  'Chlef',
+  'Laghouat',
+  'Oum El Bouaghi',
+  'Batna',
+  'Béjaïa',
+  'Biskra',
+  'Béchar',
+  'Blida',
+  'Bouira',
+  'Tamanrasset',
+  'Tébessa',
+  'Tlemcen',
+  'Tiaret',
+  'Tizi Ouzou',
+  'Alger',
+  'Djelfa',
+  'Jijel',
+  'Sétif',
+  'Saïda',
+  'Skikda',
+  'Sidi Bel Abbès',
+  'Annaba',
+  'Guelma',
+  'Constantine',
+  'Médéa',
+  'Mostaganem',
+  "M'Sila",
+  'Mascara',
+  'Ouargla',
+  'Oran',
+  'El Bayadh',
+  'Illizi',
+  'Bordj Bou Arréridj',
+  'Boumerdès',
+  'El Tarf',
+  'Tindouf',
+  'Tissemsilt',
+  'El Oued',
+  'Khenchela',
+  'Souk Ahras',
+  'Tipaza',
+  'Mila',
+  'Aïn Defla',
+  'Naâma',
+  'Aïn Témouchent',
+  'Ghardaïa',
+  'Relizane',
+  'Timimoun',
+  'Bordj Badji Mokhtar',
+  'Ouled Djellal',
+  'Béni Abbès',
+  'In Salah',
+  'In Guezzam',
+  'Touggourt',
+  'Djanet',
+  "El M'Ghair",
+  'El Menia',
+]
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
@@ -108,6 +169,19 @@ const handleLogin = async () => {
 // دالة إنشاء الحساب (الجديدة)
 const handleRegister = async () => {
   error.value = ''
+
+  // Email: must have a proper domain (at least one dot after @)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+  if (!emailRegex.test(registerData.email)) {
+    error.value = t('error_registration') + ' — Email invalide'
+    return
+  }
+  // Password: min 8 characters
+  if (registerData.password.length < 8) {
+    error.value = t('password_min_8')
+    return
+  }
+
   loading.value = true
   try {
     // إرسال البيانات للـ Backend (تأكد من أن المسار صحيح في الـ API الخاص بك)
@@ -138,8 +212,8 @@ const handleRegister = async () => {
       class="relative rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 h-[650px] flex"
     >
       <div
-        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-transform duration-700 ease-in-out deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
-        :style="{ transform: getTransformStyle() }"
+        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
+        :style="{ transform: overlayTransform }"
       >
         <div v-if="!isSignUp" class="space-y-6">
           <h2 class="text-4xl font-bold">{{ t('welcome_title') }}</h2>
@@ -182,8 +256,10 @@ const handleRegister = async () => {
         <div
           class="absolute bottom-6 start-6 right-6 p-4 bg-white/10 rounded-xl backdrop-blur-sm text-xs text-start"
         >
-          <p class="font-bold mb-1">🔑 Test Accounts:</p>
-          <span>Etudiant: etudiant@usto.dz | Admin: admin@usto.dz</span>
+          <p class="font-bold mb-1">{{ t('test_accounts_label') }}</p>
+          <span>{{ t('test_student_example') }}</span>
+          <span class="mx-1">|</span>
+          <span>{{ t('test_admin_example') }}</span>
         </div>
       </div>
 
@@ -243,18 +319,26 @@ const handleRegister = async () => {
             :placeholder="t('email')"
             class="w-full p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
           />
+          <input
+            v-model="registerData.phone"
+            type="tel"
+            :placeholder="t('phone_number')"
+            pattern="^(05|06|07)[0-9]{8}$"
+            class="w-full p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
+          />
           <div class="grid grid-cols-2 gap-3">
             <input
               v-model="registerData.birthday"
               type="date"
               class="p-2.5 border rounded-xl bg-gray-50 text-sm text-gray-400"
             />
-            <input
+            <select
               v-model="registerData.city"
-              type="text"
-              :placeholder="t('city')"
-              class="p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500"
-            />
+              class="p-2.5 border rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-blue-500 text-gray-700"
+            >
+              <option value="" disabled>{{ t('wilaya_label') }}</option>
+              <option v-for="w in algeriaWilayas" :key="w" :value="w">{{ w }}</option>
+            </select>
           </div>
           <input
             v-model="registerData.password"
@@ -371,5 +455,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 .deep-blue-gradient {
   background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+}
+
+/* Prevent content flash during transition */
+.login-page > div > div:not(.absolute) {
+  transition: opacity 0.5s ease 0.2s;
 }
 </style>

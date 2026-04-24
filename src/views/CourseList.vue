@@ -18,7 +18,9 @@ import * as api from '../services/api.js'
 import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
-
+// script
+import ChangePasswordModal from '../components/ChangePasswordModal.vue'
+const showChangePwdModal = ref(false)
 const { t } = useLanguage() // ✅ Extract t for translations
 const showStudentModal = ref(false)
 const props = defineProps({
@@ -397,6 +399,12 @@ onMounted(() => {
           <Plus :size="20" />
           {{ t('add_course') }}
         </button>
+        <button
+          @click="showChangePwdModal = true"
+          class="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-all"
+        >
+          <Lock :size="16" /> {{ t('change_my_password') }}
+        </button>
       </div>
 
       <div v-if="showFilters" class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -601,6 +609,11 @@ onMounted(() => {
     :t="t"
     @close="showStudentModal = false"
     @student-deleted="loadStats"
+  />
+  <ChangePasswordModal
+    :show="showChangePwdModal"
+    :dark-mode="darkMode"
+    @close="showChangePwdModal = false"
   />
 </template>
 

@@ -687,10 +687,105 @@ export const translations = {
     material_desc_placeholder: 'Brève description...',
     drag_drop_files: 'Cliquez pour sélectionner un fichier ou glissez-déposez',
     file_limits: 'PDF, DOC, PPT, MP4, Images (Max 250MB)',
+
+    // ── LOGIN PAGE — phone, wilaya, test accounts ──
+    phone_number: 'Numéro de téléphone',
+    wilaya_label: 'Wilaya',
+    test_accounts_label: 'Exemple de comptes:',
+    test_student_example: 'Étudiant: etudiant@belmahi.dz',
+    test_admin_example: 'Admin: admin@belmahi.dz',
+    password_min_8: 'Le mot de passe doit contenir au minimum 8 caractères',
+
+    // ── TEACHER PASSWORD MANAGEMENT ──
+    set_password_btn: 'Définir un mot de passe',
+    change_my_password: 'Changer mon mot de passe',
+    old_password: 'Ancien mot de passe',
+    new_password: 'Nouveau mot de passe',
+    password_changed_success: 'Mot de passe modifié avec succès',
+    password_set_success: 'Mot de passe défini avec succès',
+    teacher_has_no_password: 'Aucun mot de passe défini',
+    wrong_old_password: 'Ancien mot de passe incorrect',
+
+    // ── PARENT DASHBOARD — real price ──
+    price_da_label: '{n} DA / mois',
+    enroll_child_paid: '✅ Inscrire mon enfant',
+
+    // ── STUDENT DASHBOARD — 2 boxes ──
+    my_paid_courses: 'Mes Cours Actifs',
+    my_stats: 'Mes Statistiques',
+    total_courses_enrolled: 'Cours inscrits',
+    courses_paid: 'Cours payés',
+    courses_pending: 'En attente de paiement',
+    enrolled_awaiting_payment: 'Inscrit — en attente de confirmation',
+    enrolled_closed: 'Inscrit (fermé)',
+    unpaid_active: 'Non payé (actif)',
+
+    // ── MATERIALS NOTIFICATION ──
+    new_material_notif: '📚 Nouveau document publié pour le cours',
+
+    // ── CALENDAR (AppCalendar.vue) ──
+    session_details: 'Détails de la séance',
+    teacher: 'Enseignant',
+    location: 'Salle / Lieu',
+    group: 'Groupe',
+
+    confirm_password: 'Confirmer le mot de passe',
+    passwords_not_match: 'Les mots de passe ne correspondent pas',
+    same_password_error: "Le nouveau mot de passe doit être différent de l'ancien",
+    pwd_weak: 'Faible',
+    pwd_medium: 'Moyen',
+    pwd_strong: 'Fort',
   },
 
   // ════════════════════════════════════════
   ar: {
+    confirm_password: 'تأكيد كلمة المرور',
+    passwords_not_match: 'كلمتا المرور غير متطابقتين',
+    same_password_error: 'كلمة المرور الجديدة يجب أن تختلف عن القديمة',
+    pwd_weak: 'ضعيفة',
+    pwd_medium: 'متوسطة',
+    pwd_strong: 'قوية',
+    // ── LOGIN PAGE — phone, wilaya, test accounts ──
+    phone_number: 'رقم الهاتف',
+    wilaya_label: 'الولاية',
+    test_accounts_label: 'أمثلة حسابات:',
+    test_student_example: 'طالب: etudiant@belmahi.dz',
+    test_admin_example: 'مشرف: admin@belmahi.dz',
+    password_min_8: 'يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل',
+
+    // ── TEACHER PASSWORD MANAGEMENT ──
+    set_password_btn: 'تعيين كلمة مرور',
+    change_my_password: 'تغيير كلمة المرور',
+    old_password: 'كلمة المرور القديمة',
+    new_password: 'كلمة المرور الجديدة',
+    password_changed_success: 'تم تغيير كلمة المرور بنجاح',
+    password_set_success: 'تم تعيين كلمة المرور بنجاح',
+    teacher_has_no_password: 'لا توجد كلمة مرور محددة',
+    wrong_old_password: 'كلمة المرور القديمة غير صحيحة',
+
+    // ── PARENT DASHBOARD — real price ──
+    price_da_label: '{n} د.ج / شهر',
+    enroll_child_paid: '✅ تسجيل ابني',
+
+    // ── STUDENT DASHBOARD — 2 boxes ──
+    my_paid_courses: 'دروسي النشطة',
+    my_stats: 'إحصائياتي',
+    total_courses_enrolled: 'الدروس المسجلة',
+    courses_paid: 'دروس مدفوعة',
+    courses_pending: 'في انتظار الدفع',
+    enrolled_awaiting_payment: 'مسجل — في انتظار التأكيد',
+    enrolled_closed: 'مسجل (مغلق)',
+    unpaid_active: 'غير مدفوع (مفعل)',
+
+    // ── MATERIALS NOTIFICATION ──
+    new_material_notif: '📚 تم نشر مستند جديد للدرس',
+
+    // ── CALENDAR (AppCalendar.vue) ──
+    session_details: 'تفاصيل الحصة',
+    teacher: 'الأستاذ',
+    location: 'القاعة / المكان',
+    group: 'المجموعة',
+
     group_name_label_full: 'اسم المجموعة',
     ex_group_a: 'مثال: المجموعة أ',
     ex_room_a: 'مثال: القاعة أ',

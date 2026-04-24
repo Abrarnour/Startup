@@ -7,7 +7,9 @@ import UploadMaterialModal from '../components/UploadMaterialModal.vue'
 import * as api from '../services/api.js'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
+import ChangePasswordModal from '../components/ChangePasswordModal.vue'
 
+const showChangePwdModal = ref(false)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -179,6 +181,14 @@ onMounted(() => {
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
             {{ t('manage_courses_materials') }}
           </p>
+
+          <button
+            @click="showChangePwdModal = true"
+            class="mt-4 inline-flex items-center gap-2 px-5 py-2.5 border-2 border-blue-400 text-blue-600 rounded-xl font-semibold text-sm hover:bg-blue-50 transition-all"
+            :class="darkMode ? 'border-blue-500 text-blue-400 hover:bg-blue-900/20' : ''"
+          >
+            <Lock :size="16" /> {{ t('change_my_password') }}
+          </button>
         </div>
       </div>
 
@@ -463,6 +473,11 @@ onMounted(() => {
       :dark-mode="darkMode"
       :user-role="user?.role"
       @close="showMaterialsModal = false"
+    />
+    <ChangePasswordModal
+      :show="showChangePwdModal"
+      :dark-mode="darkMode"
+      @close="showChangePwdModal = false"
     />
   </div>
 </template>

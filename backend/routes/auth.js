@@ -293,4 +293,77 @@ router.delete(
   },
 )
 
+// ─── SET / RESET TEACHER PASSWORD (admin only) ──────────────────────────────
+router.patch('/teacher/:id/set-password', authMiddleware, adminMiddleware, async (req, res) => {
+  const teacherId = parseInt(req.params.id)
+  const { new_password } = req.body
+  if (!new_password || new_password.length < 8) {
+    return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 8 caractères' })
+  }
+  try {
+    const result = await pool.query(
+      'UPDATE users SET password = $1 WHERE id = $2 AND role = $3 RETURNING id, name, last_name, email',
+      [new_password, teacherId, 'teacher'],
+    )
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Enseignant non trouvé' })
+    }
+    await sendNotif(
+      pool,
+      teacherId,
+      `pwd_reset_${teacherId}_${Date.now()}`,
+      `🔐 Votre mot de passe a été modifié par l'administrateur. Veuillez contacter l'administration si ce n'était pas prévu.`,
+      'warning',
+    )
+    res.json({ message: 'Mot de passe défini avec succès' })
+  } catch (err) {
+    console.error('Erreur set-password:', err.message)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// ─── ADMIN CHANGES OWN PASSWORD ──────────────────────────────────────────────
+router.patch('/change-my-password', authMiddleware, async (req, res) => {
+  const { old_password, new_password } = req.body
+  if (!old_password || !new_password || new_password.length < 8) {
+    return res.status(400).json({ error: 'Champs manquants ou mot de passe trop court (min 8)' })
+  }
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id])
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Utilisateur non trouvé' })
+
+    const user = result.rows[0]
+    // Plain-text comparison (your app stores passwords as plain text currently)
+    if (user.password !== old_password) {
+      return res.status(401).json({ error: 'Ancien mot de passe incorrect' })
+    }
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [new_password, req.user.id])
+    res.json({ message: 'Mot de passe modifié avec succès' })
+  } catch (err) {
+    console.error('Erreur change-password:', err.message)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// ─── CHANGE OWN PASSWORD (teacher, admin, parent, student) ───────────────────
+router.patch('/change-my-password', authMiddleware, async (req, res) => {
+  const { old_password, new_password } = req.body
+  if (!old_password || !new_password || new_password.length < 8) {
+    return res.status(400).json({ error: 'Champs manquants ou mot de passe trop court (min 8)' })
+  }
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id])
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Utilisateur non trouvé' })
+
+    const user = result.rows[0]
+    if (user.password !== old_password) {
+      return res.status(401).json({ error: 'Ancien mot de passe incorrect' })
+    }
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [new_password, req.user.id])
+    res.json({ message: 'Mot de passe modifié avec succès' })
+  } catch (err) {
+    console.error('Erreur change-password:', err.message)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 export default router

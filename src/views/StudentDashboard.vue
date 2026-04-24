@@ -136,106 +136,159 @@ onMounted(() => {
       </p>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else>
+      <!-- ─── STATS BOX ──────────────────────────────────────────── -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div
+          :class="darkMode ? 'bg-gray-800' : 'bg-white'"
+          class="rounded-xl shadow-lg p-5 text-center"
+        >
+          <BookOpen class="mx-auto mb-2 text-blue-500" :size="28" />
+          <div :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
+            {{ enrolledCourses.length }}
+          </div>
+          <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-xs mt-1">
+            {{ t('total_courses_enrolled') }}
+          </div>
+        </div>
+        <div
+          :class="darkMode ? 'bg-gray-800' : 'bg-white'"
+          class="rounded-xl shadow-lg p-5 text-center"
+        >
+          <Users class="mx-auto mb-2 text-green-500" :size="28" />
+          <div :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
+            {{ enrolledCourses.filter((c) => c.payment_status === 'paid').length }}
+          </div>
+          <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-xs mt-1">
+            {{ t('courses_paid') }}
+          </div>
+        </div>
+        <div
+          :class="darkMode ? 'bg-gray-800' : 'bg-white'"
+          class="rounded-xl shadow-lg p-5 text-center"
+        >
+          <Clock class="mx-auto mb-2 text-orange-500" :size="28" />
+          <div :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
+            {{ enrolledCourses.filter((c) => c.payment_status !== 'paid').length }}
+          </div>
+          <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-xs mt-1">
+            {{ t('courses_pending') }}
+          </div>
+        </div>
+        <div
+          :class="darkMode ? 'bg-gray-800' : 'bg-white'"
+          class="rounded-xl shadow-lg p-5 text-center"
+        >
+          <Calendar class="mx-auto mb-2 text-purple-500" :size="28" />
+          <div :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-2xl font-bold">
+            {{ enrolledCourses.filter((c) => c.enrollment_status === 'active').length }}
+          </div>
+          <div :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-xs mt-1">
+            {{ t('enrolled_courses') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── BOX 1: PAID / ACTIVE COURSES ───────────────────────── -->
+      <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
+        <h2
+          :class="darkMode ? 'text-white' : 'text-gray-900'"
+          class="text-2xl font-bold mb-6 flex items-center gap-3"
+        >
+          <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+          {{ t('my_paid_courses') }}
+        </h2>
+        <div
+          v-if="enrolledCourses.filter((c) => c.enrollment_status === 'active').length === 0"
+          class="text-center py-8 text-gray-400"
+        >
+          <BookOpen :size="40" class="mx-auto mb-3 opacity-30" />
+          <p>{{ t('no_enrolled_courses') }}</p>
+        </div>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div
+            v-for="course in enrolledCourses.filter((c) => c.enrollment_status === 'active')"
+            :key="course.course_id"
+            :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'"
+            class="rounded-xl p-5 border-2 border-transparent hover:border-blue-300 transition-all"
+          >
+            <div
+              :class="{
+                'bg-gradient-to-r from-green-500 to-emerald-500':
+                  course.education_level === 'primaire',
+                'bg-gradient-to-r from-blue-500 to-cyan-500': course.education_level === 'moyen',
+                'bg-gradient-to-r from-purple-500 to-pink-500':
+                  course.education_level === 'secondaire',
+              }"
+              class="h-1.5 rounded-full mb-4"
+            />
+            <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-lg font-bold mb-2">
+              {{ course.title }}
+            </h3>
+            <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-sm mb-2">
+              {{ formatTeacherName(course) }}
+            </p>
+            <div
+              class="flex items-center gap-2 text-sm mb-3"
+              :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
+            >
+              <Clock :size="14" />
+              <span
+                >{{ course.day_of_week }} {{ course.session_start_time }}–{{
+                  course.session_end_time
+                }}</span
+              >
+            </div>
+            <div class="flex items-center justify-between">
+              <span
+                class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 font-semibold"
+              >
+                {{ t('paid_status') }}
+              </span>
+              <button
+                @click="openMaterialsModal(course.course_id)"
+                class="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-xs font-bold hover:from-blue-600 hover:to-indigo-700 transition-all"
+              >
+                {{ t('view_course_materials') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── BOX 2: PENDING / INACTIVE COURSES ──────────────────── -->
       <div
-        v-for="course in enrolledCourses"
-        :key="course.course_id"
+        v-if="enrolledCourses.filter((c) => c.enrollment_status !== 'active').length > 0"
         :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-        class="rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6"
+        class="rounded-2xl shadow-xl p-6"
       >
-        <div
-          :class="{
-            'bg-gradient-to-r from-green-500 to-emerald-500': course.education_level === 'primaire',
-            'bg-gradient-to-r from-blue-500 to-cyan-500': course.education_level === 'moyen',
-            'bg-gradient-to-r from-purple-500 to-pink-500': course.education_level === 'secondaire',
-          }"
-          class="h-2 rounded-full mb-4"
-        />
-
-        <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold mb-2">
-          {{ course.title }}
-        </h3>
-
-        <div class="mb-3">
-          <span
-            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800"
+        <h2
+          :class="darkMode ? 'text-white' : 'text-gray-900'"
+          class="text-2xl font-bold mb-6 flex items-center gap-3"
+        >
+          <span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span>
+          {{ t('courses_pending') }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div
+            v-for="course in enrolledCourses.filter((c) => c.enrollment_status !== 'active')"
+            :key="course.course_id"
+            :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'"
+            class="rounded-xl p-5 opacity-80 border-2 border-orange-200"
           >
-            {{ getLevelLabel(course.education_level) }} - {{ course.year_level }}
-            {{ t('year_suffix') }}
-          </span>
-        </div>
-
-        <div
-          :class="darkMode ? 'text-gray-300' : 'text-gray-600'"
-          class="flex items-center gap-2 mb-3"
-        >
-          <Users :size="18" />
-          <span class="font-semibold">{{ formatTeacherName(course) }}</span>
-        </div>
-
-        <div
-          :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-          class="flex items-center gap-2 mb-3"
-        >
-          <Calendar :size="18" />
-          <span>{{ course.group_name }}</span>
-        </div>
-
-        <div
-          v-if="course.day_of_week"
-          :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-          class="flex items-center gap-2 mb-4"
-        >
-          <Clock :size="18" />
-          <span>
-            {{ course.day_of_week }} - {{ course.session_start_time }} {{ t('to_time') }}
-            {{ course.session_end_time }}
-          </span>
-        </div>
-
-        <p
-          v-if="course.description"
-          :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-          class="text-sm mb-4 line-clamp-2"
-        >
-          {{ course.description }}
-        </p>
-
-        <div
-          v-if="course.enrollment_status === 'inactive'"
-          class="mt-4 p-3 bg-orange-100 text-orange-800 rounded-lg text-center text-sm font-bold flex items-center justify-center gap-2"
-        >
-          <Lock :size="16" />
-          مسجل (في انتظار تأكيد الدفع)
-        </div>
-
-        <button
-          v-else
-          @click="openMaterialsModal(course.course_id)"
-          class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md"
-        >
-          <span class="text-xl">📚</span>
-          {{ t('view_course_materials') }}
-        </button>
-
-        <div class="mt-3 text-center">
-          <span
-            :class="{
-              'bg-green-100 text-green-800': course.payment_status === 'paid',
-              'bg-yellow-100 text-yellow-800':
-                course.payment_status === 'pending' && course.enrollment_status === 'active',
-              'bg-orange-100 text-orange-800': course.enrollment_status === 'inactive',
-            }"
-            class="text-xs px-3 py-1 rounded-full font-semibold"
-          >
-            {{
-              course.enrollment_status === 'inactive'
-                ? 'مسجل (مغلق)'
-                : course.payment_status === 'paid'
-                  ? t('paid_status')
-                  : 'غير مدفوع (مفعل)'
-            }}
-          </span>
+            <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-lg font-bold mb-2">
+              {{ course.title }}
+            </h3>
+            <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-sm mb-3">
+              {{ formatTeacherName(course) }}
+            </p>
+            <div class="flex items-center gap-2">
+              <Lock :size="14" class="text-orange-500" />
+              <span class="text-xs text-orange-700 font-semibold">
+                {{ t('enrolled_awaiting_payment') }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

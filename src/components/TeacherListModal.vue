@@ -287,6 +287,7 @@ import { getAdminTeachersList } from '../services/api.js'
 import { Search, X, User, Mail, Phone, Trash2, AlertTriangle, Loader2 } from 'lucide-vue-next'
 // In <script setup>
 import { adminDeleteUser } from '../services/api.js' // Add this import
+
 const confirmTarget = ref(null)
 const deleting = ref(false)
 const props = defineProps({

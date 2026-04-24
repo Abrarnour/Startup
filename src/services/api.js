@@ -1360,3 +1360,38 @@ export const clearAllNotificationsApi = async () => {
   if (!response.ok) throw new Error('Erreur suppression de toutes les notifications')
   return response.json()
 }
+
+// Set / reset a teacher's password (admin only)
+export const setTeacherPassword = async (teacherId, newPassword) => {
+  const token = localStorage.getItem('token')
+  const res = await fetch(`${API_URL}/auth/teacher/${teacherId}/set-password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ new_password: newPassword }),
+  })
+  if (!res.ok) {
+    const d = await res.json()
+    throw new Error(d.error)
+  }
+  return res.json()
+}
+
+// Admin changes their own password
+
+// Change own password (works for any role: teacher, admin...)
+export const changeMyPassword = async (oldPassword, newPassword) => {
+  const token = localStorage.getItem('token')
+  const res = await fetch(`${API_URL}/auth/change-my-password`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+  })
+  if (!res.ok) {
+    const d = await res.json()
+    throw new Error(d.error)
+  }
+  return res.json()
+}

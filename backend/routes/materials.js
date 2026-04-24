@@ -8,7 +8,7 @@ import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-
+import { sendNotif } from '../notifHelper.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
@@ -101,6 +101,29 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
       RETURNING *`,
       [course_id, teacher_id, title, description, fileName, filePath, fileType, fileSize],
     )
+
+    // Notify all enrolled students in this course
+    try {
+      const enrolledStudents = await pool.query(
+        `SELECT DISTINCT gs.student_id
+         FROM group_students gs
+         JOIN groups g ON g.id = gs.group_id
+         WHERE g.course_id = $1 AND gs.status = 'active'`,
+        [course_id],
+      )
+      const materialId = result.rows[0].id
+      for (const row of enrolledStudents.rows) {
+        await sendNotif(
+          pool,
+          row.student_id,
+          `new_material_${materialId}_s${row.student_id}`,
+          ` مستند جديد نُشر في درسك: "${title}"`,
+          'assignment',
+        )
+      }
+    } catch (notifErr) {
+      console.warn('Notification error after upload:', notifErr.message)
+    }
 
     res.status(201).json({
       message: 'Fichier téléchargé avec succès',

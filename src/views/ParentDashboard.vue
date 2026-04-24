@@ -605,9 +605,17 @@ onMounted(() => {
                   :class="props.darkMode ? 'bg-gray-700' : 'bg-gray-50'"
                   class="p-2 rounded-lg text-sm flex items-center gap-1"
                 >
-                  <DollarSign :size="14" /><span class="font-semibold text-green-600">{{
-                    t('free')
-                  }}</span>
+                  <DollarSign :size="14" />
+                  <span
+                    :class="!course.price || course.price == 0 ? 'text-green-600' : 'text-blue-700'"
+                    class="font-semibold"
+                  >
+                    {{
+                      !course.price || course.price == 0
+                        ? t('free')
+                        : `${parseFloat(course.price).toLocaleString('fr-DZ')} DA`
+                    }}
+                  </span>
                 </div>
                 <div
                   :class="props.darkMode ? 'bg-gray-700' : 'bg-gray-50'"
@@ -621,7 +629,13 @@ onMounted(() => {
                 :disabled="children.length === 0"
                 class="w-full py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {{ children.length > 0 ? t('enroll_child_free') : t('add_child_first') }}
+                {{
+                  children.length === 0
+                    ? t('add_child_first')
+                    : !course.price || course.price == 0
+                      ? t('enroll_child_free')
+                      : t('enroll_child_paid')
+                }}
               </button>
             </div>
           </div>
