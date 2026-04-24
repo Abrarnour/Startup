@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { BookOpen, Calendar, Users, Clock } from 'lucide-vue-next'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
-
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
 
@@ -245,9 +244,11 @@ onMounted(() => {
     </div>
 
     <MaterialsListModal
+      v-if="showMaterialsModal"
       :is-open="showMaterialsModal"
       :course-id="selectedCourseId"
       :dark-mode="darkMode"
+      :user-role="user?.role"
       @close="showMaterialsModal = false"
     />
   </div>
