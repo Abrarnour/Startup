@@ -4,12 +4,7 @@ import { BookOpen, Calendar, Users, Clock } from 'lucide-vue-next'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
-const selectedCourseId = ref(null) // <--- ADD THIS LINE
 
-const openMaterialsModal = (courseId) => {
-  selectedCourseId.value = courseId // Store the ID
-  showMaterialsModal.value = true // Open the modal
-}
 const { t } = useLanguage() // ⬅️ تفعيل دالة الترجمة
 
 const props = defineProps({
