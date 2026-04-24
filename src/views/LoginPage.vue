@@ -17,13 +17,12 @@ import {
 } from 'lucide-vue-next'
 import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
-import { useLanguage } from '../composables/useLanguage.js' // ✅ نظام اللغة
+import { useLanguage } from '../composables/useLanguage.js'
 
-const { t, locale } = useLanguage() // ✅ استدعاء دالة الترجمة
 const router = useRouter()
 // دالة لتحديد اتجاه حركة الطبقة الزرقاء بدقة بناءً على اتجاه المتصفح
 import { computed } from 'vue'
-const { t, isRTL } = useLanguage()
+const { t, isRTL, local } = useLanguage()
 
 const overlayTransform = computed(() => {
   if (!isSignUp.value) return 'translateX(0)'

@@ -51,7 +51,7 @@ router.post('/register', async (req, res) => {
       pool,
       newUser.rows[0].id,
       `welcome_register_${newUser.rows[0].id}`,
-      `🎉 مرحباً بك ${name}! تم إنشاء حسابك في مدرسة بلماحي بنجاح. يمكنك الآن تسجيل الدخول والاطلاع على إشعاراتك.`,
+      ` مرحباً بك ${name}! تم إنشاء حسابك في مدرسة بلماحي بنجاح. يمكنك الآن تسجيل الدخول والاطلاع على إشعاراتك.`,
       'welcome',
     )
 
@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
     await notifyAllAdmins(
       pool,
       `new_register_${newUser.rows[0].id}_${Date.now()}`,
-      `👤 مستخدم جديد سجّل: ${name} ${last_name} (${role}) — ${email}.`,
+      ` مستخدم جديد سجّل: ${name} ${last_name} (${role}) — ${email}.`,
       'info',
     )
 
@@ -96,12 +96,12 @@ router.post('/login', async (req, res) => {
     const today = new Date().toISOString().split('T')[0]
     const notifKey = `welcome_${user.id}_${today}`
     const welcomeMessages = {
-      admin: `👋 مرحباً بك في لوحة الإدارة! يمكنك الآن رؤية إشعاراتك هنا وعلى جهازك.`,
-      teacher: `👋 مرحباً أستاذ ${user.name}! ستصلك إشعارات الحصص قبل 15 دقيقة من بدئها.`,
-      student: `👋 مرحباً ${user.name}! ستصلك تذكيرات دروسك قبل 15 دقيقة. يمكنك رؤية إشعاراتك هنا.`,
-      Parent: `👋 مرحباً! ستصلك إشعارات مواعيد دروس أبنائك قبل 15 دقيقة.`,
+      admin: `مرحباً بك في لوحة الإدارة! يمكنك الآن رؤية إشعاراتك هنا وعلى جهازك.`,
+      teacher: ` مرحباً أستاذ ${user.name}! ستصلك إشعارات الحصص قبل 15 دقيقة من بدئها.`,
+      student: ` مرحباً ${user.name}! ستصلك تذكيرات دروسك قبل 15 دقيقة. يمكنك رؤية إشعاراتك هنا.`,
+      Parent: ` مرحباً! ستصلك إشعارات مواعيد دروس أبنائك قبل 15 دقيقة.`,
     }
-    const welcomeMsg = welcomeMessages[user.role] || `👋 مرحباً بك في مدرسة بلماحي!`
+    const welcomeMsg = welcomeMessages[user.role] || ` مرحباً بك في مدرسة بلماحي!`
     await sendNotif(pool, user.id, notifKey, welcomeMsg, 'welcome')
 
     res.json({
@@ -154,7 +154,7 @@ router.post('/register-teacher', authMiddleware, adminMiddleware, async (req, re
       pool,
       teacherId,
       `teacher_created_${teacherId}`,
-      `🎉 مرحباً أستاذ ${name} ${last_name}! تم إنشاء حسابك في مدرسة بلماحي. بريدك: ${email}. ستصلك إشعارات حصصك تلقائياً.`,
+      ` مرحباً أستاذ ${name} ${last_name}! تم إنشاء حسابك في مدرسة بلماحي. بريدك: ${email}. ستصلك إشعارات حصصك تلقائياً.`,
       'welcome',
     )
 
@@ -162,7 +162,7 @@ router.post('/register-teacher', authMiddleware, adminMiddleware, async (req, re
     await notifyAllAdmins(
       pool,
       `teacher_added_admin_${teacherId}_${ts}`,
-      `👨‍🏫 تم إضافة أستاذ جديد: ${name} ${last_name} — ${email}.`,
+      ` تم إضافة أستاذ جديد: ${name} ${last_name} — ${email}.`,
       'info',
     )
 
@@ -203,14 +203,7 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) =>
           pool,
           row.student_id,
           `teacher_removed_s${row.student_id}_${userId}_${ts}`,
-          `ℹ️ الأستاذ ${targetUser.name} ${targetUser.last_name} لم يعد متاحاً في مادة "${row.title}". ستصلك تحديثات من الإدارة قريباً.`,
-          'warning',
-        )
-        await notifyParentsOf(
-          pool,
-          row.student_id,
-          `teacher_removed_p${row.student_id}_${userId}_${ts}`,
-          `ℹ️ أستاذ ابنك في مادة "${row.title}" لم يعد متاحاً. ستصلك تحديثات من الإدارة.`,
+          `الأستاذ ${targetUser.name} ${targetUser.last_name} لم يعد متاحاً في مادة "${row.title}". ستصلك تحديثات من الإدارة قريباً.`,
           'warning',
         )
       }
@@ -312,7 +305,7 @@ router.patch('/teacher/:id/set-password', authMiddleware, adminMiddleware, async
       pool,
       teacherId,
       `pwd_reset_${teacherId}_${Date.now()}`,
-      `🔐 Votre mot de passe a été modifié par l'administrateur. Veuillez contacter l'administration si ce n'était pas prévu.`,
+      ` Votre mot de passe a été modifié par l'administrateur. Veuillez contacter l'administration si ce n'était pas prévu.`,
       'warning',
     )
     res.json({ message: 'Mot de passe défini avec succès' })
