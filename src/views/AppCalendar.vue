@@ -14,11 +14,12 @@ import {
   AlertCircle,
   X,
   Repeat,
+  Plus,
 } from 'lucide-vue-next'
 import * as api from '../services/api.js'
-import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
+import { useLanguage } from '../composables/useLanguage.js'
 
-const { t, currentLang } = useLanguage() // ✅ Extract translation tools
+const { t, currentLang } = useLanguage()
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
 })
@@ -29,10 +30,54 @@ const currentDate = ref(new Date())
 const events = ref([])
 const loading = ref(true)
 const error = ref('')
-const selectedEvent = ref(null)
+const selectedEvent = ref(null) // single event detail modal
+const selectedDay = ref(null) // "all events of this day" modal
 const userRole = ref('')
+const currentUser = ref(null)
 
-// Reactive translated weekdays
+// ─── Stable color palette (not random — deterministic per course_id / student_name) ────
+// 12 rich, accessible colors. Index is derived from a string hash so it's
+// always the same color for the same course / child — no random, no keys.
+const COLOR_PALETTE = [
+  { bg: 'linear-gradient(135deg,#6366f1,#8b5cf6)', solid: '#6366f1' },
+  { bg: 'linear-gradient(135deg,#ec4899,#f43f5e)', solid: '#ec4899' },
+  { bg: 'linear-gradient(135deg,#0ea5e9,#38bdf8)', solid: '#0ea5e9' },
+  { bg: 'linear-gradient(135deg,#10b981,#34d399)', solid: '#10b981' },
+  { bg: 'linear-gradient(135deg,#f59e0b,#fbbf24)', solid: '#f59e0b' },
+  { bg: 'linear-gradient(135deg,#ef4444,#f97316)', solid: '#ef4444' },
+  { bg: 'linear-gradient(135deg,#14b8a6,#06b6d4)', solid: '#14b8a6' },
+  { bg: 'linear-gradient(135deg,#a855f7,#d946ef)', solid: '#a855f7' },
+  { bg: 'linear-gradient(135deg,#3b82f6,#6366f1)', solid: '#3b82f6' },
+  { bg: 'linear-gradient(135deg,#84cc16,#22c55e)', solid: '#84cc16' },
+  { bg: 'linear-gradient(135deg,#fb923c,#f97316)', solid: '#fb923c' },
+  { bg: 'linear-gradient(135deg,#64748b,#94a3b8)', solid: '#64748b' },
+]
+
+function hashString(str) {
+  if (!str) return 0
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+// ─── Color logic:
+//   • admin / teacher  → color by course_id (stable per course)
+//   • student          → color by group_id  (stable per group)
+//   • Parent           → color by student_name (one color per child)
+function getEventColor(event) {
+  let key = ''
+  if (userRole.value === 'Parent') {
+    key = event.student_name || event.course_title || ''
+  } else {
+    key = String(event.course_id || event.group_id || event.course_title || '')
+  }
+  const idx = hashString(key) % COLOR_PALETTE.length
+  return COLOR_PALETTE[idx]
+}
+
+// ─── Weekdays & month name ────────────────────────────────────────────────────
 const weekDays = computed(() => [
   t('sun'),
   t('mon'),
@@ -43,59 +88,39 @@ const weekDays = computed(() => [
   t('sat'),
 ])
 
-const educationLevels = computed(() => [
-  {
-    key: 'primaire',
-    label: t('level_primary'),
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  },
-  {
-    key: 'moyen',
-    label: t('level_middle'),
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  },
-  {
-    key: 'secondaire',
-    label: t('level_secondary'),
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  },
-])
-
-const monthName = computed(() => {
-  return currentDate.value.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
+const monthName = computed(() =>
+  currentDate.value.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     month: 'long',
-  })
-})
+  }),
+)
+const currentYear = computed(() => currentDate.value.getFullYear())
 
-const currentYear = computed(() => {
-  return currentDate.value.getFullYear()
-})
-
+// ─── Calendar grid ─────────────────────────────────────────────────────────────
 const calendarDays = computed(() => {
   const year = currentDate.value.getFullYear()
   const month = currentDate.value.getMonth()
-
   const firstDay = new Date(year, month, 1)
   const startingDayOfWeek = firstDay.getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const daysInPrevMonth = new Date(year, month, 0).getDate()
 
   const days = []
+  const today = new Date()
 
+  // Previous month filler
   for (let i = startingDayOfWeek - 1; i >= 0; i--) {
     const date = daysInPrevMonth - i
-    const fullDate = new Date(year, month - 1, date)
     days.push({
       id: `prev-${date}`,
       date,
-      fullDate,
+      fullDate: new Date(year, month - 1, date),
       isCurrentMonth: false,
       isToday: false,
       events: [],
     })
   }
 
-  const today = new Date()
+  // Current month days — ALL events (no slice here)
   for (let date = 1; date <= daysInMonth; date++) {
     const fullDate = new Date(year, month, date)
     const isToday =
@@ -104,7 +129,10 @@ const calendarDays = computed(() => {
       fullDate.getFullYear() === today.getFullYear()
 
     const dateString = fullDate.toISOString().split('T')[0]
+    // ✅ FIX: collect ALL events for this day (not slice)
     const dayEvents = events.value.filter((e) => e.date === dateString)
+    // ✅ Sort by start time so the earliest course shows first
+    dayEvents.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
 
     days.push({
       id: `curr-${date}`,
@@ -116,13 +144,13 @@ const calendarDays = computed(() => {
     })
   }
 
+  // Next month filler
   const remainingDays = 42 - days.length
   for (let date = 1; date <= remainingDays; date++) {
-    const fullDate = new Date(year, month + 1, date)
     days.push({
       id: `next-${date}`,
       date,
-      fullDate,
+      fullDate: new Date(year, month + 1, date),
       isCurrentMonth: false,
       isToday: false,
       events: [],
@@ -132,11 +160,7 @@ const calendarDays = computed(() => {
   return days
 })
 
-const getEventColor = (event) => {
-  const level = educationLevels.value.find((l) => l.key === event.education_level)
-  return level ? level.color : 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
-}
-
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const getLevelLabel = (level) => {
   const labels = {
     primaire: t('level_primary'),
@@ -146,9 +170,7 @@ const getLevelLabel = (level) => {
   return labels[level] || level
 }
 
-const getSuffix = (year) => {
-  return year === 1 && currentLang.value !== 'ar' ? 'ère' : 'ème'
-}
+const getSuffix = (year) => (year === 1 && currentLang.value !== 'ar' ? 'ère' : 'ème')
 
 const formatTime = (time) => {
   if (!time) return ''
@@ -165,47 +187,63 @@ const formatDate = (dateString) => {
   })
 }
 
+const formatDayHeader = (fullDate) => {
+  return fullDate.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
 const previousMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1)
 }
-
 const nextMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
 }
-
-const today = () => {
+const goToday = () => {
   currentDate.value = new Date()
 }
 
-const showEventDetails = (event) => {
+// ─── Modal controls ────────────────────────────────────────────────────────────
+const showEventDetails = (event, e) => {
+  e?.stopPropagation()
   selectedEvent.value = event
+  selectedDay.value = null
 }
 
-const closeModal = () => {
+// ✅ NEW: Open "all events of this day" modal — triggered by clicking day cell
+//         or the "+N more" indicator
+const openDayModal = (day, e) => {
+  e?.stopPropagation()
+  if (day.events.length === 0) return
+  selectedDay.value = day
   selectedEvent.value = null
 }
 
-const showDayEvents = (day) => {
-  console.log('Show all events for day:', day)
+const closeModals = () => {
+  selectedEvent.value = null
+  selectedDay.value = null
 }
 
+// ─── Fetch events ─────────────────────────────────────────────────────────────
 const fetchEvents = async () => {
   loading.value = true
   error.value = ''
-
   try {
     const user = api.getCurrentUser()
     if (!user) {
       router.push('/login')
       return
     }
-
     userRole.value = user.role
+    currentUser.value = user
 
     const data = await api.getCalendarEvents(user.role)
-    events.value = data.events.map((event, index) => ({
+    events.value = (data.events || []).map((event, index) => ({
       ...event,
-      id: `event-${index}-${event.group_id}-${event.date}`,
+      id: `event-${index}-${event.group_id}-${event.date}-${event.start_time}`,
     }))
   } catch (err) {
     console.error('Erreur chargement calendrier:', err)
@@ -222,51 +260,70 @@ onMounted(() => {
 
 <template>
   <div :class="['calendar-container', { dark: darkMode }]">
-    <div class="calendar-header">
-      <div class="header-content">
-        <div class="title-section">
-          <Calendar class="icon" :size="28" />
-          <div>
-            <h1>{{ t('timetable_title') }}</h1>
-            <p class="subtitle">{{ monthName }} {{ currentYear }}</p>
-          </div>
+    <!-- ─── Header ─────────────────────────────────────────────────────────── -->
+    <div class="cal-header">
+      <div class="cal-header-left">
+        <Calendar class="cal-icon" :size="26" />
+        <div>
+          <h1 class="cal-title">{{ t('timetable_title') }}</h1>
+          <p class="cal-subtitle" style="text-transform: capitalize">
+            {{ monthName }} {{ currentYear }}
+          </p>
         </div>
+      </div>
 
-        <div class="month-nav">
-          <button @click="previousMonth" class="nav-btn">
-            <ChevronLeft :size="20" />
-          </button>
-          <button @click="today" class="today-btn">{{ t('today') }}</button>
-          <button @click="nextMonth" class="nav-btn">
-            <ChevronRight :size="20" />
-          </button>
-        </div>
+      <div class="cal-nav">
+        <button @click="previousMonth" class="nav-btn" :title="t('previous')">
+          <ChevronLeft :size="18" />
+        </button>
+        <button @click="goToday" class="today-btn">{{ t('today') }}</button>
+        <button @click="nextMonth" class="nav-btn" :title="t('next')">
+          <ChevronRight :size="18" />
+        </button>
+      </div>
 
-        <div class="legend">
-          <div v-for="level in educationLevels" :key="level.key" class="legend-item">
-            <div class="color-box" :style="{ background: level.color }"></div>
-            <span>{{ level.label }}</span>
-          </div>
-        </div>
+      <!-- Legend: only shown for admin/teacher (not student/parent — colors are per-course/child) -->
+      <div v-if="['admin', 'teacher'].includes(userRole)" class="cal-legend">
+        <span class="legend-label">{{ t('courses') }}</span>
+        <div
+          v-for="(color, i) in COLOR_PALETTE.slice(0, 5)"
+          :key="i"
+          class="legend-dot"
+          :style="{ background: color.solid }"
+        ></div>
+        <span class="legend-label" style="opacity: 0.6">…</span>
+      </div>
+      <div v-else-if="userRole === 'Parent'" class="cal-legend">
+        <span class="legend-label">{{ t('color_per_child') || 'Couleur par enfant' }}</span>
+      </div>
+      <div v-else class="cal-legend">
+        <span class="legend-label">{{ t('color_per_course') || 'Couleur par matière' }}</span>
       </div>
     </div>
 
-    <div v-if="loading" class="loading-state">
+    <!-- ─── Loading ────────────────────────────────────────────────────────── -->
+    <div v-if="loading" class="state-box">
       <div class="spinner"></div>
       <p>{{ t('loading_calendar') }}</p>
     </div>
 
-    <div v-else-if="error" class="error-state">
-      <AlertCircle :size="48" />
+    <!-- ─── Error ──────────────────────────────────────────────────────────── -->
+    <div v-else-if="error" class="state-box">
+      <AlertCircle :size="44" style="color: #ef4444" />
       <p>{{ error }}</p>
-      <button @click="fetchEvents" class="retry-btn">{{ t('retry') }}</button>
+      <button @click="fetchEvents" class="today-btn" style="margin-top: 1rem">
+        {{ t('retry') }}
+      </button>
     </div>
 
-    <div v-else class="calendar-body">
-      <div class="weekdays">
-        <div v-for="day in weekDays" :key="day" class="weekday">{{ day }}</div>
+    <!-- ─── Calendar body ──────────────────────────────────────────────────── -->
+    <div v-else class="cal-body">
+      <!-- Weekday headers -->
+      <div class="weekdays-row">
+        <div v-for="day in weekDays" :key="day" class="weekday-label">{{ day }}</div>
       </div>
 
+      <!-- Days grid -->
       <div class="days-grid">
         <div
           v-for="day in calendarDays"
@@ -275,73 +332,156 @@ onMounted(() => {
             'day-cell',
             {
               'other-month': !day.isCurrentMonth,
-              today: day.isToday,
+              'is-today': day.isToday,
               'has-events': day.events.length > 0,
             },
           ]"
+          @click="openDayModal(day, $event)"
         >
-          <div class="day-number">{{ day.date }}</div>
+          <!-- Day number + optional plus badge -->
+          <div class="day-top">
+            <span class="day-num">{{ day.date }}</span>
+            <!-- ✅ Plus badge — visible when day has more than 2 events -->
+            <span v-if="day.events.length > 2" class="plus-badge">
+              <Plus :size="10" />{{ day.events.length }}
+            </span>
+          </div>
 
-          <div class="events-list">
+          <!-- Show max 2 events inline, rest hidden behind the modal -->
+          <div class="events-stack">
             <div
               v-for="event in day.events.slice(0, 2)"
               :key="event.id"
-              :class="['event-item', `level-${event.education_level}`]"
-              :style="{ background: getEventColor(event) }"
-              @click="showEventDetails(event)"
+              class="event-pill"
+              :style="{ background: getEventColor(event).bg }"
+              @click="showEventDetails(event, $event)"
             >
-              <div class="event-time">
-                {{ formatTime(event.start_time) }} - {{ formatTime(event.end_time) }}
-              </div>
-              <div class="event-title">{{ event.course_title }}</div>
-              <div class="event-subtitle">
-                {{ event.group_name }}
-                <span v-if="userRole === 'Parent'" class="student-badge">{{
-                  event.student_name
-                }}</span>
-              </div>
+              <span class="pill-time">{{ formatTime(event.start_time) }}</span>
+              <span class="pill-title">
+                <!-- For Parent: show child name first -->
+                <template v-if="userRole === 'Parent' && event.student_name">
+                  {{ event.student_name.split(' ')[0] }} · {{ event.course_title }}
+                </template>
+                <template v-else>{{ event.course_title }}</template>
+              </span>
             </div>
 
-            <div v-if="day.events.length > 2" class="more-events" @click="showDayEvents(day)">
-              +{{ day.events.length - 2 }} {{ t('more_suffix') }}
+            <!-- ✅ "+N more" strip — clicking opens the day modal -->
+            <div
+              v-if="day.events.length > 2"
+              class="more-strip"
+              @click.stop="openDayModal(day, $event)"
+            >
+              +{{ day.events.length - 2 }} {{ t('more_suffix') || 'de plus' }}
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <transition name="modal">
-      <div v-if="selectedEvent" class="modal-overlay" @click.self="closeModal">
-        <div class="modal-content" :style="{ borderTopColor: getEventColor(selectedEvent) }">
-          <button class="close-btn" @click="closeModal">
-            <X :size="24" />
-          </button>
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ✅ NEW: Day modal — all events of a day in one scrollable sheet
+         ═══════════════════════════════════════════════════════════════════ -->
+    <Transition name="fade">
+      <div v-if="selectedDay" class="modal-overlay" @click.self="closeModals">
+        <div class="day-modal" :class="{ dark: darkMode }">
+          <button class="close-btn" @click="closeModals"><X :size="20" /></button>
+          <h3 class="day-modal-title">
+            <Calendar :size="18" style="margin-right: 0.4rem; vertical-align: middle" />
+            {{ formatDayHeader(selectedDay.fullDate) }}
+          </h3>
+          <p class="day-modal-count">
+            {{ selectedDay.events.length }}
+            {{
+              selectedDay.events.length === 1
+                ? t('course_singular') || 'cours'
+                : t('courses_plural') || 'cours'
+            }}
+          </p>
 
-          <div class="modal-header">
-            <div class="event-icon" :style="{ background: getEventColor(selectedEvent) }">
-              <BookOpen :size="32" />
-            </div>
-            <div>
-              <h2>{{ selectedEvent.course_title }}</h2>
-              <p class="modal-subtitle">{{ selectedEvent.group_name }}</p>
+          <div class="day-modal-list">
+            <div
+              v-for="event in selectedDay.events"
+              :key="event.id"
+              class="day-event-card"
+              :style="{ borderLeftColor: getEventColor(event).solid }"
+              @click="showEventDetails(event, $event)"
+            >
+              <!-- Color strip -->
+              <div class="dcard-accent" :style="{ background: getEventColor(event).bg }">
+                <BookOpen :size="18" />
+              </div>
+
+              <div class="dcard-body">
+                <div class="dcard-title">{{ event.course_title }}</div>
+                <div class="dcard-meta">
+                  <!-- Time -->
+                  <span class="dcard-tag">
+                    <Clock :size="12" />
+                    {{ formatTime(event.start_time) }} – {{ formatTime(event.end_time) }}
+                  </span>
+                  <!-- Room -->
+                  <span v-if="event.salle" class="dcard-tag">
+                    <MapPin :size="12" />{{ event.salle }}
+                  </span>
+                  <!-- Teacher -->
+                  <span v-if="event.teacher_name" class="dcard-tag">
+                    <User :size="12" />{{ event.teacher_name }}
+                  </span>
+                  <!-- Group -->
+                  <span class="dcard-tag"> <Users :size="12" />{{ event.group_name }} </span>
+                  <!-- Child name (parent view) -->
+                  <span
+                    v-if="userRole === 'Parent' && event.student_name"
+                    class="dcard-tag child-tag"
+                  >
+                    👤 {{ event.student_name }}
+                  </span>
+                  <!-- Students count (admin/teacher) -->
+                  <span v-if="['admin', 'teacher'].includes(userRole)" class="dcard-tag">
+                    {{ event.current_students || 0 }}/{{ event.max_students || 30 }} élèves
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+    </Transition>
 
-          <div class="modal-body">
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         Event detail modal
+         ═══════════════════════════════════════════════════════════════════ -->
+    <Transition name="fade">
+      <div v-if="selectedEvent" class="modal-overlay" @click.self="closeModals">
+        <div
+          class="detail-modal"
+          :class="{ dark: darkMode }"
+          :style="{ '--event-color': getEventColor(selectedEvent).solid }"
+        >
+          <button class="close-btn" @click="closeModals"><X :size="20" /></button>
+
+          <div class="detail-hero" :style="{ background: getEventColor(selectedEvent).bg }">
+            <BookOpen :size="28" style="color: white; margin-bottom: 0.5rem" />
+            <h2>{{ selectedEvent.course_title }}</h2>
+            <p>{{ selectedEvent.group_name }}</p>
+          </div>
+
+          <div class="detail-body">
             <div class="detail-row">
-              <Clock :size="20" />
+              <Clock :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('schedule_label') }}</strong>
+                <p>{{ formatDate(selectedEvent.date) }}</p>
                 <p>
-                  {{ formatDate(selectedEvent.date) }} •
-                  {{ formatTime(selectedEvent.start_time) }} -
+                  {{ formatTime(selectedEvent.start_time) }} –
                   {{ formatTime(selectedEvent.end_time) }}
                 </p>
               </div>
             </div>
 
             <div v-if="selectedEvent.teacher_name" class="detail-row">
-              <User :size="20" />
+              <User :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('teacher_label') }}</strong>
                 <p>{{ selectedEvent.teacher_name }}</p>
@@ -349,7 +489,7 @@ onMounted(() => {
             </div>
 
             <div v-if="selectedEvent.salle" class="detail-row">
-              <MapPin :size="20" />
+              <MapPin :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('room') }}</strong>
                 <p>{{ selectedEvent.salle }}</p>
@@ -357,12 +497,12 @@ onMounted(() => {
             </div>
 
             <div class="detail-row">
-              <GraduationCap :size="20" />
+              <GraduationCap :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('level') }}</strong>
                 <p>
-                  {{ getLevelLabel(selectedEvent.education_level) }} - {{ selectedEvent.year_level
-                  }}{{ currentLang === 'ar' ? ' ' : getSuffix(selectedEvent.year_level) }}
+                  {{ getLevelLabel(selectedEvent.education_level) }} – {{ selectedEvent.year_level
+                  }}{{ currentLang === 'ar' ? '' : getSuffix(selectedEvent.year_level) }}
                   {{ t('year_label') }}
                   <span v-if="selectedEvent.branch"> ({{ selectedEvent.branch }})</span>
                 </p>
@@ -370,7 +510,7 @@ onMounted(() => {
             </div>
 
             <div v-if="userRole === 'Parent' && selectedEvent.student_name" class="detail-row">
-              <Users :size="20" />
+              <Users :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('student_label') }}</strong>
                 <p>{{ selectedEvent.student_name }}</p>
@@ -378,7 +518,7 @@ onMounted(() => {
             </div>
 
             <div v-if="['admin', 'teacher'].includes(userRole)" class="detail-row">
-              <Users :size="20" />
+              <Users :size="18" class="detail-icon" />
               <div>
                 <strong>{{ t('class_size') }}</strong>
                 <p>
@@ -388,361 +528,349 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="type-badge">
+            <div class="type-pill">
               {{
                 selectedEvent.course_type === 'continuous'
                   ? t('continuous_course')
                   : t('single_session')
               }}
-              <span v-if="selectedEvent.is_recurring" class="recurring-badge">
-                <Repeat :size="14" /> {{ t('recurring') }}
+              <span v-if="selectedEvent.is_recurring" class="recurring-tag">
+                <Repeat :size="12" /> {{ t('recurring') }}
               </span>
             </div>
           </div>
         </div>
       </div>
-    </transition>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
-/* ===================================================
-   ✅ FIX 1: CALENDAR CSS - Smaller + No overflow
-   =================================================== */
-
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
 .calendar-container {
-  /* ✅ Changed: min-height: 100vh removed, padding 2rem → 1rem */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --bg: #f0f4ff;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --today-bg: rgba(99, 102, 241, 0.08);
+  --radius: 14px;
+  --shadow: 0 4px 24px rgba(99, 102, 241, 0.1);
+  min-height: 100%;
+  background: var(--bg);
   padding: 1rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .calendar-container.dark {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  --bg: #0f1117;
+  --surface: #1a1d2e;
+  --border: #2d3448;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --today-bg: rgba(99, 102, 241, 0.15);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-.calendar-header {
-  background: white;
-  border-radius: 16px;
-  /* ✅ Changed: padding 2rem → 1rem, margin-bottom 2rem → 1rem */
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.cal-header {
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 1rem 1.5rem;
   margin-bottom: 1rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.calendar-container.dark .calendar-header {
-  background: #1a1a2e;
-  color: white;
-}
-
-.header-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
   flex-wrap: wrap;
-  /* ✅ Changed: gap 2rem → 1rem */
-  gap: 1rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
 }
 
-.title-section {
+.cal-header-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex: 1;
 }
 
-.icon {
-  color: #667eea;
+.cal-icon {
+  color: var(--accent);
 }
 
-h1 {
-  /* ✅ Changed: font-size 2rem → 1.5rem */
-  font-size: 1.5rem;
-  font-weight: 700;
+.cal-title {
   margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.subtitle {
-  margin: 0.15rem 0 0 0;
-  color: #64748b;
-  font-size: 0.9rem;
-  text-transform: capitalize;
+.cal-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
-.month-nav {
+.cal-nav {
   display: flex;
-  gap: 0.5rem;
   align-items: center;
+  gap: 0.4rem;
 }
 
 .nav-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: #f1f5f9;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s;
+  transition: all 0.2s;
 }
-
 .nav-btn:hover {
-  background: #667eea;
+  background: var(--accent);
   color: white;
-  transform: translateY(-2px);
+  border-color: var(--accent);
 }
 
 .today-btn {
-  padding: 0.4rem 1.2rem;
+  padding: 0.4rem 1rem;
   border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.today-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-}
-
-.legend {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-}
-
-.color-box {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-}
-
-.calendar-body {
-  background: white;
-  border-radius: 16px;
-  /* ✅ Changed: padding 2rem → 1rem */
-  padding: 1rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.calendar-container.dark .calendar-body {
-  background: #1a1a2e;
-}
-
-.weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  /* ✅ Changed: gap 1rem → 0.4rem */
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.weekday {
-  text-align: center;
-  font-weight: 600;
-  color: #667eea;
-  font-size: 0.85rem;
-  padding: 0.3rem;
-}
-
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  /* ✅ Changed: gap 1rem → 0.4rem */
-  gap: 0.4rem;
-}
-
-.day-cell {
-  /* ✅ Changed: min-height 120px → 95px — fits screen without scrolling */
-  min-height: 95px;
-  border: 1.5px solid #f1f5f9;
-  border-radius: 10px;
-  /* ✅ Changed: padding 0.5rem → 0.35rem */
-  padding: 0.35rem;
-  background: #fafafa;
-  transition: all 0.3s;
-  cursor: pointer;
-  /* ✅ KEY FIX: prevents events from breaking outside the cell border */
-  overflow: hidden;
-}
-
-.calendar-container.dark .day-cell {
-  border-color: #2d3748;
-  background: #16213e;
-}
-
-.day-cell:hover {
-  border-color: #667eea;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-}
-
-.day-cell.other-month {
-  opacity: 0.4;
-}
-
-.day-cell.today {
-  border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-}
-
-.day-number {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: #1e293b;
-  margin-bottom: 0.3rem;
-}
-
-.calendar-container.dark .day-number {
-  color: #e2e8f0;
-}
-
-.day-cell.today .day-number {
-  color: #667eea;
   font-weight: 700;
-}
-
-.events-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  /* ✅ KEY FIX: max-height limits how tall events can be, overflow:hidden clips extra */
-  max-height: 70px;
-  overflow: hidden;
-}
-
-.event-item {
-  /* ✅ Changed: padding reduced for compactness */
-  padding: 0.25rem 0.4rem;
-  border-radius: 6px;
-  font-size: 0.68rem;
-  color: white;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s;
-  /* ✅ KEY FIX: each event also clips its own text */
-  overflow: hidden;
 }
-
-.event-item:hover {
-  transform: scale(1.02);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-}
-
-.event-time {
-  font-weight: 600;
-  font-size: 0.62rem;
+.today-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-.event-title {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.cal-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.legend-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
 }
 
-.event-subtitle {
-  font-size: 0.6rem;
-  opacity: 0.8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.student-badge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.1rem 0.3rem;
-  border-radius: 4px;
-  margin-left: 0.25rem;
-}
-
-.more-events {
-  text-align: center;
-  font-size: 0.65rem;
-  color: #667eea;
-  font-weight: 600;
-  padding: 0.15rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.more-events:hover {
-  color: #764ba2;
-}
-
-.loading-state,
-.error-state {
+/* ── State boxes ───────────────────────────────────────────────────────────── */
+.state-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  color: #64748b;
-}
-
-.calendar-container.dark .loading-state,
-.calendar-container.dark .error-state {
-  background: #1a1a2e;
-  color: #94a3b8;
+  background: var(--surface);
+  border-radius: var(--radius);
+  color: var(--muted);
+  gap: 0.75rem;
+  border: 1px solid var(--border);
 }
 
 .spinner {
-  width: 44px;
-  height: 44px;
-  border: 4px solid #f1f5f9;
-  border-top-color: #667eea;
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.9s linear infinite;
 }
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.retry-btn {
-  margin-top: 1rem;
-  padding: 0.5rem 1.5rem;
-  border: none;
+/* ── Calendar body ─────────────────────────────────────────────────────────── */
+.cal-body {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+.weekday-label {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--accent);
+  padding: 0.3rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Days grid ──────────────────────────────────────────────────────────── */
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.day-cell {
+  min-height: 100px;
+  border: 1.5px solid var(--border);
   border-radius: 10px;
-  background: #667eea;
-  color: white;
-  font-weight: 600;
+  padding: 0.3rem;
+  background: var(--bg);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
   cursor: pointer;
-  transition: all 0.3s;
+  overflow: hidden;
+  position: relative;
 }
 
-.retry-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+.day-cell.other-month {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
+.day-cell:hover:not(.other-month) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
+}
+
+.day-cell.is-today {
+  border-color: var(--accent);
+  background: var(--today-bg);
+}
+
+.day-cell.has-events {
+  cursor: pointer;
+}
+
+/* Day number row */
+.day-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.day-num {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.day-cell.is-today .day-num {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 0.9rem;
+}
+
+/* ✅ Plus badge — appears when day has >2 events */
+.plus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  background: var(--accent);
+  color: white;
+  border-radius: 5px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  line-height: 1.4;
+}
+
+/* Events stack — shows 2 pills max */
+.events-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+/* Event pill */
+.event-pill {
+  border-radius: 5px;
+  padding: 0.22rem 0.35rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.event-pill:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.pill-time {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+}
+
+.pill-title {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+/* "+N more" strip */
+.more-strip {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  padding: 0.1rem 0;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.more-strip:hover {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Day modal (all events of a day)
+══════════════════════════════════════════════════════════════════════════════ */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -751,189 +879,305 @@ h1 {
   backdrop-filter: blur(4px);
 }
 
-.modal-content {
+.day-modal {
   background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  max-width: 500px;
+  border-radius: 18px;
+  padding: 1.5rem;
   width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.day-modal.dark {
+  background: #1a1d2e;
+  color: #e2e8f0;
+}
+
+.day-modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text, #1e293b);
+  text-transform: capitalize;
+}
+.day-modal.dark .day-modal-title {
+  color: #e2e8f0;
+}
+
+.day-modal-count {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.day-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Each event card inside day modal */
+.day-event-card {
+  display: flex;
+  align-items: stretch;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.day-modal.dark .day-event-card {
+  border-color: #2d3448;
+}
+.day-event-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.dcard-accent {
+  width: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.dcard-body {
+  flex: 1;
+  padding: 0.55rem 0.7rem;
+}
+
+.dcard-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.35rem;
+}
+.day-modal.dark .dcard-title {
+  color: #e2e8f0;
+}
+
+.dcard-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.dcard-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 5px;
+  padding: 0.15rem 0.4rem;
+}
+.day-modal.dark .dcard-tag {
+  background: #2d3448;
+  color: #94a3b8;
+}
+
+.child-tag {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Event detail modal
+══════════════════════════════════════════════════════════════════════════════ */
+.detail-modal {
+  background: white;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 460px;
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  border-top: 5px solid #667eea;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+}
+.detail-modal.dark {
+  background: #1a1d2e;
+  color: #e2e8f0;
 }
 
-.calendar-container.dark .modal-content {
-  background: #1a1a2e;
-  color: white;
-}
-
-.close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  background: #f1f5f9;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-}
-
-.close-btn:hover {
-  background: #fee;
-  color: #dc2626;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.event-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: #1e293b;
-}
-
-.calendar-container.dark .modal-header h2 {
-  color: white;
-}
-
-.modal-subtitle {
-  margin: 0.25rem 0 0 0;
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-.modal-body {
+.detail-hero {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  align-items: flex-start;
+  border-radius: 18px 18px 0 0;
+}
+.detail-hero h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+}
+.detail-hero p {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.detail-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .detail-row {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: flex-start;
 }
-
-.detail-row > svg {
-  color: #667eea;
+.detail-icon {
+  color: var(--accent, #6366f1);
   flex-shrink: 0;
-  margin-top: 0.2rem;
+  margin-top: 2px;
 }
-
 .detail-row strong {
   display: block;
-  margin-bottom: 0.25rem;
-  color: #1e293b;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 0.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-
-.calendar-container.dark .detail-row strong {
-  color: white;
-}
-
 .detail-row p {
   margin: 0;
-  color: #64748b;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+.detail-modal.dark .detail-row p {
+  color: #e2e8f0;
 }
 
-.type-badge {
-  display: flex;
+.type-pill {
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.5rem 0.9rem;
+  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent2, #8b5cf6));
   color: white;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
-.recurring-badge {
+.recurring-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.2rem 0.45rem;
+  border-radius: 5px;
+  font-size: 0.72rem;
+}
+
+/* ── Close button (shared) ─────────────────────────────────────────────────── */
+.close-btn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 10;
+}
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s;
+/* For day modal (white bg) */
+.day-modal .close-btn {
+  background: #f1f5f9;
+  color: #475569;
+}
+.day-modal.dark .close-btn {
+  background: #2d3448;
+  color: #94a3b8;
+}
+.day-modal .close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
-.modal-enter-from,
-.modal-leave-to {
+/* ── Transition ────────────────────────────────────────────────────────────── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.22s;
+}
+.fade-enter-active .day-modal,
+.fade-enter-active .detail-modal {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fade-enter-from {
+  opacity: 0;
+}
+.fade-enter-from .day-modal,
+.fade-enter-from .detail-modal {
+  transform: scale(0.93) translateY(12px);
+}
+.fade-leave-to {
   opacity: 0;
 }
 
-.modal-enter-active .modal-content,
-.modal-leave-active .modal-content {
-  transition: transform 0.3s;
-}
-
-.modal-enter-from .modal-content,
-.modal-leave-to .modal-content {
-  transform: scale(0.9);
-}
-
+/* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .calendar-container {
     padding: 0.5rem;
   }
-
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
+  .cal-header {
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
   }
-
-  h1 {
-    font-size: 1.2rem;
+  .cal-title {
+    font-size: 1.1rem;
   }
-
   .days-grid {
-    gap: 0.25rem;
+    gap: 0.2rem;
   }
-
   .day-cell {
-    min-height: 70px;
+    min-height: 72px;
     padding: 0.2rem;
   }
-
-  .event-item {
-    padding: 0.2rem 0.3rem;
+  .event-pill {
+    padding: 0.18rem 0.28rem;
+  }
+  .pill-title {
     font-size: 0.6rem;
   }
+}
 
-  .legend {
-    width: 100%;
+@media (max-width: 480px) {
+  .day-cell {
+    min-height: 58px;
   }
-
-  .modal-content {
-    margin: 0.5rem;
-    padding: 1.5rem;
+  .pill-time {
+    display: none;
+  }
+  .day-modal {
+    padding: 1rem;
   }
 }
 </style>
