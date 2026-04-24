@@ -5,6 +5,16 @@ import MaterialsListModal from '../components/MaterialsListModal.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
 
+// Ensure these refs are defined at the top of your script
+const showMaterialsModal = ref(false)
+const selectedCourseId = ref(null) // Use this name consistently
+
+// Update your function to use the correct ref
+const openMaterialsModal = (courseId) => {
+  console.log('Fetching materials for:', courseId)
+  selectedCourseId.value = courseId
+  showMaterialsModal.value = true
+}
 const { t } = useLanguage() // ⬅️ تفعيل دالة الترجمة
 
 const props = defineProps({
@@ -16,10 +26,6 @@ const props = defineProps({
 const loading = ref(true)
 const error = ref(null)
 const enrolledCourses = ref([])
-
-// ⭐ Materials modal
-const showMaterialsModal = ref(false)
-const selectedCourseId = ref(null)
 
 // Charger les cours de l'étudiant
 const loadCourses = async () => {
@@ -52,14 +58,6 @@ const loadCourses = async () => {
   } finally {
     loading.value = false
   }
-}
-
-// ⭐ Open materials modal
-const openMaterialsModal = (courseId) => {
-  console.log('Opening materials for course:', courseId)
-  // Fix: This line was crashing because 'selectedCourseId' was not defined in the script
-  selectedCourseId.value = courseId
-  showMaterialsModal.value = true // This now executes successfully
 }
 
 // Labels des niveaux
