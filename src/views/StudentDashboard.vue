@@ -1,21 +1,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { BookOpen, Calendar, Users, Clock } from 'lucide-vue-next'
+import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ FIX 1: Lock was missing
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import * as api from '../services/api.js'
-import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
+import { useLanguage } from '../composables/useLanguage.js'
 
-// Ensure these refs are defined at the top of your script
 const showMaterialsModal = ref(false)
-const selectedCourseId = ref(null) // Use this name consistently
+const selectedCourseId = ref(null)
 
-// Update your function to use the correct ref
 const openMaterialsModal = (courseId) => {
   console.log('Fetching materials for:', courseId)
   selectedCourseId.value = courseId
   showMaterialsModal.value = true
 }
-const { t } = useLanguage() // ⬅️ تفعيل دالة الترجمة
+
+const { t } = useLanguage()
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -33,7 +32,6 @@ const loadCourses = async () => {
   error.value = null
 
   try {
-    // Appeler l'API pour récupérer les cours de l'étudiant
     const response = await fetch(
       'https://belmahi-school-production.up.railway.app/api/students/my-courses',
       {
@@ -51,7 +49,7 @@ const loadCourses = async () => {
     const data = await response.json()
     enrolledCourses.value = data
 
-    console.log('Courses loaded:', data) // Debug
+    console.log('Courses loaded:', data)
   } catch (err) {
     console.error('Erreur chargement cours:', err)
     error.value = err.message || 'Erreur lors du chargement des cours'
@@ -242,8 +240,10 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- ✅ FIX 2: Removed "&&  user" condition — modal must mount even if user prop arrives late -->
+    <!-- ✅ FIX 3: user-role uses optional chaining safely -->
     <MaterialsListModal
-      v-if="showMaterialsModal && user"
+      v-if="showMaterialsModal"
       :is-open="showMaterialsModal"
       :course-id="selectedCourseId"
       :dark-mode="darkMode"
