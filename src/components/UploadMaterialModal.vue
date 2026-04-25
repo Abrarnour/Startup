@@ -12,13 +12,38 @@
       <button
         @click="closeModal"
         :class="darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'"
-        class="absolute top-4 right-4 text-3xl transition-colors"
+        class="absolute top-4 right-4 transition-colors"
       >
-        &times;
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
       </button>
 
       <h2 class="text-3xl font-bold mb-6 flex items-center gap-3">
-        <span class="text-4xl"></span>
+        <span
+          class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+          >
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+          </svg>
+        </span>
         {{ t('upload_material_title') }}
       </h2>
 
@@ -34,7 +59,7 @@
           <input
             v-model="formData.title"
             type="text"
-            placeholder="e.g., Chapter 1 - Introduction"
+            placeholder="Ex: Chapitre 1 — Introduction"
             required
             :class="
               darkMode
@@ -56,7 +81,7 @@
           <textarea
             v-model="formData.description"
             rows="3"
-            placeholder="Brief description..."
+            :placeholder="t('brief_description')"
             :class="
               darkMode
                 ? 'bg-gray-800 border-gray-700 text-white'
@@ -92,7 +117,7 @@
               class="hidden"
             />
             <div v-if="selectedFile" class="flex items-center gap-4 justify-center">
-              <span class="text-5xl">{{ getFileIcon(selectedFile.type) }}</span>
+              <span class="text-4xl">{{ getFileIconChar(selectedFile.type) }}</span>
               <div class="text-left">
                 <p class="font-bold">{{ selectedFile.name }}</p>
                 <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
@@ -101,12 +126,27 @@
               </div>
             </div>
             <div v-else>
+              <div class="flex justify-center mb-3">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="opacity-30"
+                >
+                  <polyline points="16 16 12 12 8 16" />
+                  <line x1="12" y1="12" x2="12" y2="21" />
+                  <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                </svg>
+              </div>
               <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="mb-2">
                 {{ t('drag_drop_files') }}
               </p>
-              <!-- ✅ CHANGED: 250MB -->
+              <!-- CHANGED: 1GB limit -->
               <p :class="darkMode ? 'text-gray-500' : 'text-gray-500'" class="text-xs">
-                {{ t('file_limits') }}
+                PDF, DOC, PPT, MP4, {{ t('images_label') }} (Max 1 GB)
               </p>
             </div>
           </div>
@@ -121,21 +161,31 @@
             ></div>
           </div>
           <p class="text-center text-blue-600 font-bold">
-            {{ t('uploading_btn') }}{{ uploadProgress }}%
+            {{ t('uploading_btn') }} {{ uploadProgress }}%
           </p>
         </div>
 
-        <!-- Error Message -->
+        <!-- Error -->
         <div v-if="error" class="p-4 bg-red-100 text-red-700 rounded-xl border border-red-300">
           {{ error }}
         </div>
 
-        <!-- Success Message -->
+        <!-- Success -->
         <div
           v-if="success"
-          class="p-4 bg-green-100 text-green-700 rounded-xl border border-green-300 text-center font-bold"
+          class="p-4 bg-green-100 text-green-700 rounded-xl border border-green-300 text-center font-bold flex items-center justify-center gap-2"
         >
-          ✅ Material uploaded successfully!
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          {{ t('upload_success_msg') }}
         </div>
 
         <!-- Buttons -->
@@ -151,7 +201,7 @@
             "
             class="flex-1 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
           >
-            Cancel
+            {{ t('cancel') }}
           </button>
           <button
             type="submit"
@@ -171,6 +221,7 @@ import { ref, reactive } from 'vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
 const { t } = useLanguage()
+
 const props = defineProps({
   isOpen: Boolean,
   courseId: Number,
@@ -179,33 +230,30 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'upload-success'])
 
-const formData = reactive({
-  title: '',
-  description: '',
-})
-
+const formData = reactive({ title: '', description: '' })
 const selectedFile = ref(null)
 const uploading = ref(false)
 const uploadProgress = ref(0)
 const error = ref(null)
 const success = ref(false)
 
-const getFileIcon = (mimeType) => {
-  if (!mimeType) return '📄'
-  if (mimeType.includes('pdf')) return '📕'
-  if (mimeType.includes('word')) return '📘'
-  if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📊'
-  if (mimeType.includes('video')) return '🎬'
-  if (mimeType.includes('image')) return '🖼️'
-  return '📄'
+// Returns a text character for file type icon (no emoji)
+const getFileIconChar = (mimeType) => {
+  if (!mimeType) return '?'
+  if (mimeType.includes('pdf')) return 'PDF'
+  if (mimeType.includes('word')) return 'DOC'
+  if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PPT'
+  if (mimeType.includes('video')) return 'VID'
+  if (mimeType.includes('image')) return 'IMG'
+  return 'FILE'
 }
 
 const handleFileSelect = (event) => {
   const file = event.target.files[0]
   if (file) {
-    // ✅ CHANGED: 250MB limit (was 50MB)
-    if (file.size > 250 * 1024 * 1024) {
-      error.value = 'File size must be less than 250MB'
+    // CHANGED: 1 GB limit
+    if (file.size > 1024 * 1024 * 1024) {
+      error.value = t('file_too_large_1gb') || 'La taille du fichier doit être inférieure à 1 GB'
       return
     }
     selectedFile.value = file
@@ -226,7 +274,6 @@ const handleUpload = async () => {
     error.value = t('error_select_file')
     return
   }
-
   if (!formData.title.trim()) {
     error.value = t('error_enter_title')
     return
@@ -244,11 +291,8 @@ const handleUpload = async () => {
     data.append('title', formData.title)
     data.append('description', formData.description || '')
 
-    // Simulate progress
     const progressInterval = setInterval(() => {
-      if (uploadProgress.value < 90) {
-        uploadProgress.value += 5
-      }
+      if (uploadProgress.value < 90) uploadProgress.value += 5
     }, 300)
 
     await api.uploadMaterial(data)
@@ -263,7 +307,7 @@ const handleUpload = async () => {
     }, 1500)
   } catch (err) {
     console.error('Upload error:', err)
-    error.value = err.message || 'Failed to upload file'
+    error.value = err.message || t('upload_failed')
   } finally {
     uploading.value = false
   }
