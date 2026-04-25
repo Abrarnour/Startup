@@ -159,8 +159,8 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
       SELECT
         ROUND(
           AVG(
-            CASE WHEN c.max_students_per_group > 0
-              THEN (gs_count::float / c.max_students_per_group * 100)
+            CASE WHEN sub.max_students_per_group > 0
+              THEN (sub.gs_count::float / sub.max_students_per_group * 100)
               ELSE 0
             END
           )
