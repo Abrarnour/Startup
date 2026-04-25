@@ -1,12 +1,13 @@
-<!-- src/views/PublicCourses.vue — VERSION CORRIGÉE (Fix 2) -->
+<!-- src/views/PublicCourses.vue -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router' // ✅ ajout useRoute
-import { BookOpen, Users, LogIn, GraduationCap } from 'lucide-vue-next'
+import { useRouter, useRoute } from 'vue-router'
 import * as api from '../services/api.js'
+import { useLanguage } from '../composables/useLanguage.js'
 
 const router = useRouter()
-const route = useRoute() // ✅ nouveau
+const route = useRoute()
+const { t, currentLang } = useLanguage()
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -16,24 +17,32 @@ const courses = ref([])
 const loading = ref(true)
 const selectedLevel = ref('tous')
 
-// Structure des niveaux
-const educationLevels = {
-  tous: { label: 'جميع المستويات (Tous les niveaux)', icon: '🎓' },
-  primaire: { label: 'الابتدائي (Primaire)', icon: '📚', years: 5 },
-  moyen: { label: 'المتوسط (Collège)', icon: '📖', years: 4 },
-  secondaire: { label: 'الثانوي (Lycée)', icon: '🎯', years: 3 },
-}
+/* ── Level config ─────────────────────────────────────────────── */
+const educationLevels = computed(() => ({
+  tous: { label: t('all_levels'), color: '#0255ae', bg: 'from-[#0255ae] to-[#1ba8f4]' },
+  primaire: {
+    label: t('primary_level_label'),
+    color: '#10b981',
+    bg: 'from-emerald-500 to-teal-400',
+  },
+  moyen: { label: t('middle_level_label'), color: '#3b82f6', bg: 'from-blue-500 to-sky-400' },
+  secondaire: {
+    label: t('secondary_level_label'),
+    color: '#8b5cf6',
+    bg: 'from-violet-500 to-purple-400',
+  },
+}))
 
-const branchLabels = {
-  sciences_experimentales: 'علوم تجريبية',
-  mathematiques: 'رياضيات',
-  techniques_mathematiques: 'تقني رياضي',
-  gestion_economie: 'تسيير واقتصاد',
-  lettres_philosophie: 'آداب وفلسفة',
-  langues_etrangeres: 'لغات أجنبية',
-}
+const branchLabels = computed(() => ({
+  sciences_experimentales: currentLang.value === 'ar' ? 'علوم تجريبية' : 'Sciences expérimentales',
+  mathematiques: currentLang.value === 'ar' ? 'رياضيات' : 'Mathématiques',
+  techniques_mathematiques: currentLang.value === 'ar' ? 'تقني رياضي' : 'Techniques mathématiques',
+  gestion_economie: currentLang.value === 'ar' ? 'تسيير واقتصاد' : 'Gestion & Économie',
+  lettres_philosophie: currentLang.value === 'ar' ? 'آداب وفلسفة' : 'Lettres & Philosophie',
+  langues_etrangeres: currentLang.value === 'ar' ? 'لغات أجنبية' : 'Langues étrangères',
+}))
 
-// Computed
+/* ── Computed list ────────────────────────────────────────────── */
 const coursesByLevel = computed(() => {
   if (selectedLevel.value === 'tous') {
     return {
@@ -41,18 +50,17 @@ const coursesByLevel = computed(() => {
       moyen: courses.value.filter((c) => c.education_level === 'moyen'),
       secondaire: courses.value.filter((c) => c.education_level === 'secondaire'),
     }
-  } else {
-    return {
-      [selectedLevel.value]: courses.value.filter((c) => c.education_level === selectedLevel.value),
-    }
+  }
+  return {
+    [selectedLevel.value]: courses.value.filter((c) => c.education_level === selectedLevel.value),
   }
 })
 
+/* ── Data ─────────────────────────────────────────────────────── */
 const loadCourses = async () => {
   try {
     loading.value = true
-    const data = await api.getPublicCourses()
-    courses.value = data
+    courses.value = await api.getPublicCourses()
   } catch (err) {
     console.error('Erreur chargement cours:', err)
   } finally {
@@ -60,236 +68,397 @@ const loadCourses = async () => {
   }
 }
 
-const getLevelColor = (level) => {
-  const colors = {
-    primaire: 'from-green-500 to-emerald-500',
-    moyen: 'from-blue-500 to-cyan-500',
-    secondaire: 'from-purple-500 to-pink-500',
+const getLevelGradient = (level) => {
+  const map = {
+    primaire: 'from-emerald-500 to-teal-400',
+    moyen: 'from-blue-500 to-sky-400',
+    secondaire: 'from-violet-500 to-purple-400',
   }
-  return colors[level] || 'from-gray-500 to-gray-600'
+  return map[level] || 'from-gray-400 to-gray-500'
 }
 
-const goToLogin = () => {
-  router.push('/login')
+const getLevelColor = (level) => {
+  const map = { primaire: '#10b981', moyen: '#3b82f6', secondaire: '#8b5cf6' }
+  return map[level] || '#64748b'
 }
 
 onMounted(async () => {
   await loadCourses()
-
-  // ✅ NOUVEAU — lire le niveau depuis la query string (?level=primaire)
-  const levelFromQuery = route.query.level
-  if (levelFromQuery && educationLevels[levelFromQuery]) {
-    selectedLevel.value = levelFromQuery
-    // Scroller vers la section du niveau sélectionné
+  const lvl = route.query.level
+  if (lvl && ['primaire', 'moyen', 'secondaire'].includes(lvl)) {
+    selectedLevel.value = lvl
     setTimeout(() => {
-      const el = document.getElementById(`level-${levelFromQuery}`)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      document
+        .getElementById(`level-${lvl}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 300)
   }
 })
 </script>
 
 <template>
-  <div v-if="loading" class="text-center py-12">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  <!-- ══════ LOADING ══════ -->
+  <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-4">
+    <div
+      class="w-14 h-14 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin"
+    ></div>
+    <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-sm font-medium">
+      {{ t('loading') }}
+    </p>
   </div>
 
-  <div v-else>
-    <!-- Header -->
-    <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-8 mb-8">
-      <div class="text-center max-w-3xl mx-auto">
-        <div
-          class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4"
-        >
-          <BookOpen :size="40" class="text-white" />
-        </div>
-        <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-4xl font-bold mb-4">
-          دوراتنا التعليمية
-        </h1>
-        <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-lg mb-6">
-          اكتشف جميع الدورات المتاحة في مدرستنا من الابتدائي إلى الثانوي
-        </p>
+  <div v-else class="space-y-10">
+    <!-- ══════ HERO HEADER ══════ -->
+    <div class="relative overflow-hidden rounded-3xl">
+      <!-- gradient bg -->
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-[#040d1f] via-[#0255ae] to-[#1ba8f4]"
+      ></div>
+      <!-- mesh overlay -->
+      <div
+        class="absolute inset-0 opacity-10"
+        style="
+          background-image:
+            radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px),
+            radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px),
+            radial-gradient(circle at 60% 80%, #fff 1px, transparent 1px);
+          background-size: 40px 40px;
+        "
+      ></div>
 
-        <div
-          :class="darkMode ? 'bg-blue-900/20' : 'bg-blue-50'"
-          class="rounded-xl p-6 border-2 border-blue-500/30"
-        >
-          <p
-            :class="darkMode ? 'text-blue-200' : 'text-blue-800'"
-            class="text-lg font-semibold mb-4"
+      <div class="relative z-10 px-8 py-12 md:py-16 text-white">
+        <div class="max-w-3xl mx-auto text-center">
+          <!-- icon -->
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 mb-6 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20"
           >
-            💡 هل أعجبك أحد هذه الدورات؟
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+          </div>
+
+          <h1 class="text-3xl md:text-5xl font-black mb-3 leading-tight">
+            {{ t('our_educational_courses') }}
+          </h1>
+          <p class="text-blue-100 text-base md:text-lg mb-8 max-w-xl mx-auto">
+            {{ t('discover_all_courses') }}
           </p>
-          <p :class="darkMode ? 'text-blue-300' : 'text-blue-700'" class="mb-4">
-            للتسجيل أو معرفة المزيد من التفاصيل، يرجى تسجيل الدخول إلى حسابك
-          </p>
-          <button
-            @click="goToLogin"
-            class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
+
+          <!-- CTA banner -->
+          <div
+            class="inline-flex flex-col sm:flex-row items-center gap-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl px-6 py-4"
           >
-            <LogIn :size="24" />
-            تسجيل الدخول
-          </button>
+            <!-- info icon -->
+            <div class="flex items-center gap-2 text-sm text-blue-100">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="shrink-0"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+              </svg>
+              {{ t('login_to_register_details') }}
+            </div>
+            <button
+              @click="router.push('/login')"
+              class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0255ae] font-bold text-sm hover:bg-blue-50 transition-all hover:scale-105 shadow-lg"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              {{ t('login_button') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ✅ Filtres par niveau -->
-    <div class="flex flex-wrap gap-3 mb-8 justify-center">
+    <!-- ══════ LEVEL FILTER TABS ══════ -->
+    <div class="flex flex-wrap gap-3 justify-center">
       <button
-        v-for="(info, level) in educationLevels"
-        :key="level"
-        @click="selectedLevel = level"
-        :class="[
-          selectedLevel === level
-            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white scale-105'
+        v-for="(info, key) in educationLevels"
+        :key="key"
+        @click="selectedLevel = key"
+        class="relative px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200"
+        :class="
+          selectedLevel === key
+            ? `bg-gradient-to-r ${info.bg} text-white shadow-lg scale-105`
             : darkMode
-              ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              : 'bg-white text-gray-700 hover:bg-gray-50',
-          'px-6 py-3 rounded-xl font-bold transition-all transform shadow-lg',
-        ]"
+              ? 'bg-gray-800/80 text-gray-300 hover:bg-gray-700 border border-gray-700'
+              : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 shadow-sm'
+        "
       >
-        <span class="mr-2">{{ info.icon }}</span>
+        <!-- active indicator dot -->
+        <span
+          v-if="selectedLevel === key"
+          class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-white/70 animate-pulse"
+        ></span>
         {{ info.label }}
       </button>
     </div>
 
-    <!-- Cours groupés par niveau -->
-    <div class="space-y-12">
+    <!-- ══════ EMPTY STATE ══════ -->
+    <div
+      v-if="courses.length === 0"
+      :class="darkMode ? 'bg-gray-800/60 border-gray-700' : 'bg-white border-gray-100'"
+      class="rounded-2xl border-2 shadow-lg p-16 text-center"
+    >
       <div
+        class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+        :class="darkMode ? 'bg-gray-700' : 'bg-gray-100'"
+      >
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          :class="darkMode ? 'text-gray-500' : 'text-gray-400'"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+      </div>
+      <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-base font-medium">
+        {{ t('no_courses_available_now') }}
+      </p>
+    </div>
+
+    <!-- ══════ COURSE SECTIONS BY LEVEL ══════ -->
+    <div class="space-y-14">
+      <section
         v-for="(levelCourses, level) in coursesByLevel"
         :key="level"
         v-show="levelCourses.length > 0"
         :id="`level-${level}`"
       >
-        <!-- En-tête du niveau -->
+        <!-- section header -->
         <div class="flex items-center gap-4 mb-6">
-          <div :class="`bg-gradient-to-r ${getLevelColor(level)} w-2 h-16 rounded-full`"></div>
-          <div>
-            <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold">
-              {{ educationLevels[level].label }}
-            </h2>
-            <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
-              {{ levelCourses.length }} cours disponibles
-            </p>
+          <div class="flex items-center gap-3">
+            <div class="w-1 h-10 rounded-full" :style="{ background: getLevelColor(level) }"></div>
+            <div>
+              <h2
+                :class="darkMode ? 'text-white' : 'text-gray-900'"
+                class="text-2xl font-black tracking-tight"
+              >
+                {{ educationLevels[level]?.label }}
+              </h2>
+              <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-sm mt-0.5">
+                {{ t('available_courses_count').replace('{n}', levelCourses.length) }}
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Grille des cours -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
+        <!-- course grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <article
             v-for="course in levelCourses"
             :key="course.id"
-            :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-            class="rounded-2xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-2 overflow-hidden border-2"
-            :style="{ borderColor: 'transparent' }"
+            :class="
+              darkMode
+                ? 'bg-gray-800/80 border-gray-700/60 hover:border-gray-500'
+                : 'bg-white border-gray-100 hover:border-blue-200'
+            "
+            class="group rounded-2xl border-2 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col"
           >
-            <!-- Barre de couleur -->
-            <div :class="`h-2 bg-gradient-to-r ${getLevelColor(course.education_level)}`"></div>
+            <!-- top color bar -->
+            <div
+              class="h-1.5 w-full bg-gradient-to-r shrink-0"
+              :class="getLevelGradient(course.education_level)"
+            ></div>
 
-            <div class="p-6">
-              <!-- Titre et badge -->
-              <div class="mb-4">
+            <div class="p-5 flex flex-col flex-1 gap-4">
+              <!-- course title + badges -->
+              <div>
                 <h3
                   :class="darkMode ? 'text-white' : 'text-gray-900'"
-                  class="text-xl font-bold mb-2"
+                  class="font-bold text-base leading-snug mb-2 group-hover:text-blue-600 transition-colors"
                 >
                   {{ course.title }}
                 </h3>
-                <div class="flex flex-wrap gap-2">
-                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
-                    {{ educationLevels[course.education_level].label.split('(')[0].trim() }} -
-                    {{ course.year_level }}ème
+                <div class="flex flex-wrap gap-1.5">
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                    :style="{
+                      background: getLevelColor(course.education_level) + '18',
+                      color: getLevelColor(course.education_level),
+                    }"
+                  >
+                    {{ educationLevels[course.education_level]?.label }} — {{ course.year_level }}
+                    {{ currentLang === 'ar' ? '' : 'ème' }}
                   </span>
                   <span
                     v-if="course.branch"
-                    class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold"
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700"
                   >
                     {{ branchLabels[course.branch] }}
                   </span>
                 </div>
               </div>
 
-              <!-- Enseignant -->
-              <div
-                :class="darkMode ? 'text-gray-300' : 'text-gray-600'"
-                class="flex items-center gap-2 mb-3"
-              >
-                <GraduationCap :size="18" />
-                <span class="font-semibold">
-                  {{ course.teacher_gender === 'M' ? 'Mr.' : 'Mme.' }}
-                  {{ course.teacher_name }} {{ course.teacher_last_name }}
-                </span>
+              <!-- teacher -->
+              <div class="flex items-center gap-2.5">
+                <!-- avatar initials -->
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white"
+                  :style="{ background: getLevelColor(course.education_level) }"
+                >
+                  {{ course.teacher_name?.charAt(0) }}{{ course.teacher_last_name?.charAt(0) }}
+                </div>
+                <div>
+                  <p
+                    :class="darkMode ? 'text-gray-200' : 'text-gray-800'"
+                    class="text-sm font-semibold leading-none"
+                  >
+                    {{
+                      course.teacher_gender === 'M'
+                        ? currentLang === 'ar'
+                          ? 'أ.'
+                          : 'M.'
+                        : currentLang === 'ar'
+                          ? 'أ.'
+                          : 'Mme'
+                    }}
+                    {{ course.teacher_name }} {{ course.teacher_last_name }}
+                  </p>
+                  <p :class="darkMode ? 'text-gray-500' : 'text-gray-400'" class="text-xs mt-0.5">
+                    {{ t('teachers') }}
+                  </p>
+                </div>
               </div>
 
-              <!-- Description -->
+              <!-- description -->
               <p
                 v-if="course.description"
-                :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-                class="text-sm mb-4 line-clamp-3"
+                :class="darkMode ? 'text-gray-400' : 'text-gray-500'"
+                class="text-sm leading-relaxed line-clamp-2 flex-1"
               >
                 {{ course.description }}
               </p>
+              <div v-else class="flex-1"></div>
 
-              <!-- Infos -->
-              <div class="flex items-center justify-between mb-4 text-sm">
+              <!-- meta row: groups + price -->
+              <div
+                class="flex items-center justify-between pt-3 mt-auto border-t"
+                :class="darkMode ? 'border-gray-700' : 'border-gray-100'"
+              >
+                <!-- groups -->
                 <div
-                  :class="darkMode ? 'text-gray-400' : 'text-gray-600'"
-                  class="flex items-center gap-2"
+                  class="flex items-center gap-1.5"
+                  :class="darkMode ? 'text-gray-400' : 'text-gray-500'"
                 >
-                  <Users :size="16" />
-                  <span>{{ course.open_groups }} groupes ouverts</span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  <span class="text-xs font-medium">
+                    {{ course.open_groups }} {{ t('my_groups') }}
+                  </span>
                 </div>
+                <!-- price badge -->
                 <span
-                  v-if="course.price === 0 || course.price === null"
-                  class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold"
+                  v-if="!course.price || course.price === 0"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-700"
                 >
-                  🆓 GRATUIT
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  {{ t('free').toUpperCase() }}
                 </span>
                 <span
                   v-else
-                  class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold"
+                  class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-700"
                 >
                   {{ parseFloat(course.price).toLocaleString('fr-DZ') }} DA
                 </span>
               </div>
 
-              <!-- Bouton -->
+              <!-- CTA button -->
               <button
-                @click="goToLogin"
-                :class="darkMode ? 'from-blue-600 to-purple-600' : 'from-blue-500 to-purple-600'"
-                class="w-full py-3 bg-gradient-to-r text-white rounded-xl font-bold hover:shadow-lg transition-all transform hover:scale-105"
+                @click="router.push('/login')"
+                class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all bg-gradient-to-r from-[#0255ae] to-[#1ba8f4] hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02] flex items-center justify-center gap-2"
               >
-                تسجيل الدخول للتسجيل
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                {{ t('login_to_register') }}
               </button>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-    </div>
-
-    <!-- Message si aucun cours -->
-    <div
-      v-if="courses.length === 0"
-      :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-      class="rounded-2xl shadow-xl p-12 text-center"
-    >
-      <BookOpen
-        :size="64"
-        :class="darkMode ? 'text-gray-600' : 'text-gray-300'"
-        class="mx-auto mb-4"
-      />
-      <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
-        Aucun cours disponible pour le moment
-      </p>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
-.line-clamp-3 {
+.line-clamp-2 {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
