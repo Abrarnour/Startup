@@ -70,13 +70,20 @@ const formatTime = (dateStr) => {
 const notifStyle = (type) => {
   switch (type) {
     case 'welcome':
-      return { bg: 'bg-green-50', dot: 'bg-green-500', emoji: '👋' }
+      return { bg: 'bg-green-50', dot: 'bg-green-500', icon: 'user' }
     case 'reminder':
-      return { bg: 'bg-amber-50', dot: 'bg-amber-500', emoji: '⏰' }
+      return { bg: 'bg-amber-50', dot: 'bg-amber-500', icon: 'clock' }
     default:
-      return { bg: 'bg-blue-50', dot: 'bg-blue-500', emoji: '🔔' }
+      return { bg: 'bg-blue-50', dot: 'bg-blue-500', icon: 'bell' }
   }
 }
+
+const notifIcon = (icon) =>
+  ({
+    user: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+    clock: `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>`,
+    bell: `<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
+  })[icon] ?? ``
 </script>
 
 <template>
@@ -86,8 +93,61 @@ const notifStyle = (type) => {
       <div
         class="flex items-start gap-3 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 pr-10"
       >
-        <span class="text-2xl shrink-0">
-          {{ toastNotif.type === 'welcome' ? '👋' : toastNotif.type === 'reminder' ? '⏰' : '🔔' }}
+        <span
+          class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+          :class="
+            toastNotif.type === 'welcome'
+              ? 'bg-green-100 text-green-600'
+              : toastNotif.type === 'reminder'
+                ? 'bg-amber-100 text-amber-600'
+                : 'bg-blue-100 text-blue-600'
+          "
+        >
+          <!-- welcome: user icon -->
+          <svg
+            v-if="toastNotif.type === 'welcome'"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <!-- reminder: clock icon -->
+          <svg
+            v-else-if="toastNotif.type === 'reminder'"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <!-- default: bell icon -->
+          <svg
+            v-else
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
         </span>
         <div class="flex-1 min-w-0">
           <p class="text-xs font-bold text-blue-600 mb-1">Belmahi School</p>
