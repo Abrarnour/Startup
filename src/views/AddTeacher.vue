@@ -1,10 +1,11 @@
 <script setup>
 import { ref, reactive, defineProps } from 'vue'
 import { useRouter } from 'vue-router'
-import { UserPlus, Mail, Lock, Phone, User, Calendar, MapPin } from 'lucide-vue-next'
-import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
+// Removed Calendar since birthday is deleted
+import { UserPlus, Mail, Lock, Phone, User, MapPin } from 'lucide-vue-next'
+import { useLanguage } from '../composables/useLanguage.js'
 
-const { t } = useLanguage() // ✅ Extract t for translations
+const { t } = useLanguage()
 const router = useRouter()
 
 const props = defineProps({
@@ -12,7 +13,7 @@ const props = defineProps({
   user: { type: Object, default: null },
 })
 
-// Rediriger si pas admin
+// Redirect if not admin
 if (!props.user || props.user.role !== 'admin') {
   router.push('/courses')
 }
@@ -21,6 +22,69 @@ const loading = ref(false)
 const error = ref('')
 const successMessage = ref('')
 
+// List of the 58 Wilayas of Algeria
+const wilayas = [
+  '01 - Adrar',
+  '02 - Chlef',
+  '03 - Laghouat',
+  '04 - Oum El Bouaghi',
+  '05 - Batna',
+  '06 - Béjaïa',
+  '07 - Biskra',
+  '08 - Béchar',
+  '09 - Blida',
+  '10 - Bouira',
+  '11 - Tamanrasset',
+  '12 - Tébessa',
+  '13 - Tlemcen',
+  '14 - Tiaret',
+  '15 - Tizi Ouzou',
+  '16 - Alger',
+  '17 - Djelfa',
+  '18 - Jijel',
+  '19 - Sétif',
+  '20 - Saïda',
+  '21 - Skikda',
+  '22 - Sidi Bel Abbès',
+  '23 - Annaba',
+  '24 - Guelma',
+  '25 - Constantine',
+  '26 - Médéa',
+  '27 - Mostaganem',
+  "28 - M'Sila",
+  '29 - Mascara',
+  '30 - Ouargla',
+  '31 - Oran',
+  '32 - El Bayadh',
+  '33 - Illizi',
+  '34 - Bordj Bou Arréridj',
+  '35 - Boumerdès',
+  '36 - El Tarf',
+  '37 - Tindouf',
+  '38 - Tissemsilt',
+  '39 - El Oued',
+  '40 - Khenchela',
+  '41 - Souk Ahras',
+  '42 - Tipaza',
+  '43 - Mila',
+  '44 - Aïn Defla',
+  '45 - Naâma',
+  '46 - Aïn Témouchent',
+  '47 - Ghardaïa',
+  '48 - Relizane',
+  '49 - Timimoun',
+  '50 - Bordj Badji Mokhtar',
+  '51 - Ouled Djellal',
+  '52 - Béni Abbès',
+  '53 - In Salah',
+  '54 - In Guezzam',
+  '55 - Touggourt',
+  '56 - Djanet',
+  "57 - El M'Ghair",
+  '58 - El Meniaa',
+]
+
+// Removed birthday from state
 const teacherData = reactive({
   name: '',
   last_name: '',
@@ -28,7 +92,6 @@ const teacherData = reactive({
   password: '',
   phone: '',
   gender: 'M',
-  birthday: '',
   city: '',
 })
 
@@ -72,7 +135,7 @@ const handleSubmit = async () => {
     const data = await response.json()
     successMessage.value = t('teacher_created_success')
 
-    // Réinitialiser le formulaire après 2 secondes
+    // Reset form
     setTimeout(() => {
       Object.assign(teacherData, {
         name: '',
@@ -81,7 +144,6 @@ const handleSubmit = async () => {
         password: '',
         phone: '',
         gender: 'M',
-        birthday: '',
         city: '',
       })
       successMessage.value = ''
@@ -182,39 +244,6 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <div>
-          <label
-            :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
-            class="block text-sm font-medium mb-2"
-          >
-            {{ t('civility') }} <span class="text-red-500">*</span>
-          </label>
-          <div class="flex gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                v-model="teacherData.gender"
-                value="M"
-                class="w-5 h-5 text-blue-600"
-              />
-              <span :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'" class="font-medium">
-                {{ t('mister_full') }}
-              </span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                v-model="teacherData.gender"
-                value="F"
-                class="w-5 h-5 text-blue-600"
-              />
-              <span :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'" class="font-medium">
-                {{ t('madam_full') }}
-              </span>
-            </label>
-          </div>
-        </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
@@ -271,21 +300,78 @@ const handleSubmit = async () => {
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              {{ t('city') }}
+              {{ t('civility') }} <span class="text-red-500">*</span>
+            </label>
+            <div
+              class="flex gap-6 items-center px-4 py-3 border-2 rounded-xl h-[52px]"
+              :class="props.darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'"
+            >
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  v-model="teacherData.gender"
+                  value="M"
+                  class="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
+                <span
+                  :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
+                  class="font-medium"
+                >
+                  {{ t('mister_full') }}
+                </span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  v-model="teacherData.gender"
+                  value="F"
+                  class="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                />
+                <span
+                  :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
+                  class="font-medium"
+                >
+                  {{ t('madam_full') }}
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label
+              :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
+              class="block text-sm font-medium mb-2"
+            >
+              Wilaya / {{ t('city') }}
             </label>
             <div class="relative">
               <MapPin class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
-              <input
+              <select
                 v-model="teacherData.city"
-                type="text"
-                :placeholder="t('ex_city')"
                 :class="
                   props.darkMode
                     ? 'bg-gray-700 border-gray-600 text-white'
                     : 'bg-gray-50 border-gray-200'
                 "
-                class="w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-              />
+                class="w-full pl-10 pr-10 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none h-[52px]"
+              >
+                <option value="" disabled>{{ t('ex_city') || 'Select Wilaya' }}</option>
+                <option v-for="wilaya in wilayas" :key="wilaya" :value="wilaya">
+                  {{ wilaya }}
+                </option>
+              </select>
+              <div
+                class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
