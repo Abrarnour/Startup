@@ -68,7 +68,22 @@ const getLevelLabel = (level) => {
   return labels[level] || level
 }
 
-// Charger les cours
+// 1. Define the reactive state
+const materialCounts = ref({}) // { courseId: count }
+
+// 2. Define the loader function BEFORE it is called
+const loadMaterialsCounts = async () => {
+  for (const course of courses.value) {
+    try {
+      const mats = await api.getMaterials(course.id)
+      materialCounts.value[course.id] = mats.length
+    } catch (e) {
+      materialCounts.value[course.id] = 0
+    }
+  }
+}
+
+// 3. Define the main course loader
 const loadCourses = async () => {
   loading.value = true
   error.value = null
@@ -76,7 +91,10 @@ const loadCourses = async () => {
   try {
     // Récupérer les cours de l'enseignant
     courses.value = await api.getCourses()
+
+    // ✅ Now this executes safely because loadMaterialsCounts is already stored in memory
     await loadMaterialsCounts()
+
     // Calculer les statistiques
     stats.value.totalCourses = courses.value.length
 
@@ -135,31 +153,34 @@ const handleCourseAdded = async () => {
 
 // ⭐ NEW: Handle upload success
 const handleUploadSuccess = async () => {
+  // 1. Close the modal immediately for better UX
   showUploadModal.value = false
-  // Optionally show success notification
-  alert(t('material_uploaded_success')) // ✅ Dynamic translation
+
+  // 2. Notify the user
+  // Note: 'alert' works, but consider a toast component later
+  alert(t('material_uploaded_success'))
+
+  // 3. Update the specific course count
   if (selectedCourseForUpload.value) {
     try {
+      // Fetch the updated list of materials for this specific course
       const mats = await api.getMaterials(selectedCourseForUpload.value)
+
+      // Update the reactive state so the UI badge updates
       materialCounts.value[selectedCourseForUpload.value] = mats.length
-    } catch (e) {}
+    } catch (e) {
+      // ❌ Instead of an empty {}, log the error so you can debug it
+      console.error('Failed to refresh materials count:', e)
+
+      // Optional: Set to 0 or keep old value?
+      // Usually, keeping the old value is safer unless you know it's gone.
+    }
   }
 }
 
 onMounted(() => {
   loadCourses()
 })
-const materialCounts = ref({}) // { courseId: count }
-const loadMaterialsCounts = async () => {
-  for (const course of courses.value) {
-    try {
-      const mats = await api.getMaterials(course.id)
-      materialCounts.value[course.id] = mats.length
-    } catch (e) {
-      materialCounts.value[course.id] = 0
-    }
-  }
-}
 </script>
 
 <template>

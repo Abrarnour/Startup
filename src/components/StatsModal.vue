@@ -755,10 +755,7 @@ const totalCapacity = computed(() => parseInt(dashData.value?.capacityData?.tota
 .chart-full {
   width: 100%;
 }
-.chart-wide {
-}
-.chart-narrow {
-}
+
 @media (max-width: 900px) {
   .chart-row-2,
   .chart-row-3 {
@@ -816,8 +813,7 @@ const totalCapacity = computed(() => parseInt(dashData.value?.capacityData?.tota
   flex-direction: column;
   gap: 0.9rem;
 }
-.level-item {
-}
+
 .level-meta {
   display: flex;
   justify-content: space-between;
@@ -883,8 +879,7 @@ const totalCapacity = computed(() => parseInt(dashData.value?.capacityData?.tota
   flex-direction: column;
   gap: 0.8rem;
 }
-.teacher-item {
-}
+
 .teacher-meta {
   display: flex;
   align-items: center;

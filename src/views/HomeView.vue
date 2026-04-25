@@ -808,7 +808,6 @@ h3 {
   color: white;
 }
 
-<style>
 /* ── Section nav bar ───────────────────────────────────────────────── */
 .section-nav {
   position: sticky;
@@ -836,7 +835,9 @@ h3 {
   overflow-x: auto;
   scrollbar-width: none;
 }
-.snav-inner::-webkit-scrollbar { display: none; }
+.snav-inner::-webkit-scrollbar {
+  display: none;
+}
 
 .snav-btn {
   display: flex;
@@ -866,19 +867,37 @@ h3 {
   box-shadow: 0 4px 14px rgba(2, 85, 174, 0.3);
 }
 
-.dark-mode .snav-btn { color: rgba(255, 255, 255, 0.4); }
-.dark-mode .snav-btn:hover { background: rgba(27, 168, 244, 0.1); color: #1ba8f4; }
-.dark-mode .snav-active { background: #1ba8f4 !important; color: white !important; }
+.dark-mode .snav-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+.dark-mode .snav-btn:hover {
+  background: rgba(27, 168, 244, 0.1);
+  color: #1ba8f4;
+}
+.dark-mode .snav-active {
+  background: #1ba8f4 !important;
+  color: white !important;
+}
 
-.snav-icon { font-size: 0.85rem; }
-.snav-label { font-size: 0.75rem; }
+.snav-icon {
+  font-size: 0.85rem;
+}
+.snav-label {
+  font-size: 0.75rem;
+}
 
 @media (max-width: 600px) {
-  .snav-label { display: none; }
-  .snav-btn { padding: 0.45rem 0.6rem; }
-  .snav-icon { font-size: 1rem; }
+  .snav-label {
+    display: none;
+  }
+  .snav-btn {
+    padding: 0.45rem 0.6rem;
+  }
+  .snav-icon {
+    font-size: 1rem;
+  }
 }
-</style>
+
 .glass-num {
   display: block;
   font-family: 'Syne', sans-serif;
@@ -1093,8 +1112,6 @@ h3 {
 /* ═══════════════════════════════════════
    3. LEVELS
    ═══════════════════════════════════════ */
-.levels {
-}
 .levels-top {
   display: flex;
   justify-content: space-between;
@@ -1531,8 +1548,7 @@ h3 {
 /* ═══════════════════════════════════════
    6. TESTIMONIALS
    ═══════════════════════════════════════ */
-.testi {
-}
+
 .testi-layout {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -1545,8 +1561,6 @@ h3 {
   }
 }
 
-.testi-side {
-}
 .testi-controls {
   display: flex;
   flex-direction: column;
