@@ -271,15 +271,6 @@ const handleSubmit = async () => {
               :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
               class="block text-sm font-medium mb-2"
             >
-              {{ t('birthday') }}
-            </label>
-          </div>
-
-          <div>
-            <label
-              :class="props.darkMode ? 'text-gray-300' : 'text-gray-700'"
-              class="block text-sm font-medium mb-2"
-            >
               {{ t('city') }}
             </label>
             <div class="relative">
