@@ -82,14 +82,14 @@ export function useNotifications(user) {
     if ('Notification' in window && Notification.permission === 'granted') {
       const icon = '/belmahilogo.jpg'
       const titleMap = {
-        welcome: '👋 مرحباً — Belmahi School',
-        reminder: '⏰ تذكير بالدرس — Belmahi School',
-        assignment: '📚 تعيين جديد — Belmahi School',
-        warning: '⚠️ تنبيه — Belmahi School',
-        success: '✅ تم بنجاح — Belmahi School',
-        info: '🔔 Belmahi School',
+        welcome: ' مرحباً — Belmahi School',
+        reminder: ' تذكير بالدرس — Belmahi School',
+        assignment: ' تعيين جديد — Belmahi School',
+        warning: 'تنبيه — Belmahi School',
+        success: ' تم بنجاح — Belmahi School',
+        info: ' Belmahi School',
       }
-      const title = titleMap[type] || '🔔 Belmahi School'
+      const title = titleMap[type] || ' Belmahi School'
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
