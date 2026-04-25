@@ -14,53 +14,17 @@ const navigateToLevel = (key) => {
   else router.push('/courses')
 }
 
-const sections = [
-  {
-    id: 'hero-section',
-    label: 'الرئيسية',
-    svgPath: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
-    svgExtra: '',
-  },
-  {
-    id: 'stats-section',
-    label: 'الإحصائيات',
-    svgPath: 'M18 20V10 M12 20V4 M6 20v-6',
-    svgExtra: '',
-  },
-  {
-    id: 'levels-section',
-    label: 'المستويات',
-    svgPath: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
-    svgExtra: '',
-  },
-  {
-    id: 'features-section',
-    label: 'المميزات',
-    svgPath:
-      'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-    svgExtra: '',
-  },
-  {
-    id: 'about-section',
-    label: 'من نحن',
-    svgPath: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
-    svgExtra:
-      '<circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-  },
-  {
-    id: 'testimonials-section',
-    label: 'آراء',
-    svgPath: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
-    svgExtra: '',
-  },
-  {
-    id: 'cta-section',
-    label: 'سجّل الآن',
-    svgPath: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
-    svgExtra:
-      '<circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>',
-  },
-]
+// Change: const sections = [ ...  ]
+// To:
+const sections = computed(() => [
+  { id: 'hero-section', label: t('snav_home'), svgPath: '...', svgExtra: '' },
+  { id: 'stats-section', label: t('snav_stats'), svgPath: '...', svgExtra: '' },
+  { id: 'levels-section', label: t('snav_levels'), svgPath: '...', svgExtra: '' },
+  { id: 'features-section', label: t('snav_features'), svgPath: '...', svgExtra: '' },
+  { id: 'about-section', label: t('snav_about'), svgPath: '...', svgExtra: '' },
+  { id: 'testimonials-section', label: t('snav_reviews'), svgPath: '...', svgExtra: '' },
+  { id: 'cta-section', label: t('snav_register'), svgPath: '...', svgExtra: '' },
+])
 
 const activeSection = ref('hero-section')
 
@@ -120,7 +84,7 @@ onMounted(() => {
     },
     { threshold: 0.4 },
   )
-  sections.forEach((s) => {
+  sections.value.forEach((s) => {
     const el = document.getElementById(s.id)
     if (el) sectionObserver.observe(el)
   })
@@ -293,11 +257,6 @@ onUnmounted(() => clearInterval(tInterval))
         <div class="hero-badge-pill">
           <span class="pill-dot"></span> {{ t('registration_open') }}
         </div>
-      </div>
-
-      <div class="hero-scroll-hint" aria-hidden="true">
-        <div class="scroll-track"><div class="scroll-thumb"></div></div>
-        <span>{{ t('scroll_hint') }}</span>
       </div>
     </section>
 

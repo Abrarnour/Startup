@@ -843,10 +843,26 @@ export const translations = {
 
     // Child
     child_created_success: 'Enfant créé et ajouté avec succès !',
+    // ── SECTION NAV ──
+    snav_home: 'Accueil',
+    snav_stats: 'Statistiques',
+    snav_levels: 'Niveaux',
+    snav_features: 'Atouts',
+    snav_about: 'À propos',
+    snav_reviews: 'Avis',
+    snav_register: "S'inscrire",
   },
 
   // ════════════════════════════════════════
   ar: {
+    // ── SECTION NAV ──
+    snav_home: 'الرئيسية',
+    snav_stats: 'الإحصائيات',
+    snav_levels: 'المستويات',
+    snav_features: 'المميزات',
+    snav_about: 'من نحن',
+    snav_reviews: 'آراء',
+    snav_register: 'سجّل الآن',
     // Wilaya
     select_wilaya: 'اختر الولاية...',
     wilaya_label: 'الولاية',
