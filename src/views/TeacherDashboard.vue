@@ -278,23 +278,21 @@ const loadMaterialsCounts = async () => {
     <div class="mb-6">
       <button
         @click="showCourseModal = true"
-        class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-500 to-pink-400 text-white rounded-xl font-bold hover:from-pink-600 hover:to-blue-500 transition-all shadow-lg transform hover:scale-105"
+        class="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl font-bold hover:from-blue-700 hover:to-blue-600 transition-all shadow-lg transform hover:scale-105"
       >
         <svg
-          data-v-402bf322=""
           xmlns="http://www.w3.org/2000/svg"
-          width="25"
-          height="25"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="2.5"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="lucide lucide-plus-icon lucide-plus"
         >
-          <path d="M5 12h14"></path>
-          <path d="M12 5v14"></path>
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
         </svg>
         {{ t('add_course') }}
       </button>
@@ -339,7 +337,7 @@ const loadMaterialsCounts = async () => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="course in levelCourses" :key="course.id" class="relative">
+          <div v-for="course in levelCourses" :key="course.id">
             <CourseCard
               :course="course"
               :darkMode="darkMode"

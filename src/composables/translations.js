@@ -37,7 +37,7 @@ export const translations = {
     register_subtitle: 'Rejoignez Belmahi School et commencez votre apprentissage.',
     register_button: "S'inscrire",
     loading_inscription: 'Inscription...',
-    registration_success: '✅ Inscription réussie ! Redirection...',
+    registration_success: ' Inscription réussie ! Redirection...',
 
     // ── FORM FIELDS ──
     email: 'Email',
@@ -279,7 +279,7 @@ export const translations = {
 
     nav_portal_title: 'Portail de cours',
     nav_school_subtitle: 'Belmahi School - Oran',
-    nav_notifications_header: '🔔 Notifications',
+    nav_notifications_header: ' Notifications',
     my_space: 'Mon Espace',
     Admin: 'ADMIN',
     parent_badge: 'PARENT',
@@ -308,7 +308,7 @@ export const translations = {
 
     // Student & Parent Dashboards
     loading_your_courses: 'Chargement de vos cours...',
-    error_prefix: '❌ Erreur:',
+    error_prefix: ' Erreur:',
     retry: 'Réessayer',
     welcome_comma: 'Bienvenue, ',
     your_enrolled_courses: 'Vos cours inscrits',
@@ -320,10 +320,10 @@ export const translations = {
     year_suffix: 'ème année',
     year_suffix_short: 'ème',
     to_time: 'à',
-    view_course_materials: '📚 View Course Materials',
+    view_course_materials: ' View Course Materials',
     paid_status: '✓ Payé',
     partial_status: '⚠ Partiel',
-    pending_status: '⏳ En attente',
+    pending_status: ' En attente',
 
     parent_space_welcome: 'Espace Parent — Bienvenue',
     manage_children_enrollments: 'Gérez les inscriptions de vos enfants',
@@ -335,8 +335,8 @@ export const translations = {
     select_child_to_view_courses: 'Sélectionnez un enfant pour voir ses cours',
     courses_of: 'Cours de ',
     no_courses_yet: 'Aucun cours pour le moment',
-    paid_status_ok: '✅ Payé',
-    unpaid_status: '❌ Non payé',
+    paid_status_ok: ' Payé',
+    unpaid_status: ' Non payé',
     monthly_cycle_ended: "Le cycle mensuel est terminé. Contactez l'école pour renouveler.",
     courses_are_free_now: '(Les cours sont gratuits pour le moment)',
     confirm_unenroll_child: 'Retirer cet enfant de ce cours?',
@@ -345,13 +345,13 @@ export const translations = {
     group_label: 'Groupe',
     schedule_label: 'Horaire',
     teacher_notes: "Remarques de l'enseignant",
-    no_notes_yet: "📝 Aucune remarque pour l'instant",
-    important_warning: '⚠️ Important',
+    no_notes_yet: " Aucune remarque pour l'instant",
+    important_warning: 'Important',
     admin_role_label: 'Admin',
     teacher_role_label: 'Enseignant',
     no_courses_available: 'Aucun cours disponible',
     groups_label: 'groupes',
-    enroll_child_free: '✅ Inscrire mon enfant (Gratuit)',
+    enroll_child_free: 'Inscrire mon enfant (Gratuit)',
     add_child_first: "Ajoutez d'abord un enfant",
 
     note_type_general: 'Général',
@@ -486,12 +486,12 @@ export const translations = {
     start_label: 'Début',
     end_label: 'Fin',
     tip_sessions_without_date:
-      '💡 Astuce: Les séances sans date ne seront pas créées immédiatement. Vous pourrez les compléter plus tard.',
+      ' Astuce: Les séances sans date ne seront pas créées immédiatement. Vous pourrez les compléter plus tard.',
     schedules_of: 'Horaires des',
     example_sessions:
-      '💡 Exemple: Pour 2 séances/semaine → Séance #1: Lundi 09:00-11:00, Séance #2: Mercredi 14:00-16:00',
+      ' Exemple: Pour 2 séances/semaine → Séance #1: Lundi 09:00-11:00, Séance #2: Mercredi 14:00-16:00',
     example_sessions_3:
-      '💡 Exemple: Pour 3 séances/semaine → #1: Lundi 09:00-11:00, #2: Mercredi 14:00-16:00, #3: Vendredi 16:00-18:00',
+      ' Exemple: Pour 3 séances/semaine → #1: Lundi 09:00-11:00, #2: Mercredi 14:00-16:00, #3: Vendredi 16:00-18:00',
     create_group_btn: 'Créer le groupe',
     modify_next_cycle_title: 'Modifier le prochain cycle',
     how_it_works: 'Comment ça marche?',
@@ -517,7 +517,7 @@ export const translations = {
     boy: 'Garçon',
     girl: 'Fille',
     account_auto_created_tip:
-      'ℹ️ Un compte sera automatiquement créé avec un mot de passe temporaire.',
+      ' Un compte sera automatiquement créé avec un mot de passe temporaire.',
     add_btn: 'Ajouter',
     remarks_hyphen: 'Remarques -',
     add_remark: 'Ajouter une remarque',
@@ -575,9 +575,9 @@ export const translations = {
     no_children_registered:
       "Vous n'avez pas encore d'enfants enregistrés. Veuillez d'abord ajouter un enfant.",
     free_course_notice:
-      "✅ Tous les cours sont <strong>gratuits</strong> pour le moment. L'inscription confirme la participation de votre enfant.",
+      " Tous les cours sont <strong>gratuits</strong> pour le moment. L'inscription confirme la participation de votre enfant.",
     enroll_in_progress: 'Inscription en cours...',
-    enroll_success: '✅ Inscription réussie!',
+    enroll_success: ' Inscription réussie!',
     loading_groups: 'Chargement des groupes...',
     no_groups_available:
       'Aucun groupe disponible pour le moment. Les inscriptions peuvent être fermées.',
@@ -662,7 +662,7 @@ export const translations = {
 
     // Materials List
     materials_list_title: 'Documents du cours',
-    teacher_mode_badge: '🎓 Mode Enseignant — gestion des documents activée',
+    teacher_mode_badge: ' Mode Enseignant — gestion des documents activée',
     loading_materials: 'Chargement des documents...',
     no_materials: 'Aucun document disponible pour ce cours.',
     confirm_delete_title: 'Supprimer ce document ?',
@@ -683,10 +683,9 @@ export const translations = {
     materials_loading: 'Chargement des documents...',
     materials_empty_title: 'Aucun document',
     materials_empty_desc: "L'enseignant n'a pas encore publié de documents pour ce cours.",
-    protected_video_notice: '🔒 Vidéo protégée — lecture uniquement sur la plateforme',
+    protected_video_notice: ' Vidéo protégée — lecture uniquement sur la plateforme',
     material_desc_placeholder: 'Brève description...',
     drag_drop_files: 'Cliquez pour sélectionner un fichier ou glissez-déposez',
-    file_limits: 'PDF, DOC, PPT, MP4, Images (Max 250MB)',
 
     // ── LOGIN PAGE — phone, wilaya, test accounts ──
     phone_number: 'Numéro de téléphone',
@@ -708,7 +707,7 @@ export const translations = {
 
     // ── PARENT DASHBOARD — real price ──
     price_da_label: '{n} DA / mois',
-    enroll_child_paid: '✅ Inscrire mon enfant',
+    enroll_child_paid: ' Inscrire mon enfant',
 
     // ── STUDENT DASHBOARD — 2 boxes ──
     my_paid_courses: 'Mes Cours Actifs',
@@ -721,7 +720,7 @@ export const translations = {
     unpaid_active: 'Non payé (actif)',
 
     // ── MATERIALS NOTIFICATION ──
-    new_material_notif: '📚 Nouveau document publié pour le cours',
+    new_material_notif: ' Nouveau document publié pour le cours',
 
     // ── CALENDAR (AppCalendar.vue) ──
     session_details: 'Détails de la séance',
@@ -742,12 +741,12 @@ export const translations = {
     hours_ago: 'Il y a {n}h',
     clear_all: 'Tout effacer',
     notification_count: '{n} notification(s)',
-    welcome_title_notif: '👋 Bienvenue — Belmahi School',
-    reminder_title_notif: '⏰ Rappel de cours — Belmahi School',
-    assignment_title_notif: '📚 Nouveau devoir — Belmahi School',
-    warning_title_notif: '⚠️ Avertissement — Belmahi School',
-    success_title_notif: '✅ Succès — Belmahi School',
-    info_title_notif: '🔔 Belmahi School',
+    welcome_title_notif: ' Bienvenue — Belmahi School',
+    reminder_title_notif: ' Rappel de cours — Belmahi School',
+    assignment_title_notif: ' Nouveau devoir — Belmahi School',
+    warning_title_notif: ' Avertissement — Belmahi School',
+    success_title_notif: ' Succès — Belmahi School',
+    info_title_notif: ' Belmahi School',
 
     // ── STATS DASHBOARD ──
     stats_dashboard_title: 'Tableau de bord des statistiques',
@@ -755,7 +754,7 @@ export const translations = {
     loading_data: 'Chargement des données...',
     error_loading_data: 'Erreur lors du chargement des données',
     paid_ok: 'Payé ✓',
-    pending_wait: 'En attente ⏳',
+    pending_wait: 'En attente ',
     inactive_cross: 'Inactif ✗',
     total_enrolled_students: 'Total des étudiants inscrits',
     capacity_usage: '% de capacité sur {n} places',
@@ -787,10 +786,10 @@ export const translations = {
     enrolled_closed_ar: 'Inscrit (Fermé)',
     paid_active_ar: 'Payé (Actif)',
     unpaid_active_trust: 'Non payé (Actif sur confiance)',
-    confirm_payment: 'Confirmer le paiement 🔓',
-    active_unpaid: 'Actif (Non payé) 🤝',
-    lock_registered: 'Verrouiller 🔒',
-    cancel_enrollment: "Annuler l'inscription ❌",
+    confirm_payment: 'Confirmer le paiement ',
+    active_unpaid: 'Actif (Non payé) ',
+    lock_registered: 'Verrouiller ',
+    cancel_enrollment: "Annuler l'inscription ",
     error_updating: 'Erreur lors de la mise à jour',
     error_deleting: 'Erreur lors de la suppression',
     error_cleaning: 'Erreur lors du nettoyage',
@@ -802,10 +801,10 @@ export const translations = {
     // ── PUBLIC COURSES ──
     our_educational_courses: 'Nos cours éducatifs',
     discover_all_courses: 'Découvrez tous les cours disponibles de la primaire au lycée',
-    like_these_courses: '💡 Un de ces cours vous intéresse ?',
+    like_these_courses: ' Un de ces cours vous intéresse ?',
     login_to_register_details: 'Pour vous inscrire ou en savoir plus, veuillez vous connecter.',
     available_courses_count: '{n} cours disponibles',
-    free_uppercase: '🆓 GRATUIT',
+    free_uppercase: ' GRATUIT',
     login_to_register: 'Connectez-vous pour vous inscrire',
     no_courses_available_now: 'Aucun cours disponible pour le moment',
 
@@ -815,10 +814,71 @@ export const translations = {
     browser_no_video: 'Votre navigateur ne supporte pas la lecture vidéo.',
 
     detailed_stats: 'Statistiques détaillées',
+
+    // Wilaya
+    select_wilaya: 'Sélectionner une wilaya...',
+
+    // Add teacher form
+    create_teacher_account_btn: 'Créer le compte enseignant',
+    teacher_note_msg:
+      "L'enseignant pourra se connecter avec l'email et le mot de passe définis. Il aura accès aux outils pédagogiques et pourra gérer ses cours.",
+
+    // Upload modal
+    images_label: 'Images',
+    brief_description: 'Description brève...',
+    upload_success_msg: 'Document mis en ligne avec succès !',
+    upload_failed: 'Échec du téléversement',
+    file_too_large_1gb: 'La taille du fichier doit être inférieure à 1 GB',
+    file_limits: 'PDF, DOC, PPT, MP4, Images (Max 1 GB)',
+
+    // Student list modal info tooltips
+    info_cleanup_pending:
+      "Supprime définitivement toutes les inscriptions dont le statut est 'en attente' depuis plus de 14 jours. Ces étudiants n'ont pas confirmé leur place. Cette action est irréversible.",
+    info_cleanup_inactive:
+      "Supprime définitivement les comptes étudiants inactifs depuis plus de 60 jours (aucune connexion, aucun cours actif). Cette action est irréversible et libère de l'espace.",
+
+    // Teacher dashboard
+    upload_material_inside: 'Téléverser un document',
+    view_documents_inside: 'Voir documents',
+
+    // Child
+    child_created_success: 'Enfant créé et ajouté avec succès !',
   },
 
   // ════════════════════════════════════════
   ar: {
+    // Wilaya
+    select_wilaya: 'اختر الولاية...',
+    wilaya_label: 'الولاية',
+
+    // Add teacher form
+    create_teacher_account_btn: 'إنشاء حساب الأستاذ',
+    teacher_note_msg:
+      'سيتمكن الأستاذ من تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور المحددين. سيتمكن من الوصول إلى الأدوات التربوية وإدارة دروسه.',
+    secure_password: 'كلمة مرور آمنة',
+    min_8_chars: '8 أحرف على الأقل موصى بها',
+
+    // Upload modal
+    images_label: 'صور',
+    brief_description: 'وصف مختصر...',
+    upload_success_msg: 'تم رفع المستند بنجاح!',
+    upload_failed: 'فشل الرفع',
+    file_too_large_1gb: 'يجب أن يكون حجم الملف أقل من 1 GB',
+    file_limits: 'PDF, DOC, PPT, MP4, صور (الحد الأقصى 1 GB)',
+
+    // Student list modal info tooltips
+    info_cleanup_pending:
+      "يحذف نهائياً جميع التسجيلات التي تكون في حالة 'انتظار' منذ أكثر من 14 يوماً. هؤلاء الطلاب لم يؤكدوا مكانهم. هذا الإجراء لا يمكن التراجع عنه.",
+    info_cleanup_inactive:
+      'يحذف نهائياً حسابات الطلاب الغير نشطين منذ أكثر من 60 يوماً (لا دخول، لا مواد نشطة). هذا الإجراء لا يمكن التراجع عنه.',
+
+    // Teacher dashboard
+    upload_material_inside: 'رفع مستند',
+    view_documents_inside: 'عرض المستندات',
+
+    // Child
+    child_created_success: 'تم إنشاء الطفل وإضافته بنجاح!',
+
     global_stats: 'إحصائيات عامة',
     courses_available: 'الدروس المتاحة',
     detailed_stats: 'إحصائيات تفصيلية',
@@ -828,12 +888,12 @@ export const translations = {
     hours_ago: 'منذ {n} ساعة',
     clear_all: 'مسح الكل',
     notification_count: '{n} إشعار',
-    welcome_title_notif: '👋 مرحباً — مدرسة بلماحي',
-    reminder_title_notif: '⏰ تذكير بالدرس — مدرسة بلماحي',
-    assignment_title_notif: '📚 تعيين جديد — مدرسة بلماحي',
-    warning_title_notif: '⚠️ تنبيه — مدرسة بلماحي',
-    success_title_notif: '✅ تم بنجاح — مدرسة بلماحي',
-    info_title_notif: '🔔 مدرسة بلماحي',
+    welcome_title_notif: ' مرحباً — مدرسة بلماحي',
+    reminder_title_notif: ' تذكير بالدرس — مدرسة بلماحي',
+    assignment_title_notif: ' تعيين جديد — مدرسة بلماحي',
+    warning_title_notif: ' تنبيه — مدرسة بلماحي',
+    success_title_notif: 'تم بنجاح — مدرسة بلماحي',
+    info_title_notif: ' مدرسة بلماحي',
 
     // ── STATS DASHBOARD ──
     stats_dashboard_title: 'لوحة الإحصائيات',
@@ -873,10 +933,10 @@ export const translations = {
     enrolled_closed_ar: 'مسجل (مغلق)',
     paid_active_ar: 'مدفوع (مفعل)',
     unpaid_active_trust: 'غير مدفوع (مفعل بالثقة)',
-    confirm_payment: 'تأكيد الدفع 🔓',
-    active_unpaid: 'مفعل (لم يدفع) 🤝',
-    lock_registered: 'قفل (مسجل) 🔒',
-    cancel_enrollment: 'إلغاء التسجيل ❌',
+    confirm_payment: 'تأكيد الدفع ',
+    active_unpaid: 'مفعل (لم يدفع) ',
+    lock_registered: 'قفل (مسجل) ',
+    cancel_enrollment: 'إلغاء التسجيل ',
     error_updating: 'خطأ في التحديث',
     error_deleting: 'خطأ في الحذف',
     error_cleaning: 'خطأ في التنظيف',
@@ -891,7 +951,7 @@ export const translations = {
     like_these_courses: '💡 هل أعجبك أحد هذه الدورات؟',
     login_to_register_details: 'للتسجيل أو معرفة المزيد من التفاصيل، يرجى تسجيل الدخول إلى حسابك',
     available_courses_count: '{n} دورات متاحة',
-    free_uppercase: '🆓 مجاني',
+    free_uppercase: ' مجاني',
     login_to_register: 'تسجيل الدخول للتسجيل',
     no_courses_available_now: 'لا توجد دورات متاحة في الوقت الحالي',
 
@@ -908,7 +968,7 @@ export const translations = {
     pwd_strong: 'قوية',
     // ── LOGIN PAGE — phone, wilaya, test accounts ──
     phone_number: 'رقم الهاتف',
-    wilaya_label: 'الولاية',
+
     test_accounts_label: 'أمثلة حسابات:',
     test_student_example: 'طالب: etudiant@belmahi.dz',
     test_admin_example: 'مشرف: admin@belmahi.dz',
@@ -926,7 +986,7 @@ export const translations = {
 
     // ── PARENT DASHBOARD — real price ──
     price_da_label: '{n} د.ج / شهر',
-    enroll_child_paid: '✅ تسجيل ابني',
+    enroll_child_paid: ' تسجيل ابني',
 
     // ── STUDENT DASHBOARD — 2 boxes ──
     my_paid_courses: 'دروسي النشطة',
@@ -939,7 +999,7 @@ export const translations = {
     unpaid_active: 'غير مدفوع (مفعل)',
 
     // ── MATERIALS NOTIFICATION ──
-    new_material_notif: '📚 تم نشر مستند جديد للدرس',
+    new_material_notif: ' تم نشر مستند جديد للدرس',
 
     // ── CALENDAR (AppCalendar.vue) ──
     session_details: 'تفاصيل الحصة',
@@ -965,7 +1025,7 @@ export const translations = {
     protected_video_notice: '🔒 فيديو محمي — المشاهدة حصرياً على المنصة',
     material_desc_placeholder: 'وصف مختصر...',
     drag_drop_files: 'انقر لتحديد ملف أو اسحب وأفلت',
-    file_limits: 'PDF, DOC, PPT, MP4, صور (الحد الأقصى 250MB)',
+
     materials_list_title: 'مستندات الدرس',
     teacher_mode_badge: '🎓 فضاء الأستاذ — يمكنك حذف المستندات',
     loading_materials: 'جاري تحميل المستندات...',
@@ -1287,7 +1347,7 @@ export const translations = {
 
     // Student & Parent Dashboards
     loading_your_courses: 'جاري تحميل دروسك...',
-    error_prefix: '❌ خطأ:',
+    error_prefix: ' خطأ:',
     retry: 'إعادة المحاولة',
     welcome_comma: 'مرحباً، ',
     your_enrolled_courses: 'دروسك المسجلة',
@@ -1299,10 +1359,10 @@ export const translations = {
     year_suffix: 'سنة',
     year_suffix_short: 'سنة',
     to_time: 'إلى',
-    view_course_materials: '📚 عرض مستندات الدرس',
+    view_course_materials: ' عرض مستندات الدرس',
     paid_status: '✓ مدفوع',
     partial_status: '⚠ جزئي',
-    pending_status: '⏳ قيد الانتظار',
+    pending_status: 'قيد الانتظار',
 
     parent_space_welcome: 'فضاء الولي — مرحباً',
     manage_children_enrollments: 'إدارة تسجيلات أبنائك',
@@ -1314,8 +1374,8 @@ export const translations = {
     select_child_to_view_courses: 'اختر ابناً لعرض دروسه',
     courses_of: 'دروس ',
     no_courses_yet: 'لا توجد دروس حالياً',
-    paid_status_ok: '✅ مدفوع',
-    unpaid_status: '❌ غير مدفوع',
+    paid_status_ok: 'مدفوع',
+    unpaid_status: ' غير مدفوع',
     monthly_cycle_ended: 'انتهت الدورة الشهرية. يرجى الاتصال بالمدرسة للتجديد.',
     courses_are_free_now: '(الدروس مجانية في الوقت الحالي)',
     confirm_unenroll_child: 'هل تريد سحب هذا الابن من هذا الدرس؟',
@@ -1368,8 +1428,7 @@ export const translations = {
     ex_email_teacher: 'teacher@usto.dz',
     ex_phone: '0555 12 34 56',
     ex_city: 'مثال: وهران',
-    secure_password: 'كلمة مرور آمنة',
-    min_8_chars: 'يوصى بـ 8 أحرف على الأقل',
+
     creation_in_progress: 'جاري الإنشاء...',
     create_teacher_account: 'إنشاء حساب الأستاذ',
     note_label: '📌 ملاحظة:',
@@ -1388,9 +1447,9 @@ export const translations = {
     error_favorites: 'خطأ في إدارة المفضلة: ',
     confirm_delete_course_msg: 'هل أنت متأكد من حذف هذا الدرس؟',
     loading_courses_list: 'جاري تحميل الدروس...',
-    global_stats: 'إحصائيات عامة',
+
     courses_assigned: 'الدروس المعينة',
-    courses_available: 'الدروس المتاحة',
+
     search_course_placeholder: 'ابحث عن درس...',
     hide: 'إخفاء',
     filters: 'عوامل التصفية',

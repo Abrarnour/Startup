@@ -45,19 +45,77 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <button
-              @click="handleCleanupPending"
-              class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium mr-2"
-            >
-              {{ t('cleanup_pending_14d') }}
-            </button>
+            <!-- Purge pending > 14 days + info button -->
+            <div class="flex items-center gap-1">
+              <button
+                @click="handleCleanupPending"
+                class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
+              >
+                {{ t('cleanup_pending_14d') }}
+              </button>
+              <div class="relative group">
+                <button
+                  class="w-5 h-5 rounded-full bg-orange-200 text-orange-700 text-xs font-bold flex items-center justify-center hover:bg-orange-300 transition-colors cursor-help"
+                  title="Info"
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
+                    <line x1="12" y1="12" x2="12" y2="16" />
+                  </svg>
+                </button>
+                <!-- Tooltip -->
+                <div
+                  class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                >
+                  <p class="font-bold mb-1 text-orange-300">{{ t('cleanup_pending_14d') }}</p>
+                  <p>{{ t('info_cleanup_pending') }}</p>
+                </div>
+              </div>
+            </div>
 
-            <button
-              @click="handleCleanup"
-              class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-            >
-              {{ t('cleanup_inactive') }}
-            </button>
+            <!-- Clean inactive > 60 days + info button -->
+            <div class="flex items-center gap-1">
+              <button
+                @click="handleCleanup"
+                class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+              >
+                {{ t('cleanup_inactive') }}
+              </button>
+              <div class="relative group">
+                <button
+                  class="w-5 h-5 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center hover:bg-red-300 transition-colors cursor-help"
+                  title="Info"
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
+                    <line x1="12" y1="12" x2="12" y2="16" />
+                  </svg>
+                </button>
+                <!-- Tooltip -->
+                <div
+                  class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                >
+                  <p class="font-bold mb-1 text-red-300">{{ t('cleanup_inactive') }}</p>
+                  <p>{{ t('info_cleanup_inactive') }}</p>
+                </div>
+              </div>
+            </div>
 
             <button
               @click="$emit('close')"
@@ -321,6 +379,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { X, Users, Search, Loader2 } from 'lucide-vue-next'
+import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 import {
   getAdminStudentsList,
   adminDeleteUser,
@@ -346,7 +405,7 @@ const handleCleanup = async () => {
     loading.value = false
   }
 }
-
+const { t } = useLanguage() // ✅ Extract t for translations
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
