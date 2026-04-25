@@ -211,7 +211,7 @@ const handleRegister = async () => {
       class="relative rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 h-[650px] flex"
     >
       <div
-        class="absolute top-0 start-0 w-1/2 h-full z-50 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
+        class="absolute top-0 start-0 w-1/2 h-full z-10 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
         :style="{ transform: overlayTransform }"
       >
         <div v-if="!isSignUp" class="space-y-6">
