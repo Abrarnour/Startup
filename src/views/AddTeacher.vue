@@ -273,19 +273,6 @@ const handleSubmit = async () => {
             >
               {{ t('birthday') }}
             </label>
-            <div class="relative">
-              <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" :size="20" />
-              <input
-                v-model="teacherData.birthday"
-                type="date"
-                :class="
-                  props.darkMode
-                    ? 'bg-gray-700 border-gray-600 text-white'
-                    : 'bg-gray-50 border-gray-200'
-                "
-                class="w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
           </div>
 
           <div>
