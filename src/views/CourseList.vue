@@ -19,6 +19,10 @@ import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 // script
+import StatsModal from '../components/StatsModal.vue'
+
+// ADD THIS REF (with other refs):
+const showStatsModal = ref(false)
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
 const showChangePwdModal = ref(false)
 const { t } = useLanguage() // ✅ Extract t for translations
@@ -329,11 +333,29 @@ onMounted(() => {
           </div>
 
           <div
-            class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
+            @click="showStatsModal = true"
           >
-            <Heart class="mx-auto mb-2" :size="28" />
-            <div class="text-2xl font-bold">{{ favoriteCount }}</div>
-            <div class="text-sm text-blue-100">{{ t('favorites') }}</div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="mx-auto mb-2"
+              :width="28"
+              :height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <div class="text-2xl font-bold">{{ stats.totalCourses }}</div>
+            <div class="text-sm text-blue-100">إحصائيات تفصيلية</div>
+            <p class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1">
+              👆 {{ t('click_to_manage') }}
+            </p>
           </div>
         </div>
       </div>
@@ -614,6 +636,13 @@ onMounted(() => {
     :show="showChangePwdModal"
     :dark-mode="darkMode"
     @close="showChangePwdModal = false"
+  />
+
+  <StatsModal
+    :show="showStatsModal"
+    :dark-mode="props.darkMode"
+    :base-stats="stats"
+    @close="showStatsModal = false"
   />
 </template>
 

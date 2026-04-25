@@ -8,7 +8,6 @@ import * as api from '../services/api.js'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
-
 const showChangePwdModal = ref(false)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -77,7 +76,7 @@ const loadCourses = async () => {
   try {
     // Récupérer les cours de l'enseignant
     courses.value = await api.getCourses()
-
+    await loadMaterialsCounts()
     // Calculer les statistiques
     stats.value.totalCourses = courses.value.length
 
@@ -135,15 +134,32 @@ const handleCourseAdded = async () => {
 }
 
 // ⭐ NEW: Handle upload success
-const handleUploadSuccess = () => {
+const handleUploadSuccess = async () => {
   showUploadModal.value = false
   // Optionally show success notification
   alert(t('material_uploaded_success')) // ✅ Dynamic translation
+  if (selectedCourseForUpload.value) {
+    try {
+      const mats = await api.getMaterials(selectedCourseForUpload.value)
+      materialCounts.value[selectedCourseForUpload.value] = mats.length
+    } catch (e) {}
+  }
 }
 
 onMounted(() => {
   loadCourses()
 })
+const materialCounts = ref({}) // { courseId: count }
+const loadMaterialsCounts = async () => {
+  for (const course of courses.value) {
+    try {
+      const mats = await api.getMaterials(course.id)
+      materialCounts.value[course.id] = mats.length
+    } catch (e) {
+      materialCounts.value[course.id] = 0
+    }
+  }
+}
 </script>
 
 <template>
@@ -348,7 +364,9 @@ onMounted(() => {
                 "
                 class="px-4 py-2 rounded-xl font-semibold transition-all flex items-center gap-2"
               >
-                {{ t('view_documents_btn') }} ({{ course.materials_count || 0 }})
+                {{ t('view_documents_btn') }} ({{
+                  materialCounts[course.id] ?? course.materials_count ?? 0
+                }})
               </button>
             </div>
           </div>

@@ -55,6 +55,10 @@ router.get('/', authMiddleware, async (req, res) => {
            WHERE g.course_id = c.id),
           0
         )::integer as enrolled_students
+         COALESCE(
+//     (SELECT COUNT(*) FROM course_materials WHERE course_id = c.id),
+//     0
+//   )::integer as materials_count,
       FROM courses c
       LEFT JOIN users u ON c.teacher_id = u.id
     `

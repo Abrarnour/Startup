@@ -9,6 +9,23 @@ defineProps({
   darkMode: { type: Boolean, default: false },
 })
 
+const sections = [
+  { id: 'hero-section', label: 'الرئيسية', icon: '' },
+  { id: 'stats-section', label: 'الإحصائيات', icon: '' },
+  { id: 'levels-section', label: 'المستويات', icon: '' },
+  { id: 'features-section', label: 'المميزات', icon: '' },
+  { id: 'about-section', label: 'من نحن', icon: '' },
+  { id: 'testimonials-section', label: 'آراء', icon: '' },
+  { id: 'cta-section', label: 'سجّل الآن', icon: '' },
+]
+
+const activeSection = ref('hero-section')
+
+const scrollToSection = (id) => {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 // ── Animated counters ──────────────────────────────────────────
 const counters = ref([
   { key: 'stat_students', target: 320, current: 0, suffix: '+' },
@@ -49,6 +66,22 @@ onMounted(() => {
   )
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el))
   if (countersRef.value) io.observe(countersRef.value)
+
+  const sectionObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeSection.value = entry.target.id
+        }
+      })
+    },
+    { threshold: 0.4 },
+  )
+  sections.forEach((s) => {
+    const el = document.getElementById(s.id)
+    if (el) sectionObserver.observe(el)
+  })
+  onUnmounted(() => sectionObserver.disconnect())
 })
 
 onUnmounted(() => io?.disconnect())
@@ -189,6 +222,22 @@ onUnmounted(() => clearInterval(tInterval))
         <span>{{ t('scroll_hint') }}</span>
       </div>
     </section>
+    <template>
+      <nav class="section-nav">
+        <div class="snav-inner">
+          <button
+            v-for="sec in sections"
+            :key="sec.id"
+            class="snav-btn"
+            :class="{ 'snav-active': activeSection === sec.id }"
+            @click="scrollToSection(sec.id)"
+          >
+            <span class="snav-icon">{{ sec.icon }}</span>
+            <span class="snav-label">{{ sec.label }}</span>
+          </button>
+        </div>
+      </nav>
+    </template>
 
     <!-- ══════════════════════════════════
          2. BENTO STATS
@@ -758,6 +807,78 @@ h3 {
   padding: 1.25rem 1.75rem;
   color: white;
 }
+
+<style>
+/* ── Section nav bar ───────────────────────────────────────────────── */
+.section-nav {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(2, 85, 174, 0.09);
+  box-shadow: 0 2px 20px rgba(2, 85, 174, 0.07);
+  border-radius: 0 0 16px 16px;
+  margin-bottom: -0.5rem;
+}
+
+.dark-mode .section-nav {
+  background: rgba(8, 15, 32, 0.92);
+  border-bottom-color: rgba(27, 168, 244, 0.1);
+}
+
+.snav-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.55rem 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.snav-inner::-webkit-scrollbar { display: none; }
+
+.snav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.snav-btn:hover {
+  background: rgba(2, 85, 174, 0.07);
+  color: #0255ae;
+}
+
+.snav-active {
+  background: #0255ae !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(2, 85, 174, 0.3);
+}
+
+.dark-mode .snav-btn { color: rgba(255, 255, 255, 0.4); }
+.dark-mode .snav-btn:hover { background: rgba(27, 168, 244, 0.1); color: #1ba8f4; }
+.dark-mode .snav-active { background: #1ba8f4 !important; color: white !important; }
+
+.snav-icon { font-size: 0.85rem; }
+.snav-label { font-size: 0.75rem; }
+
+@media (max-width: 600px) {
+  .snav-label { display: none; }
+  .snav-btn { padding: 0.45rem 0.6rem; }
+  .snav-icon { font-size: 1rem; }
+}
+</style>
 .glass-num {
   display: block;
   font-family: 'Syne', sans-serif;
