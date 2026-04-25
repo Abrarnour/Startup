@@ -1,8 +1,4 @@
-// ═══════════════════════════════════════════════════════
-// FILE: backend/routes/stats.js
-// CHANGE: Added comprehensive dashboard stats endpoint
-// ═══════════════════════════════════════════════════════
-
+// backend/routes/stats.js
 import express from 'express'
 import pool from '../db.js'
 import { authMiddleware } from './auth.js'
@@ -13,11 +9,17 @@ const router = express.Router()
 router.get('/', async (req, res) => {
   try {
     const totalUsers = await pool.query('SELECT COUNT(*) FROM users')
-    const usersByRole = await pool.query(`SELECT role, COUNT(*) as count FROM users GROUP BY role`)
+
+    const usersByRole = await pool.query(`
+      SELECT role, COUNT(*) as count FROM users GROUP BY role
+    `)
+
     const totalCourses = await pool.query('SELECT COUNT(*) FROM courses')
+
     const totalHours = await pool.query(
       'SELECT COALESCE(SUM(duration_hours), 0) as total FROM courses',
     )
+
     const uniqueTeachers = await pool.query(
       'SELECT COUNT(DISTINCT teacher_id) as count FROM courses',
     )
@@ -38,42 +40,45 @@ router.get('/', async (req, res) => {
   }
 })
 
+// ═══════════════════════════════════════════════════════════════════════════════
 // 📊 GET /api/stats/dashboard - Full Power BI-like dashboard data (Admin)
+// ═══════════════════════════════════════════════════════════════════════════════
 router.get('/dashboard', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
 
-    // ── 1. Payment distribution ─────────────────────────────────────────
+    // ── 1. Payment distribution ─────────────────────────────────────────────
     const paymentDist = await pool.query(`
       SELECT
-        payment_status,
+        COALESCE(payment_status, 'pending') as payment_status,
         COUNT(*) as count
       FROM group_students
       GROUP BY payment_status
     `)
 
-    // ── 2. Students enrolled vs total capacity ───────────────────────────
+    // ── 2. Enrolled students vs total capacity ───────────────────────────────
     const capacityData = await pool.query(`
       SELECT
         COALESCE(SUM(c.max_students_per_group), 0) as total_capacity,
         COUNT(DISTINCT gs.student_id) as enrolled_students
       FROM courses c
       LEFT JOIN groups g ON g.course_id = c.id
-      LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+      LEFT JOIN group_students gs ON gs.group_id = g.id
     `)
 
-    // ── 3. Students by education level ──────────────────────────────────
+    // ── 3. Students by education level ───────────────────────────────────────
     const byLevel = await pool.query(`
       SELECT
-        c.education_level,
+        COALESCE(c.education_level, 'autre') as education_level,
         COUNT(DISTINCT gs.student_id) as student_count
       FROM courses c
       LEFT JOIN groups g ON g.course_id = c.id
-      LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+      LEFT JOIN group_students gs ON gs.group_id = g.id
       GROUP BY c.education_level
+      ORDER BY student_count DESC
     `)
 
-    // ── 4. Monthly enrollments trend (last 7 months) ─────────────────────
+    // ── 4. Monthly enrollments trend (last 7 months) ─────────────────────────
     const monthlyEnrollments = await pool.query(`
       SELECT
         TO_CHAR(enrollment_date, 'Mon YYYY') as month,
@@ -81,25 +86,43 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
         COUNT(*) as count
       FROM group_students
       WHERE enrollment_date >= NOW() - INTERVAL '7 months'
+        AND enrollment_date IS NOT NULL
       GROUP BY month, month_key
       ORDER BY month_key ASC
     `)
 
-    // ── 5. Top courses by enrollment ─────────────────────────────────────
+    // fallback: if no enrollment_date data, count by request_date or created_at
+    let enrollments = monthlyEnrollments.rows
+    if (enrollments.length === 0) {
+      const fallback = await pool.query(`
+        SELECT
+          TO_CHAR(request_date, 'Mon YYYY') as month,
+          TO_CHAR(request_date, 'YYYY-MM') as month_key,
+          COUNT(*) as count
+        FROM group_students
+        WHERE request_date IS NOT NULL
+          AND request_date >= NOW() - INTERVAL '7 months'
+        GROUP BY month, month_key
+        ORDER BY month_key ASC
+      `)
+      enrollments = fallback.rows
+    }
+
+    // ── 5. Top courses by enrollment ─────────────────────────────────────────
     const topCourses = await pool.query(`
       SELECT
         c.title,
         COUNT(DISTINCT gs.student_id) as student_count,
-        c.max_students_per_group as capacity
+        COALESCE(c.max_students_per_group, 25) as capacity
       FROM courses c
       LEFT JOIN groups g ON g.course_id = c.id
-      LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+      LEFT JOIN group_students gs ON gs.group_id = g.id
       GROUP BY c.id, c.title, c.max_students_per_group
       ORDER BY student_count DESC
       LIMIT 6
     `)
 
-    // ── 6. Monthly revenue estimate ──────────────────────────────────────
+    // ── 6. Monthly revenue estimate ───────────────────────────────────────────
     const monthlyRevenue = await pool.query(`
       SELECT
         TO_CHAR(gs.last_payment_date, 'Mon YYYY') as month,
@@ -109,12 +132,13 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
       JOIN groups g ON g.id = gs.group_id
       JOIN courses c ON c.id = g.course_id
       WHERE gs.payment_status = 'paid'
+        AND gs.last_payment_date IS NOT NULL
         AND gs.last_payment_date >= NOW() - INTERVAL '6 months'
       GROUP BY month, month_key
       ORDER BY month_key ASC
     `)
 
-    // ── 7. Teacher performance ────────────────────────────────────────────
+    // ── 7. Teacher performance ─────────────────────────────────────────────────
     const teacherPerf = await pool.query(`
       SELECT
         u.name || ' ' || u.last_name as teacher_name,
@@ -123,14 +147,14 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
       FROM users u
       LEFT JOIN courses c ON c.teacher_id = u.id
       LEFT JOIN groups g ON g.course_id = c.id
-      LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+      LEFT JOIN group_students gs ON gs.group_id = g.id
       WHERE u.role = 'teacher'
       GROUP BY u.id, u.name, u.last_name
       ORDER BY student_count DESC
       LIMIT 5
     `)
 
-    // ── 8. Total revenue this month ───────────────────────────────────────
+    // ── 8. Revenue this month ─────────────────────────────────────────────────
     const revenueThisMonth = await pool.query(`
       SELECT COALESCE(SUM(c.price), 0) as revenue
       FROM group_students gs
@@ -140,7 +164,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
         AND gs.last_payment_date >= DATE_TRUNC('month', NOW())
     `)
 
-    // ── 9. Groups fill rate ────────────────────────────────────────────────
+    // ── 9. Average group fill rate ─────────────────────────────────────────────
     const fillRate = await pool.query(`
       SELECT
         ROUND(
@@ -155,7 +179,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
           COUNT(gs.student_id) as gs_count
         FROM groups g
         JOIN courses c ON c.id = g.course_id
-        LEFT JOIN group_students gs ON gs.group_id = g.id AND gs.status = 'active'
+        LEFT JOIN group_students gs ON gs.group_id = g.id
         GROUP BY g.id, c.max_students_per_group
       ) sub
     `)
@@ -164,7 +188,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
       paymentDistribution: paymentDist.rows,
       capacityData: capacityData.rows[0],
       byLevel: byLevel.rows,
-      monthlyEnrollments: monthlyEnrollments.rows,
+      monthlyEnrollments: enrollments,
       topCourses: topCourses.rows,
       monthlyRevenue: monthlyRevenue.rows,
       teacherPerformance: teacherPerf.rows,
@@ -173,7 +197,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
     })
   } catch (error) {
     console.error('Erreur dashboard stats:', error)
-    res.status(500).json({ error: 'Erreur serveur' })
+    res.status(500).json({ error: 'Erreur serveur', detail: error.message })
   }
 })
 
@@ -181,6 +205,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
 router.get('/teacher', authMiddleware, async (req, res) => {
   try {
     const teacherId = req.user.id
+
     if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Accès refusé' })
     }
@@ -189,6 +214,7 @@ router.get('/teacher', authMiddleware, async (req, res) => {
       'SELECT COUNT(*) as count FROM courses WHERE teacher_id = $1',
       [teacherId],
     )
+
     const studentsResult = await pool.query(
       `SELECT COUNT(DISTINCT gs.student_id) as count
        FROM group_students gs
@@ -197,22 +223,28 @@ router.get('/teacher', authMiddleware, async (req, res) => {
        WHERE c.teacher_id = $1`,
       [teacherId],
     )
+
     const sessionsResult = await pool.query(
-      `SELECT COUNT(*) as count FROM groups g
-       INNER JOIN courses c ON g.course_id = c.id WHERE c.teacher_id = $1`,
+      `SELECT COUNT(*) as count
+       FROM groups g
+       INNER JOIN courses c ON g.course_id = c.id
+       WHERE c.teacher_id = $1`,
       [teacherId],
     )
+
     const seatsResult = await pool.query(
-      `SELECT COALESCE(SUM(c.max_students_per_group), 0) as total_seats,
+      `SELECT
+         COALESCE(SUM(c.max_students_per_group), 0) as total_seats,
          COUNT(gs.student_id) as occupied_seats
        FROM groups g
        INNER JOIN courses c ON g.course_id = c.id
        LEFT JOIN group_students gs ON gs.group_id = g.id
-       WHERE c.teacher_id = $1 GROUP BY g.id`,
+       WHERE c.teacher_id = $1
+       GROUP BY g.id`,
       [teacherId],
     )
 
-    // ── Materials count per course ─────────────────────────────────────
+    // ✅ Materials count for this teacher
     const materialsResult = await pool.query(
       `SELECT COUNT(*) as count FROM course_materials WHERE teacher_id = $1`,
       [teacherId],
