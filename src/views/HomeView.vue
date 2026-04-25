@@ -2,7 +2,7 @@
 import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
-
+import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
 const { t } = useLanguage()
 const router = useRouter()
 const props = defineProps({
@@ -15,13 +15,51 @@ const navigateToLevel = (key) => {
 }
 
 const sections = [
-  { id: 'hero-section', label: 'الرئيسية', icon: '' },
-  { id: 'stats-section', label: 'الإحصائيات', icon: '' },
-  { id: 'levels-section', label: 'المستويات', icon: '' },
-  { id: 'features-section', label: 'المميزات', icon: '' },
-  { id: 'about-section', label: 'من نحن', icon: '' },
-  { id: 'testimonials-section', label: 'آراء', icon: '' },
-  { id: 'cta-section', label: 'سجّل الآن', icon: '' },
+  {
+    id: 'hero-section',
+    label: 'الرئيسية',
+    svgPath: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10',
+    svgExtra: '',
+  },
+  {
+    id: 'stats-section',
+    label: 'الإحصائيات',
+    svgPath: 'M18 20V10 M12 20V4 M6 20v-6',
+    svgExtra: '',
+  },
+  {
+    id: 'levels-section',
+    label: 'المستويات',
+    svgPath: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+    svgExtra: '',
+  },
+  {
+    id: 'features-section',
+    label: 'المميزات',
+    svgPath:
+      'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+    svgExtra: '',
+  },
+  {
+    id: 'about-section',
+    label: 'من نحن',
+    svgPath: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    svgExtra:
+      '<circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  },
+  {
+    id: 'testimonials-section',
+    label: 'آراء',
+    svgPath: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+    svgExtra: '',
+  },
+  {
+    id: 'cta-section',
+    label: 'سجّل الآن',
+    svgPath: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2',
+    svgExtra:
+      '<circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>',
+  },
 ]
 
 const activeSection = ref('hero-section')
@@ -104,6 +142,7 @@ const features = computed(() => [
 // ── Levels ────────────────────────────────────────────────────
 const levels = computed(() => [
   {
+    key: 'primaire',
     name: t('level_primary'),
     arabic: t('level_primary_ar'),
     years: t('years_primary'),
@@ -111,6 +150,7 @@ const levels = computed(() => [
     accent: '#10b981',
   },
   {
+    key: 'moyen',
     name: t('level_middle'),
     arabic: t('level_middle_ar'),
     years: t('years_middle'),
@@ -118,6 +158,7 @@ const levels = computed(() => [
     accent: '#3b82f6',
   },
   {
+    key: 'secondaire',
     name: t('level_secondary'),
     arabic: t('level_secondary_ar'),
     years: t('years_secondary'),
@@ -160,9 +201,41 @@ onUnmounted(() => clearInterval(tInterval))
 <template>
   <div class="home" :class="{ 'dark-mode': darkMode }">
     <!-- ══════════════════════════════════
+         SECTION NAV — sticky sub-navbar
+         ══════════════════════════════════ -->
+    <nav class="section-nav">
+      <div class="snav-inner">
+        <button
+          v-for="sec in sections"
+          :key="sec.id"
+          class="snav-btn"
+          :class="{ 'snav-active': activeSection === sec.id }"
+          @click="scrollToSection(sec.id)"
+        >
+          <span class="snav-icon">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path :d="sec.svgPath" />
+              <g v-if="sec.svgExtra" v-html="sec.svgExtra"></g>
+            </svg>
+          </span>
+          <span class="snav-label">{{ sec.label }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════════════
          1. HERO — split dark editorial
          ══════════════════════════════════ -->
-    <section class="hero reveal">
+    <section id="hero-section" class="hero reveal">
       <div class="hero-left">
         <div class="hero-eyebrow">
           <span class="live-dot"></span>
@@ -227,27 +300,11 @@ onUnmounted(() => clearInterval(tInterval))
         <span>{{ t('scroll_hint') }}</span>
       </div>
     </section>
-    <template>
-      <nav class="section-nav">
-        <div class="snav-inner">
-          <button
-            v-for="sec in sections"
-            :key="sec.id"
-            class="snav-btn"
-            :class="{ 'snav-active': activeSection === sec.id }"
-            @click="scrollToSection(sec.id)"
-          >
-            <span class="snav-icon">{{ sec.icon }}</span>
-            <span class="snav-label">{{ sec.label }}</span>
-          </button>
-        </div>
-      </nav>
-    </template>
 
     <!-- ══════════════════════════════════
          2. BENTO STATS
          ══════════════════════════════════ -->
-    <section class="bento reveal" ref="countersRef">
+    <section id="stats-section" class="bento reveal" ref="countersRef">
       <div class="bento-grid">
         <!-- Big card -->
         <div class="bc bc-navy bc-big">
@@ -291,7 +348,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          3. LEVELS — full photo cards
          ══════════════════════════════════ -->
-    <section class="levels reveal">
+    <section id="levels-section" class="levels reveal">
       <div class="levels-top">
         <div>
           <span class="eyetag">{{ t('levels_eyetag') }}</span>
@@ -337,7 +394,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          4. FEATURES — editorial grid
          ══════════════════════════════════ -->
-    <section class="features reveal">
+    <section id="features-section" class="features reveal">
       <div class="features-top">
         <div>
           <span class="eyetag">{{ t('feat_eyetag') }}</span>
@@ -375,7 +432,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          5. ABOUT — layered images
          ══════════════════════════════════ -->
-    <section class="about reveal" :class="{ dark: darkMode }">
+    <section id="about-section" class="about reveal" :class="{ dark: darkMode }">
       <div class="about-grid">
         <!-- Visual -->
         <div class="about-vis">
@@ -427,7 +484,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          6. TESTIMONIALS — featured quote
          ══════════════════════════════════ -->
-    <section class="testi reveal">
+    <section id="testimonials-section" class="testi reveal">
       <div class="testi-layout">
         <!-- Sidebar -->
         <div class="testi-side">
@@ -482,7 +539,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          7. CTA — dark cinematic
          ══════════════════════════════════ -->
-    <section class="cta reveal">
+    <section id="cta-section" class="cta reveal">
       <div class="cta-photo-wrap">
         <img
           src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=85"
@@ -823,26 +880,27 @@ h3 {
 .section-nav {
   position: sticky;
   top: 0;
-  z-index: 80;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(2, 85, 174, 0.09);
-  box-shadow: 0 2px 20px rgba(2, 85, 174, 0.07);
-  border-radius: 0 0 16px 16px;
-  margin-bottom: -0.5rem;
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(2, 85, 174, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 24px rgba(2, 85, 174, 0.08);
+  margin-bottom: 0;
 }
 
 .dark-mode .section-nav {
-  background: rgba(8, 15, 32, 0.92);
-  border-bottom-color: rgba(27, 168, 244, 0.1);
+  background: rgba(4, 13, 31, 0.96);
+  border-bottom-color: rgba(27, 168, 244, 0.12);
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
 }
 
 .snav-inner {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.55rem 1.25rem;
+  gap: 0.15rem;
+  padding: 0.5rem 1rem;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -853,13 +911,13 @@ h3 {
 .snav-btn {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.9rem;
+  gap: 0.45rem;
+  padding: 0.5rem 1rem;
   border: none;
   background: transparent;
   cursor: pointer;
   border-radius: 999px;
-  transition: all 0.25s ease;
+  transition: all 0.22s ease;
   white-space: nowrap;
   color: #64748b;
   font-size: 0.78rem;
@@ -868,33 +926,42 @@ h3 {
 }
 
 .snav-btn:hover {
-  background: rgba(2, 85, 174, 0.07);
+  background: rgba(2, 85, 174, 0.08);
   color: #0255ae;
 }
 
 .snav-active {
-  background: #0255ae !important;
+  background: linear-gradient(135deg, #0255ae, #1ba8f4) !important;
   color: white !important;
-  box-shadow: 0 4px 14px rgba(2, 85, 174, 0.3);
+  box-shadow: 0 4px 16px rgba(2, 85, 174, 0.28);
 }
 
 .dark-mode .snav-btn {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.45);
 }
 .dark-mode .snav-btn:hover {
-  background: rgba(27, 168, 244, 0.1);
+  background: rgba(27, 168, 244, 0.12);
   color: #1ba8f4;
 }
 .dark-mode .snav-active {
-  background: #1ba8f4 !important;
+  background: linear-gradient(135deg, #0255ae, #1ba8f4) !important;
   color: white !important;
 }
 
 .snav-icon {
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.snav-active .snav-icon {
+  opacity: 1;
 }
 .snav-label {
   font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 @media (max-width: 600px) {
@@ -902,10 +969,11 @@ h3 {
     display: none;
   }
   .snav-btn {
-    padding: 0.45rem 0.6rem;
+    padding: 0.5rem 0.65rem;
   }
-  .snav-icon {
-    font-size: 1rem;
+  .snav-icon svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
