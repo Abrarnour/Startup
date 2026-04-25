@@ -281,6 +281,7 @@ onMounted(() => {
 
   <div v-else>
     <header
+      v-if="user?.role === 'admin'"
       :class="
         props.darkMode
           ? 'bg-gradient-to-r from-gray-800 to-gray-900'
@@ -352,7 +353,7 @@ onMounted(() => {
               <rect x="14" y="14" width="7" height="7" rx="1" />
             </svg>
             <div class="text-2xl font-bold">{{ stats.totalCourses }}</div>
-            <div class="text-sm text-blue-100">إحصائيات تفصيلية</div>
+            <div class="text-sm text-blue-100">{{ t('detailed_stats') }}</div>
             <p class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1">
               👆 {{ t('click_to_manage') }}
             </p>

@@ -1,10 +1,12 @@
+<!-- src/views/PublicCourses.vue — VERSION CORRIGÉE (Fix 2) -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router' // ✅ ajout useRoute
 import { BookOpen, Users, LogIn, GraduationCap } from 'lucide-vue-next'
 import * as api from '../services/api.js'
 
 const router = useRouter()
+const route = useRoute() // ✅ nouveau
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -71,8 +73,19 @@ const goToLogin = () => {
   router.push('/login')
 }
 
-onMounted(() => {
-  loadCourses()
+onMounted(async () => {
+  await loadCourses()
+
+  // ✅ NOUVEAU — lire le niveau depuis la query string (?level=primaire)
+  const levelFromQuery = route.query.level
+  if (levelFromQuery && educationLevels[levelFromQuery]) {
+    selectedLevel.value = levelFromQuery
+    // Scroller vers la section du niveau sélectionné
+    setTimeout(() => {
+      const el = document.getElementById(`level-${levelFromQuery}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 300)
+  }
 })
 </script>
 
@@ -121,7 +134,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Filtres par niveau -->
+    <!-- ✅ Filtres par niveau -->
     <div class="flex flex-wrap gap-3 mb-8 justify-center">
       <button
         v-for="(info, level) in educationLevels"
@@ -147,6 +160,7 @@ onMounted(() => {
         v-for="(levelCourses, level) in coursesByLevel"
         :key="level"
         v-show="levelCourses.length > 0"
+        :id="`level-${level}`"
       >
         <!-- En-tête du niveau -->
         <div class="flex items-center gap-4 mb-6">

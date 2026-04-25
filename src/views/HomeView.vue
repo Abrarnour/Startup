@@ -1,13 +1,18 @@
 <script setup>
 import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
 
 const { t } = useLanguage()
-
-defineProps({
+const router = useRouter()
+const props = defineProps({
   darkMode: { type: Boolean, default: false },
+  user: { type: Object, default: null }, // add user prop
 })
+const navigateToLevel = (key) => {
+  if (!props.user) router.push({ path: '/public-courses', query: { level: key } })
+  else router.push('/courses')
+}
 
 const sections = [
   { id: 'hero-section', label: 'الرئيسية', icon: '' },
@@ -298,7 +303,13 @@ onUnmounted(() => clearInterval(tInterval))
       </div>
 
       <div class="levels-grid">
-        <div v-for="lv in levels" :key="lv.name" class="lc">
+        <div
+          v-for="lv in levels"
+          :key="lv.name"
+          class="lc"
+          @click="navigateToLevel(lv.key)"
+          style="cursor: pointer"
+        >
           <img :src="lv.img" :alt="lv.name" class="lc-img" />
           <div class="lc-veil" :style="{ '--a': lv.accent }"></div>
           <div class="lc-body">
@@ -306,7 +317,7 @@ onUnmounted(() => clearInterval(tInterval))
             <h3 class="lc-name">{{ lv.name }}</h3>
             <p class="lc-years">{{ lv.years }}</p>
             <RouterLink to="/courses" class="lc-cta">
-              {{ t('see_courses') }}
+              <button class="lc-cta">{{ t('see_courses') }} ...</button>
               <svg
                 width="14"
                 height="14"

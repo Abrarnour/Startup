@@ -813,10 +813,15 @@ export const translations = {
     seen_check: '✓ Vu',
     watch: 'Regarder',
     browser_no_video: 'Votre navigateur ne supporte pas la lecture vidéo.',
+
+    detailed_stats: 'Statistiques détaillées',
   },
 
   // ════════════════════════════════════════
   ar: {
+    global_stats: 'إحصائيات عامة',
+    courses_available: 'الدروس المتاحة',
+    detailed_stats: 'إحصائيات تفصيلية',
     // ── NOTIFICATIONS & NAVBAR ──
     just_now: 'الآن',
     mins_ago: 'منذ {n} دقيقة',

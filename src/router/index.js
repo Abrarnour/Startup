@@ -9,6 +9,8 @@ import GroupManagement from '../views/GroupManagement.vue' // ✅ NOUVEAU
 import ParentDashboard from '../views/ParentDashboard.vue'
 import StudentDashboard from '../views/StudentDashboard.vue'
 import AppCalendar from '../views/AppCalendar.vue'
+import PublicCourses from '../views/PublicCourses.vue'
+// inside routes array, add:
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,6 +68,7 @@ const router = createRouter({
       component: AppCalendar,
       meta: { requiresAuth: true },
     },
+    { path: '/public-courses', name: 'public-courses', component: PublicCourses },
   ],
 })
 
