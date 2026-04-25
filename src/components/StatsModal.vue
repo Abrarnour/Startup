@@ -45,11 +45,13 @@ watch(
 onMounted(() => {
   if (props.show) fetchDash()
 })
+import { useLanguage } from '../composables/useLanguage.js'
 
+const { t } = useLanguage()
 // ── Palette ───────────────────────────────────────────────────────────────────
 const PAL = ['#1ba8f4', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4']
 const PAY_COLOR = { paid: '#10b981', pending: '#f59e0b', inactive: '#ef4444' }
-const PAY_LABEL = { paid: 'مدفوع ✓', pending: 'معلق ⏳', inactive: 'غير نشط ✗' }
+const PAY_LABEL = { paid: t('paid_ok'), pending: t('pending_wait'), inactive: t('inactive_cross') }
 const LVL_COLOR = { primaire: '#10b981', moyen: '#3b82f6', secondaire: '#8b5cf6' }
 const LVL_LABEL = { primaire: 'ابتدائي', moyen: 'متوسط', secondaire: 'ثانوي' }
 
@@ -210,8 +212,8 @@ const teacherBars = computed(() => {
                 </svg>
               </div>
               <div>
-                <h2 class="sm-title">لوحة الإحصائيات</h2>
-                <p class="sm-sub">Belmahi School · Vue en temps réel</p>
+                <h2 class="sm-title">{{ t('stats_dashboard_title') }}</h2>
+                <p class="sm-sub">{{ t('stats_realtime_view') }}</p>
               </div>
             </div>
             <button class="sm-close" @click="emit('close')">✕</button>
@@ -220,12 +222,12 @@ const teacherBars = computed(() => {
           <!-- ── Loading ────────────────────────────────────────────── -->
           <div v-if="loading" class="sm-center">
             <div class="sm-spin"></div>
-            <p>جاري تحميل البيانات…</p>
+            <p>{{ t('loading_data') }}</p>
           </div>
 
           <!-- ── Error ──────────────────────────────────────────────── -->
           <div v-else-if="error" class="sm-center sm-err">
-            <p>خطأ في تحميل البيانات</p>
+            <p>{{ t('error_loading_data') }}</p>
             <p style="font-size: 0.75rem; opacity: 0.6">{{ error }}</p>
             <button @click="fetchDash" class="sm-retry">إعادة المحاولة</button>
           </div>
@@ -240,14 +242,14 @@ const teacherBars = computed(() => {
                   <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.students }}</span>
                 </div>
-                <div class="kpi-lbl">إجمالي الطلاب المسجلين</div>
+                <div class="kpi-lbl">{{ t('total_enrolled_students') }}</div>
                 <div class="kpi-track">
                   <div
                     class="kpi-fill"
                     :style="{ width: kpis.fillPct + '%', background: '#60c8ff' }"
                   />
                 </div>
-                <div class="kpi-foot">{{ kpis.fillPct }}% من طاقة {{ kpis.capacity }} مقعد</div>
+                <div class="kpi-foot">{{ t('capacity_usage').replace('{n}', kpis.capacity) }}</div>
               </div>
 
               <!-- Teachers + Courses -->
@@ -256,9 +258,13 @@ const teacherBars = computed(() => {
                   <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.teachers }}</span>
                 </div>
-                <div class="kpi-lbl">الأساتذة النشطون</div>
+                <div class="kpi-lbl">{{ t('active_teachers') }}</div>
                 <div class="kpi-foot">
-                  {{ kpis.totalCourses }} مادة · {{ kpis.materials }} ملف مرفوع
+                  {{
+                    t('courses_materials_count')
+                      .replace('{courses}', kpis.totalCourses)
+                      .replace('{materials}', kpis.materials)
+                  }}
                 </div>
               </div>
 
@@ -268,7 +274,7 @@ const teacherBars = computed(() => {
                   <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.paid }}</span>
                 </div>
-                <div class="kpi-lbl">تسجيلات مدفوعة</div>
+                <div class="kpi-lbl">{{ t('paid_enrollments') }}</div>
                 <div class="kpi-track">
                   <div
                     class="kpi-fill"
@@ -279,7 +285,13 @@ const teacherBars = computed(() => {
                     }"
                   />
                 </div>
-                <div class="kpi-foot">{{ kpis.pending }} معلق · {{ kpis.totalEnroll }} إجمالي</div>
+                <div class="kpi-foot">
+                  {{
+                    t('pending_total_enrollments')
+                      .replace('{pending}', kpis.pending)
+                      .replace('{total}', kpis.totalEnroll)
+                  }}
+                </div>
               </div>
 
               <!-- Fill rate -->
@@ -288,7 +300,7 @@ const teacherBars = computed(() => {
                   <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.avgFill }}%</span>
                 </div>
-                <div class="kpi-lbl">متوسط امتلاء المجموعات</div>
+                <div class="kpi-lbl">{{ t('avg_group_fill') }}</div>
                 <div class="kpi-track">
                   <div
                     class="kpi-fill"
@@ -296,7 +308,9 @@ const teacherBars = computed(() => {
                   />
                 </div>
                 <div class="kpi-foot">
-                  Revenue ce mois: {{ kpis.revenue.toLocaleString('fr-DZ') }} DA
+                  {{
+                    t('monthly_revenue').replace('{revenue}', kpis.revenue.toLocaleString('fr-DZ'))
+                  }}
                 </div>
               </div>
             </div>
@@ -306,10 +320,10 @@ const teacherBars = computed(() => {
               <!-- Line chart -->
               <div class="card card-wide">
                 <div class="card-hdr">
-                  <span class="card-ttl"> منحنى التسجيل حسب الوقت</span>
-                  <span class="badge">آخر 7 أشهر</span>
+                  <span class="card-ttl">{{ t('enrollment_curve') }}</span>
+                  <span class="badge">{{ t('last_7_months') }}</span>
                 </div>
-                <div v-if="!line" class="no-data">لا توجد بيانات بعد</div>
+                <div v-if="!line" class="no-data">{{ t('no_data_yet') }}</div>
                 <svg v-else :viewBox="`0 0 ${line.W} ${line.H}`" class="line-svg">
                   <defs>
                     <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
@@ -377,7 +391,7 @@ const teacherBars = computed(() => {
               <!-- Donut -->
               <div class="card card-narrow">
                 <div class="card-hdr">
-                  <span class="card-ttl"> توزيع الدفعات</span>
+                  <span class="card-ttl">{{ t('payment_distribution') }}</span>
                 </div>
                 <div v-if="!donut.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="donut-wrap">
@@ -422,7 +436,7 @@ const teacherBars = computed(() => {
                       fill="currentColor"
                       fill-opacity=".45"
                     >
-                      إجمالي
+                      {{ t('total_label') }}
                     </text>
                   </svg>
                   <div class="donut-legend">
@@ -440,13 +454,17 @@ const teacherBars = computed(() => {
             <div class="row3">
               <!-- Level bars -->
               <div class="card">
-                <div class="card-hdr"><span class="card-ttl"> الطلاب حسب المستوى</span></div>
+                <div class="card-hdr">
+                  <span class="card-ttl">{{ t('students_by_level') }}</span>
+                </div>
                 <div v-if="!levelBars.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="lvl-list">
                   <div v-for="b in levelBars" :key="b.level" class="lvl-item">
                     <div class="lvl-meta">
                       <span class="lvl-name">{{ b.label }}</span>
-                      <span class="lvl-cnt" :style="{ color: b.color }">{{ b.count }} طالب</span>
+                      <span class="lvl-cnt" :style="{ color: b.color }"
+                        >{{ b.count }} {{ t('student_singular') }}</span
+                      >
                     </div>
                     <div class="bar-track">
                       <div
@@ -461,10 +479,10 @@ const teacherBars = computed(() => {
               <!-- Revenue bars -->
               <div class="card">
                 <div class="card-hdr">
-                  <span class="card-ttl">الإيرادات الشهرية</span>
+                  <span class="card-ttl">{{ t('monthly_revenue_title') }}</span>
                   <span class="badge">DA</span>
                 </div>
-                <div v-if="!revBars.length" class="no-data">لا توجد مدفوعات مسجلة</div>
+                <div v-if="!revBars.length" class="no-data">{{ t('no_payments_recorded') }}</div>
                 <div v-else class="rev-bars">
                   <div v-for="b in revBars" :key="b.month" class="rev-col">
                     <div class="rev-val">{{ (b.revenue / 1000).toFixed(0) }}k</div>
@@ -481,7 +499,9 @@ const teacherBars = computed(() => {
 
               <!-- Teacher perf -->
               <div class="card">
-                <div class="card-hdr"><span class="card-ttl"> أداء الأساتذة</span></div>
+                <div class="card-hdr">
+                  <span class="card-ttl">{{ t('teacher_performance') }}</span>
+                </div>
                 <div v-if="!teacherBars.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="tch-list">
                   <div v-for="t in teacherBars" :key="t.name" class="tch-item">
@@ -504,7 +524,9 @@ const teacherBars = computed(() => {
 
             <!-- ══ ROW 4 · TOP COURSES ═══════════════════════════ -->
             <div class="card card-full">
-              <div class="card-hdr"><span class="card-ttl"> أفضل المواد تسجيلاً</span></div>
+              <div class="card-hdr">
+                <span class="card-ttl">{{ t('top_courses') }}</span>
+              </div>
               <div v-if="!topCourses.length" class="no-data">لا توجد بيانات</div>
               <div v-else class="tc-grid">
                 <div v-for="c in topCourses" :key="c.title" class="tc-row">

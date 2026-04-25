@@ -55,11 +55,9 @@ const formatTime = (dateStr) => {
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
 
-  if (diffMins < 1) return props.currentLang === 'ar' ? 'الآن' : "À l'instant"
-  if (diffMins < 60)
-    return props.currentLang === 'ar' ? `منذ ${diffMins} دقيقة` : `Il y a ${diffMins} min`
-  if (diffHours < 24)
-    return props.currentLang === 'ar' ? `منذ ${diffHours} ساعة` : `Il y a ${diffHours}h`
+  if (diffMins < 1) return props.t('just_now')
+  if (diffMins < 60) return props.t('mins_ago').replace('{n}', diffMins)
+  if (diffHours < 24) return props.t('hours_ago').replace('{n}', diffHours)
   return d.toLocaleDateString(props.currentLang === 'ar' ? 'ar-DZ' : 'fr-FR', {
     day: '2-digit',
     month: 'short',
@@ -244,7 +242,7 @@ const notifIcon = (icon) =>
                   <div class="flex items-center gap-2">
                     <Bell :size="18" class="text-blue-600" />
                     <h3 class="font-bold text-gray-800 text-sm">
-                      {{ currentLang === 'ar' ? 'الإشعارات' : 'Notifications' }}
+                      {{ props.t('notifications') }}
                     </h3>
                     <span
                       v-if="unreadCount > 0"
@@ -257,10 +255,10 @@ const notifIcon = (icon) =>
                     v-if="notifications.length > 0"
                     @click="clearAllNotifications"
                     class="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
-                    :title="currentLang === 'ar' ? 'مسح الكل' : 'Tout supprimer'"
+                    :title="props.t('notification\_count').replace('{n}', notifications.length)"
                   >
                     <Trash2 :size="12" />
-                    {{ currentLang === 'ar' ? 'مسح الكل' : 'Tout effacer' }}
+                    {{ props.t('clear_all') }}
                   </button>
                 </div>
 
@@ -270,7 +268,7 @@ const notifIcon = (icon) =>
                   class="p-8 text-center text-gray-400 text-sm flex flex-col items-center gap-3"
                 >
                   <Bell :size="32" class="text-gray-200" />
-                  <p>{{ currentLang === 'ar' ? 'لا توجد إشعارات' : 'Aucune notification' }}</p>
+                  <p>{{ props.t('no_notif') }}</p>
                 </div>
 
                 <!-- Notifications list -->

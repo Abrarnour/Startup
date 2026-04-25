@@ -82,13 +82,22 @@ export function useNotifications(user) {
     if ('Notification' in window && Notification.permission === 'granted') {
       const icon = '/belmahilogo.jpg'
       const titleMap = {
-        welcome: ' مرحباً — Belmahi School',
-        reminder: ' تذكير بالدرس — Belmahi School',
-        assignment: ' تعيين جديد — Belmahi School',
-        warning: 'تنبيه — Belmahi School',
-        success: ' تم بنجاح — Belmahi School',
-        info: ' Belmahi School',
+        welcome: 'welcome_title_notif',
+
+        reminder: 'reminder_title_notif',
+
+        assignment: 'assignment_title_notif',
+
+        warning: 'warning_title_notif',
+
+        success: 'success_title_notif',
+
+        info: 'info_title_notif',
       }
+
+      const titleKey = titleMap[type] || 'info_title_notif'
+
+      // Note: To translate OS notifications, you must import the t function at the top of useNotifications.js.
       const title = titleMap[type] || ' Belmahi School'
 
       if ('serviceWorker' in navigator) {

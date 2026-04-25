@@ -49,7 +49,7 @@
               @click="handleCleanupPending"
               class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium mr-2"
             >
-              إلغاء المعلقين (>14 يوم)
+              {{ t('cleanup_pending_14d') }}
             </button>
 
             <button
@@ -165,13 +165,13 @@
                     @click="manageStudentEnrollments(student)"
                     class="px-3 py-1.5 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all"
                   >
-                    إدارة الدورات
+                    {{ t('manage_courses') }}
                   </button>
                   <button
                     @click="initiateDelete(student)"
                     class="px-3 py-1.5 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                   >
-                    حذف الطالب
+                    {{ t('delete_student') }}
                   </button>
                 </td>
               </tr>
@@ -246,7 +246,12 @@
       >
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">
-            دورات: {{ managingStudent.name }} {{ managingStudent.last_name }}
+            {{
+              t('courses_of_student').replace(
+                '{name}',
+                managingStudent.name + ' ' + managingStudent.last_name,
+              )
+            }}
           </h3>
           <button @click="managingStudent = null" class="p-2 bg-gray-200 rounded-full text-black">
             X
@@ -254,7 +259,7 @@
         </div>
 
         <div v-if="studentEnrollments.length === 0" class="text-center text-gray-500 py-4">
-          لا توجد دورات مسجلة.
+          {{ t('no_enrolled_courses_ar') }}
         </div>
 
         <div
@@ -267,14 +272,14 @@
             <div>
               <h4 class="font-bold">{{ enr.course_title }} ({{ enr.group_name }})</h4>
               <p class="text-sm mt-1">
-                الحالة:
-                <span v-if="enr.status === 'inactive'" class="text-orange-500 font-bold"
-                  >مسجل (مغلق)</span
-                >
-                <span v-else-if="enr.payment_status === 'paid'" class="text-green-500 font-bold"
-                  >مدفوع (مفعل)</span
-                >
-                <span v-else class="text-yellow-500 font-bold">غير مدفوع (مفعل بالثقة)</span>
+                {{ t('status_label') }}
+                <span v-if="enr.status === 'inactive'" class="text-orange-500 font-bold">{{
+                  t('enrolled_closed_ar')
+                }}</span>
+                <span v-else-if="enr.payment_status === 'paid'" class="text-green-500 font-bold">{{
+                  t('paid_active_ar')
+                }}</span>
+                <span v-else class="text-yellow-500 font-bold">{{ t('unpaid_active_trust') }}</span>
               </p>
             </div>
             <div class="flex flex-col gap-2">
@@ -283,27 +288,27 @@
                 @click="updateEnrollment(enr, 'active', 'paid')"
                 class="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded hover:bg-green-600"
               >
-                تأكيد الدفع 🔓
+                {{ t('confirm_payment') }}
               </button>
               <button
                 v-if="enr.payment_status === 'paid' || enr.status === 'inactive'"
                 @click="updateEnrollment(enr, 'active', 'pending')"
                 class="px-3 py-1 bg-yellow-500 text-white text-xs font-bold rounded hover:bg-yellow-600"
               >
-                مفعل (لم يدفع) 🤝
+                {{ t('active_unpaid') }}
               </button>
               <button
                 v-if="enr.status === 'active'"
                 @click="updateEnrollment(enr, 'inactive', 'pending')"
                 class="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded hover:bg-orange-600"
               >
-                قفل (مسجل) 🔒
+                {{ t('lock_registered') }}
               </button>
               <button
                 @click="deleteEnrollment(enr)"
                 class="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded hover:bg-red-600"
               >
-                إلغاء التسجيل ❌
+                {{ t('cancel_enrollment') }}
               </button>
             </div>
           </div>
@@ -446,7 +451,7 @@ const updateEnrollment = async (enr, newStatus, newPayment) => {
 }
 
 const deleteEnrollment = async (enr) => {
-  if (!confirm('هل أنت متأكد من إلغاء تسجيل الطالب من هذه الدورة؟')) return
+  if (!confirm(t('confirm_unenroll_student'))) return
   try {
     const token = localStorage.getItem('token')
     await fetch(
@@ -463,8 +468,7 @@ const deleteEnrollment = async (enr) => {
 }
 
 const handleCleanupPending = async () => {
-  if (!confirm('هل أنت متأكد من حذف جميع التسجيلات المعلقة (مسجل) منذ أكثر من 14 يوماً ولم تدفع؟'))
-    return
+  if (!confirm(t('confirm_cleanup_pending'))) return
   try {
     const token = localStorage.getItem('token')
     const res = await fetch(
