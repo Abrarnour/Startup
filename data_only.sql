@@ -1,226 +1,294 @@
---
--- PostgreSQL database dump
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 🎓 BELMAHI SCHOOL — SEED DATA FOR TESTING
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Roles:   1 admin, 4 teachers (M/F), 20 students, 5 parents
+-- Courses: primaire / moyen / secondaire — continuous & intensive
+-- Groups:  multiple groups per course, different days/times
+-- group_students: 20 students enrolled, mixed payment & status
+-- Notifications: welcome messages
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-\restrict gdU9l7qXZOTbZT8aNM92joIaGcmHYRx8SGAZwjHEntVsmPtHEB27LAYWCfQTeOn
-
--- Dumped from database version 15.16 (Debian 15.16-0+deb12u1)
--- Dumped by pg_dump version 15.16 (Debian 15.16-0+deb12u1)
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
---
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.users (id, name, last_name, birthday, city, email, password, phone, gender, role, parent_phone, created_at) FROM stdin;
-1	Admin	Belmahi	1990-01-01	Oran	admin@belmahi.dz	pass	0555000001	M	admin	\N	2026-02-01 17:15:50.752859
-2	Mohammed	Benali	1985-05-15	Oran	benali@belmahi.dz	pass	0555000002	M	teacher	\N	2026-02-01 17:15:50.752859
-3	Fatima	Khadri	1988-08-20	Oran	khadri@belmahi.dz	pass	0555000003	F	teacher	\N	2026-02-01 17:15:50.752859
-8	karim	bnziane	1991-12-29	Oran	karimbn@gmail.com	pass	\N	\N	Parent	\N	2026-02-01 18:39:45.25055
-9	amina	bouzidi	2026-02-26	Oran	amina.bouzidi@parent.dz	pass	\N	\N	Parent	\N	2026-02-06 21:14:41.836624
-10	nour	bouzidi	2019-06-11	Oran	nourbouzidi@gmail.com	pass	\N	F	student	\N	2026-02-06 21:55:11.458914
-4	Ahmed	Meziane	2010-09-01	Oran	ahmed@student.dz	pass	0555000010	M	student	0666111222	2026-02-01 17:15:50.752859
-5	Yasmine	Boudiaf	2011-03-15	Oran	yasmine@student.dz	pass	0555000011	F	student	0666111222	2026-02-01 17:15:50.752859
-6	Karim	Hamadi	2012-07-20	Oran	karim@student.dz	pass	0555000012	M	student	0666111222	2026-02-01 17:15:50.752859
-13	Sara	Bouzidi	2012-03-10	Oran	sara.bouzidi@student.dz	pass	\N	F	student	0777888999	2026-02-07 18:52:21.240027
-14	Yacine	Bouzidi	2014-08-15	Oran	yacine.bouzidi@student.dz	pass	\N	M	student	0777888999	2026-02-07 18:52:21.240027
-15	Ahmed	Benali	1985-03-15	Oran	ahmed.benali@teacher.dz	pass123	0770123456	M	teacher	\N	2026-02-13 19:12:45.903417
-16	Fatima	Khelifi	1988-07-22	Oran	fatima.khelifi@teacher.dz	pass123	0771234567	F	teacher	\N	2026-02-13 19:12:45.903417
-17	Karim	Meziane	1982-11-10	Oran	karim.meziane@teacher.dz	pass123	0772345678	M	teacher	\N	2026-02-13 19:12:45.903417
-19	Youcef	Mansouri	1987-09-25	Oran	youcef.mansouri@teacher.dz	pass123	0774567890	M	teacher	\N	2026-02-13 19:12:45.903417
-20	Leila	Hamidi	1980-08-12	Oran	leila.hamidi@parent.dz	pass123	0660111222	F	Parent	\N	2026-02-13 19:12:45.946428
-21	Rania	Hamidi	2013-04-20	Oran	rania.hamidi@student.dz	pass123	\N	F	student	0660111222	2026-02-13 19:12:45.951045
-22	Mehdi	Hamidi	2015-09-15	Oran	mehdi.hamidi@student.dz	pass123	\N	M	student	0660111222	2026-02-13 19:12:45.951045
-23	Sarah	Benali	2012-06-10	Oran	sarah.benali@student.dz	pass123	\N	F	student	\N	2026-02-13 19:12:45.951045
-24	Amine	Khelifi	2014-02-28	Oran	amine.khelifi@student.dz	pass123	\N	M	student	\N	2026-02-13 19:12:45.951045
-25	Yasmine	Meziane	2013-11-05	Oran	yasmine.meziane@student.dz	pass123	\N	F	student	\N	2026-02-13 19:12:45.951045
-26	Admin	System	1990-01-01	Oran	admin@school.dz	admin123	0555000000	M	admin	\N	2026-02-13 19:12:46.11247
-\.
+-- ─── 0. SAFETY: clear in correct order ──────────────────────────────────────
+DELETE FROM notifications;
+DELETE FROM course_materials;
+DELETE FROM favorites;
+DELETE FROM parent_students;
+DELETE FROM group_students;
+DELETE FROM session_schedule;
+DELETE FROM groups;
+DELETE FROM courses;
+DELETE FROM users WHERE role <> 'admin';   -- keep existing admins if any
+DELETE FROM users;                          -- full clean for fresh seed
 
 
---
--- Data for Name: courses; Type: TABLE DATA; Schema: public; Owner: -
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 1. USERS
+-- Passwords are plain-text (as the app currently works).
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-COPY public.courses (id, title, teacher_id, description, education_level, year_level, branch, course_type, sessions_per_month, duration_hours, max_students_per_group, price, salle, is_active, created_at, updated_at) FROM stdin;
-3	Physique - 2ème Année Secondaire	3	Cours de physique sciences expérimentales	secondaire	2	\N	continuous	6	\N	20	8000.00	Salle C	t	2026-02-01 17:15:50.763523	2026-02-01 17:15:50.763523
-5	jjj	2	jjjj	primaire	1	\N	continuous	1	\N	30	0.01	jjjj	t	2026-02-06 23:29:36.726937	2026-02-06 23:29:36.726937
-6	Mathématiques Primaire	15	Cours de mathématiques pour le primaire avec exercices pratiques	primaire	5	\N	continuous	8	\N	25	3000.00	Salle A1	t	2026-02-13 19:12:45.981305	2026-02-13 19:12:45.981305
-7	Sciences Physiques	16	Cours de physique-chimie pour le moyen	moyen	2	\N	continuous	8	\N	30	3500.00	Labo B2	t	2026-02-13 19:12:45.988976	2026-02-13 19:12:45.988976
-8	Anglais Avancé	17	Cours d'anglais niveau avancé pour lycéens	secondaire	2	Sciences	continuous	8	\N	20	4000.00	Salle C3	t	2026-02-13 19:12:45.99382	2026-02-13 19:12:45.99382
-11	Initiation Informatique	15	Cours d'informatique pour débutants	moyen	1	\N	continuous	4	\N	15	3200.00	Salle Info E5	t	2026-02-13 19:12:46.008199	2026-02-13 19:12:46.008199
-10	Révision Intensive BAC Math	19	Stage intensif de révision pour le BA\n	secondaire	3	Mathématiques	one_time	\N	30	15	8000.00	Grande Salle	t	2026-02-13 19:12:46.003315	2026-02-23 12:49:13.919355
-12	mat	16	duk	primaire	1	\N	continuous	1	\N	30	2500.00	A	t	2026-02-23 14:46:33.766411	2026-02-24 13:04:47.829797
-\.
+INSERT INTO users (id, name, last_name, email, password, role, phone, gender, birthday, city, created_at) VALUES
 
+-- ── ADMIN ────────────────────────────────────────────────────────────────────
+(1, 'Karim',    'Belmahi',   'admin@belmahi.dz',          'Admin@1234',   'admin',   '0550000001', 'M', '1980-03-15', 'Oran',     NOW()),
 
---
--- Data for Name: course_materials; Type: TABLE DATA; Schema: public; Owner: -
---
+-- ── TEACHERS ─────────────────────────────────────────────────────────────────
+(2, 'Mohamed',  'Benali',    'benali@belmahi.dz',         'Teacher@1234', 'teacher', '0550000002', 'M', '1985-06-20', 'Oran',     NOW()),
+(3, 'Fatima',   'Haddad',    'haddad@belmahi.dz',         'Teacher@1234', 'teacher', '0550000003', 'F', '1990-09-10', 'Oran',     NOW()),
+(4, 'Youcef',   'Mebarki',   'mebarki@belmahi.dz',        'Teacher@1234', 'teacher', '0550000004', 'M', '1988-01-25', 'Mascara',  NOW()),
+(5, 'Samira',   'Ouali',     'ouali@belmahi.dz',          'Teacher@1234', 'teacher', '0550000005', 'F', '1992-11-05', 'Oran',     NOW()),
 
-COPY public.course_materials (id, course_id, teacher_id, title, description, file_name, file_path, file_type, file_size, uploaded_at) FROM stdin;
-1	5	2	k	k	1770740697549-164501080-ss.jpg	/uploads/1770740697549-164501080-ss.jpg	image/jpeg	39099	2026-02-10 17:24:57.622619
-15	5	2	f	f	1771243020009-576701460-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	/uploads/1771243020009-576701460-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	application/pdf	880765	2026-02-16 12:57:00.06313
-16	7	16	exemple	ex	1771245048830-430400902-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	/uploads/1771245048830-430400902-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	application/pdf	880765	2026-02-16 13:30:48.899888
-17	12	16	fdgfhg	dgfhgjhk	1774536137525-272604347-Screenshot 2026-03-26 15.42.02.png	/uploads/1774536137525-272604347-Screenshot 2026-03-26 15.42.02.png	image/png	237362	2026-03-26 15:42:17.575354
-\.
+-- ── STUDENTS (20) ─────────────────────────────────────────────────────────────
+(10, 'Amine',     'Bekkouche',  'amine.bek@gmail.com',      'Pass@1234', 'student', '0660000010', 'M', '2012-04-01', 'Oran',    NOW()),
+(11, 'Rania',     'Zaoui',      'rania.z@gmail.com',        'Pass@1234', 'student', '0660000011', 'F', '2011-07-15', 'Oran',    NOW()),
+(12, 'Ilyas',     'Bouchenak',  'ilyas.b@gmail.com',        'Pass@1234', 'student', '0660000012', 'M', '2013-02-20', 'Oran',    NOW()),
+(13, 'Nour',      'Khelifi',    'nour.kh@gmail.com',        'Pass@1234', 'student', '0660000013', 'F', '2010-09-30', 'Mostaganem', NOW()),
+(14, 'Sami',      'Reghioua',   'sami.r@gmail.com',         'Pass@1234', 'student', '0660000014', 'M', '2012-12-05', 'Oran',    NOW()),
+(15, 'Yasmine',   'Derbal',     'yasmine.d@gmail.com',      'Pass@1234', 'student', '0660000015', 'F', '2011-03-18', 'Oran',    NOW()),
+(16, 'Hamza',     'Bentoumi',   'hamza.bt@gmail.com',       'Pass@1234', 'student', '0660000016', 'M', '2010-06-22', 'Sidi Bel Abbes', NOW()),
+(17, 'Lina',      'Mansouri',   'lina.m@gmail.com',         'Pass@1234', 'student', '0660000017', 'F', '2013-01-11', 'Oran',    NOW()),
+(18, 'Khaled',    'Aissaoui',   'khaled.a@gmail.com',       'Pass@1234', 'student', '0660000018', 'M', '2009-08-09', 'Oran',    NOW()),
+(19, 'Meriem',    'Taleb',      'meriem.t@gmail.com',       'Pass@1234', 'student', '0660000019', 'F', '2010-05-27', 'Arzew',   NOW()),
+(20, 'Bilal',     'Ferroudj',   'bilal.f@gmail.com',        'Pass@1234', 'student', '0660000020', 'M', '2012-10-03', 'Oran',    NOW()),
+(21, 'Sara',      'Boudia',     'sara.bd@gmail.com',        'Pass@1234', 'student', '0660000021', 'F', '2011-11-14', 'Oran',    NOW()),
+(22, 'Adel',      'Chouaib',    'adel.ch@gmail.com',        'Pass@1234', 'student', '0660000022', 'M', '2009-03-07', 'Tlemcen', NOW()),
+(23, 'Hana',      'Meziane',    'hana.mz@gmail.com',        'Pass@1234', 'student', '0660000023', 'F', '2013-07-19', 'Oran',    NOW()),
+(24, 'Yassine',   'Bouabdallah','yassine.bo@gmail.com',     'Pass@1234', 'student', '0660000024', 'M', '2010-04-28', 'Oran',    NOW()),
+(25, 'Amira',     'Kaddour',    'amira.k@gmail.com',        'Pass@1234', 'student', '0660000025', 'F', '2012-09-16', 'Oran',    NOW()),
+(26, 'Rayan',     'Boudjelal',  'rayan.bj@gmail.com',       'Pass@1234', 'student', '0660000026', 'M', '2011-02-03', 'Oran',    NOW()),
+(27, 'Ghania',    'Sebaa',      'ghania.s@gmail.com',       'Pass@1234', 'student', '0660000027', 'F', '2010-12-21', 'Mascara', NOW()),
+(28, 'Omar',      'Ladj',       'omar.l@gmail.com',         'Pass@1234', 'student', '0660000028', 'M', '2013-06-08', 'Oran',    NOW()),
+(29, 'Dounia',    'Benhamed',   'dounia.bh@gmail.com',      'Pass@1234', 'student', '0660000029', 'F', '2009-10-30', 'Oran',    NOW()),
 
+-- ── PARENTS (5) ───────────────────────────────────────────────────────────────
+(50, 'Abdelkader','Bekkouche',  'parent.bek@gmail.com',     'Parent@1234','Parent',  '0770000050', 'M', '1975-04-01', 'Oran',    NOW()),
+(51, 'Houria',    'Zaoui',      'parent.zaoui@gmail.com',   'Parent@1234','Parent',  '0770000051', 'F', '1978-07-15', 'Oran',    NOW()),
+(52, 'Rachid',    'Reghioua',   'parent.reg@gmail.com',     'Parent@1234','Parent',  '0770000052', 'M', '1972-12-05', 'Oran',    NOW()),
+(53, 'Nadia',     'Mansouri',   'parent.man@gmail.com',     'Parent@1234','Parent',  '0770000053', 'F', '1980-01-11', 'Oran',    NOW()),
+(54, 'Salim',     'Aissaoui',   'parent.ais@gmail.com',     'Parent@1234','Parent',  '0770000054', 'M', '1970-08-09', 'Oran',    NOW());
 
---
--- Data for Name: favorites; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.favorites (id, user_id, course_id, created_at) FROM stdin;
-9	1	10	2026-02-23 13:39:24.981081
-\.
-
-
---
--- Data for Name: groups; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.groups (id, course_id, group_name, start_date, start_time, end_time, day_of_week, session_start_time, session_end_time, registration_open, current_students, is_active, created_at, updated_at, salle, calendar_type, total_weeks, repeat_calendar, current_cycle, total_sessions, sessions_per_week, has_next_cycle_modifications, next_cycle_modifications, return_to_normal_after_cycle, modified_cycle_count) FROM stdin;
-10	7	Groupe Unique	\N	\N	\N	monday	15:00:00	17:00:00	t	3	t	2026-02-13 19:12:46.029044	2026-02-13 19:12:46.029044	Labo B2	manual	4	f	1	\N	1	f	\N	t	0
-6	5	Groupe A	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-10 21:12:38.05828	2026-02-10 21:12:38.05828	\N	manual	4	f	1	\N	1	f	\N	t	0
-7	3	Groupe A	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-10 21:12:54.625998	2026-02-10 21:12:54.625998	\N	manual	4	f	1	\N	1	f	\N	t	0
-8	6	Groupe A - Dimanche Matin	\N	\N	\N	sunday	09:00:00	11:00:00	t	2	t	2026-02-13 19:12:46.01334	2026-02-13 19:12:46.01334	Salle A1	manual	4	f	1	\N	1	f	\N	t	0
-9	6	Groupe B - Mercredi Après-midi	\N	\N	\N	wednesday	14:00:00	16:00:00	t	1	t	2026-02-13 19:12:46.023829	2026-02-13 19:12:46.023829	Salle A1	manual	4	f	1	\N	1	f	\N	t	0
-11	8	Groupe Sciences	\N	\N	\N	tuesday	17:30:00	19:30:00	t	1	t	2026-02-13 19:12:46.033624	2026-02-13 19:12:46.033624	Salle C3	manual	4	f	1	\N	1	f	\N	t	0
-13	11	Groupe Débutants	\N	\N	\N	saturday	09:00:00	11:00:00	t	2	t	2026-02-13 19:12:46.043779	2026-02-13 19:12:46.043779	Salle Info E5	manual	4	f	1	\N	1	f	\N	t	0
-14	10	Stage Février 2026	2026-02-17	09:00:00	17:00:00	\N	\N	\N	t	1	t	2026-02-13 19:12:46.04955	2026-02-13 19:12:46.04955	Grande Salle	manual	4	f	1	\N	1	f	\N	t	0
-17	12	111	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 16:25:36.480374	2026-02-23 16:25:36.480374	A	weekly_fixed	4	f	1	4	1	f	\N	t	0
-18	12	jjkj	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 16:34:14.462836	2026-02-23 16:34:14.462836	jkjjjj	weekly_fixed	4	f	1	4	1	f	\N	t	0
-19	12	A	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 17:38:02.971887	2026-02-23 17:38:02.971887	AA	weekly_fixed	4	f	1	4	1	f	\N	t	0
-15	12	1	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-23 14:58:50.099734	2026-02-23 14:58:50.099734	A	weekly_fixed	4	f	1	4	1	f	\N	t	0
-\.
+-- reset sequence
+SELECT setval('users_id_seq', 100);
 
 
---
--- Data for Name: group_students; Type: TABLE DATA; Schema: public; Owner: -
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 2. COURSES
+-- education_level: primaire | moyen | secondaire
+-- course_type:     continuous | intensive
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-COPY public.group_students (id, group_id, student_id, status, payment_status, amount_paid, enrollment_date, enrollment_type, requested_by, request_date, payment_due, payment_deadline, last_payment_date) FROM stdin;
-16	6	3	active	pending	0.00	2026-02-10 21:13:04.62262	direct	\N	\N	\N	\N	\N
-17	7	3	active	pending	0.00	2026-02-10 21:13:04.62262	direct	\N	\N	\N	\N	\N
-21	13	22	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-28	14	25	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-30	15	5	active	pending	0.00	2026-02-23 17:39:05.461433	direct	1	\N	0.01	\N	\N
-25	13	24	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-18	8	21	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-20	9	22	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-22	10	23	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-23	11	23	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-24	8	24	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-27	10	25	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-31	10	13	active	paid	0.00	2026-02-25 14:48:41.270239	parent_request	9	2026-02-25 14:48:41.270239	\N	\N	2026-02-25
-\.
+INSERT INTO courses (id, title, teacher_id, description, education_level, year_level, branch, course_type, sessions_per_month, duration_hours, price, max_students_per_group, is_active, created_at) VALUES
 
+-- ── PRIMAIRE ─────────────────────────────────────────────────────────────────
+(1, 'Mathématiques – 4ème Primaire',   2, 'Cours de soutien en mathématiques pour les élèves de 4ème année primaire. Fractions, multiplication, géométrie de base.', 'primaire', 4, NULL, 'continuous', 8, 1.5, 2500, 15, true, NOW()),
+(2, 'Langue Arabe – 3ème Primaire',    3, 'Renforcement en lecture, écriture et grammaire arabe pour 3ème primaire.', 'primaire', 3, NULL, 'continuous', 8, 1.5, 2000, 12, true, NOW()),
+(3, 'Éveil Scientifique – 5ème Primaire', 4, 'Sciences et découverte du monde naturel pour les élèves de 5ème primaire. Préparation au passage au moyen.', 'primaire', 5, NULL, 'intensive', 12, 2.0, 3000, 10, true, NOW()),
 
---
--- Data for Name: parent_students; Type: TABLE DATA; Schema: public; Owner: -
---
+-- ── MOYEN ─────────────────────────────────────────────────────────────────────
+(4, 'Mathématiques – 2ème AM',         2, 'Algèbre, géométrie et résolution de problèmes. Niveau 2ème année moyenne.', 'moyen', 2, NULL, 'continuous', 8, 2.0, 3000, 15, true, NOW()),
+(5, 'Physique-Chimie – 3ème AM',       4, 'Introduction aux lois de la physique et réactions chimiques de base. 3ème AM.', 'moyen', 3, NULL, 'continuous', 8, 2.0, 3500, 12, true, NOW()),
+(6, 'Français – 4ème AM',             3, 'Grammaire, conjugaison, compréhension écrite et expression pour le BEM.', 'moyen', 4, NULL, 'intensive', 16, 2.5, 4000, 10, true, NOW()),
+(7, 'Anglais – 1ère AM',              5, 'Bases de la langue anglaise : vocabulaire, grammaire simple, conversation.', 'moyen', 1, NULL, 'continuous', 8, 1.5, 2500, 15, true, NOW()),
 
-COPY public.parent_students (id, parent_id, student_id, relationship, is_primary, created_at) FROM stdin;
-1	9	13	parent	t	2026-02-07 18:52:21.252639
-2	9	14	parent	t	2026-02-07 18:52:21.252639
-3	20	21	parent	t	2026-02-13 19:12:45.955529
-4	20	22	parent	t	2026-02-13 19:12:45.955529
-\.
+-- ── SECONDAIRE ────────────────────────────────────────────────────────────────
+(8, 'Mathématiques – 2ème AS (Sci)',   2, 'Fonctions, dérivées, suites et géométrie analytique. Terminal scientifique.', 'secondaire', 2, 'scientifique', 'continuous', 8, 2.5, 4500, 10, true, NOW()),
+(9, 'Physique – 1ère AS (Sci)',        4, 'Mécanique, électricité et optique. Niveau 1ère AS filière sciences.', 'secondaire', 1, 'scientifique', 'continuous', 8, 2.5, 4000, 10, true, NOW()),
+(10,'Philosophie – 3ème AS (Lett)',    3, 'Histoire de la philosophie et méthodologie de la dissertation. BAC Lettres.', 'secondaire', 3, 'lettres', 'intensive', 12, 2.0, 3500, 12, true, NOW()),
+(11,'Anglais Avancé – 2ème AS',       5, 'Expression écrite et orale avancée. Préparation aux examens officiels.', 'secondaire', 2, 'scientifique', 'continuous', 8, 2.0, 3500, 10, true, NOW()),
+
+-- ── COURS INACTIF (pour tester ce cas) ───────────────────────────────────────
+(12,'Informatique – 3ème AS (Suspendu)', 5, 'Cours suspendu en attente de matériel. Ne doit pas apparaître dans les recherches actives.', 'secondaire', 3, 'scientifique', 'continuous', 4, 1.5, 2000, 8, false, NOW());
+
+SELECT setval('courses_id_seq', 20);
 
 
---
--- Data for Name: session_schedule; Type: TABLE DATA; Schema: public; Owner: -
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 3. GROUPS
+-- day_of_week: sunday|monday|tuesday|wednesday|thursday|friday|saturday
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-COPY public.session_schedule (id, group_id, session_number, session_title, session_date, status, notes, created_at, week_number, start_time, end_time, actual_date, is_modified, is_cancelled, cancellation_reason) FROM stdin;
-\.
+INSERT INTO groups (id, course_id, group_name, salle, day_of_week, session_start_time, session_end_time, start_date, calendar_type, total_sessions, sessions_per_week, current_students, registration_open, is_active, created_at) VALUES
 
+-- Course 1: Maths 4ème Primaire → 2 groupes
+(1,  1, 'Groupe A – Matin',     'Salle 01', 'saturday',  '09:00:00', '10:30:00', '2025-09-13', 'weekly', 32, 2, 0, true,  true, NOW()),
+(2,  1, 'Groupe B – Après-midi','Salle 01', 'thursday',  '15:00:00', '16:30:00', '2025-09-11', 'weekly', 32, 2, 0, true,  true, NOW()),
 
---
--- Data for Name: student_notes; Type: TABLE DATA; Schema: public; Owner: -
---
+-- Course 2: Arabe 3ème Primaire → 1 groupe
+(3,  2, 'Groupe Unique',        'Salle 02', 'wednesday', '10:00:00', '11:30:00', '2025-09-10', 'weekly', 32, 2, 0, true,  true, NOW()),
 
-COPY public.student_notes (id, group_student_id, author_id, note_text, created_at, note_type, is_important, is_private) FROM stdin;
-5	31	16	fchgjvhkjk	2026-02-25 14:49:21.737177	general	t	f
-\.
+-- Course 3: Éveil Sci 5ème Primaire – Intensif → 1 groupe
+(4,  3, 'Stage Intensif Juin',  'Salle 03', NULL,         NULL,        NULL,       '2026-06-15', 'custom', 12, NULL, 0, true, true, NOW()),
 
+-- Course 4: Maths 2ème AM → 2 groupes
+(5,  4, 'Groupe Matin',         'Salle 04', 'monday',    '08:00:00', '10:00:00', '2025-09-15', 'weekly', 32, 2, 0, true,  true, NOW()),
+(6,  4, 'Groupe Soir',          'Salle 04', 'tuesday',   '17:00:00', '19:00:00', '2025-09-16', 'weekly', 32, 2, 0, true,  true, NOW()),
 
---
--- Name: course_materials_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
+-- Course 5: Physique 3ème AM → 1 groupe
+(7,  5, 'Groupe Principal',     'Salle 05', 'friday',    '10:00:00', '12:00:00', '2025-09-12', 'weekly', 32, 2, 0, true,  true, NOW()),
 
-SELECT pg_catalog.setval('public.course_materials_id_seq', 17, true);
+-- Course 6: Français 4ème AM – Intensif (BEM) → 2 groupes
+(8,  6, 'Intensif Matin',       'Salle 02', 'saturday',  '08:00:00', '10:30:00', '2026-03-07', 'weekly', 16, 4, 0, true,  true, NOW()),
+(9,  6, 'Intensif Soir',        'Salle 02', 'sunday',    '16:00:00', '18:30:00', '2026-03-08', 'weekly', 16, 4, 0, false, true, NOW()),
 
+-- Course 7: Anglais 1ère AM → 1 groupe
+(10, 7, 'Groupe Débutants',     'Salle 06', 'wednesday', '14:00:00', '15:30:00', '2025-09-10', 'weekly', 32, 2, 0, true,  true, NOW()),
 
---
--- Name: courses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
+-- Course 8: Maths 2ème AS → 2 groupes
+(11, 8, 'Section A',            'Salle 07', 'monday',    '16:00:00', '18:30:00', '2025-09-15', 'weekly', 32, 2, 0, true,  true, NOW()),
+(12, 8, 'Section B',            'Salle 07', 'thursday',  '16:00:00', '18:30:00', '2025-09-11', 'weekly', 32, 2, 0, true,  true, NOW()),
 
-SELECT pg_catalog.setval('public.courses_id_seq', 12, true);
+-- Course 9: Physique 1ère AS → 1 groupe
+(13, 9, 'Groupe Sciences',      'Salle 05', 'saturday',  '14:00:00', '16:30:00', '2025-09-13', 'weekly', 32, 2, 0, true,  true, NOW()),
 
+-- Course 10: Philo BAC Lettres → 1 groupe
+(14,10, 'Terminales Lettres',   'Salle 08', 'friday',    '14:00:00', '16:00:00', '2025-09-12', 'weekly', 32, 2, 0, true,  true, NOW()),
 
---
--- Name: favorites_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
+-- Course 11: Anglais Avancé → 1 groupe
+(15,11, 'Advanced Group',       'Salle 06', 'sunday',    '10:00:00', '12:00:00', '2025-09-14', 'weekly', 32, 2, 0, true,  true, NOW());
 
-SELECT pg_catalog.setval('public.favorites_id_seq', 9, true);
-
-
---
--- Name: group_students_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('public.group_students_id_seq', 31, true);
-
-
---
--- Name: groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('public.groups_id_seq', 19, true);
+SELECT setval('groups_id_seq', 30);
 
 
---
--- Name: parent_students_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 4. GROUP_STUDENTS — 20 students enrolled across groups
+-- payment_status: paid | pending | overdue
+-- status:         active | inactive | suspended
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-SELECT pg_catalog.setval('public.parent_students_id_seq', 4, true);
+INSERT INTO group_students (group_id, student_id, enrollment_date, payment_status, last_payment_date, status) VALUES
+
+-- ── Groupe 1: Maths 4P – Matin (max 15) ─────────────────────────────────────
+(1, 10, '2025-09-13', 'paid',    '2025-04-01', 'active'),
+(1, 11, '2025-09-13', 'paid',    '2025-04-01', 'active'),
+(1, 12, '2025-09-13', 'pending', NULL,          'active'),
+(1, 13, '2025-09-13', 'paid',    '2025-03-28', 'active'),
+(1, 14, '2025-09-13', 'overdue', NULL,          'active'),   -- impayé depuis longtemps
+(1, 17, '2025-10-01', 'paid',    '2025-04-05', 'active'),
+(1, 23, '2025-10-15', 'pending', NULL,          'active'),
+
+-- ── Groupe 2: Maths 4P – Après-midi (max 15) ────────────────────────────────
+(2, 15, '2025-09-11', 'paid',    '2025-04-01', 'active'),
+(2, 16, '2025-09-11', 'paid',    '2025-04-01', 'active'),
+(2, 25, '2025-09-11', 'pending', NULL,          'active'),
+
+-- ── Groupe 3: Arabe 3P ───────────────────────────────────────────────────────
+(3, 17, '2025-09-10', 'paid',    '2025-04-02', 'active'),   -- student 17 in 2 courses
+(3, 28, '2025-09-10', 'paid',    '2025-04-02', 'active'),
+(3, 29, '2025-09-10', 'overdue', NULL,          'suspended'), -- suspendu
+
+-- ── Groupe 5: Maths 2AM – Matin ─────────────────────────────────────────────
+(5, 18, '2025-09-15', 'paid',    '2025-04-01', 'active'),
+(5, 19, '2025-09-15', 'paid',    '2025-04-01', 'active'),
+(5, 20, '2025-09-15', 'pending', NULL,          'active'),
+(5, 22, '2025-09-15', 'paid',    '2025-03-30', 'active'),
+
+-- ── Groupe 6: Maths 2AM – Soir ──────────────────────────────────────────────
+(6, 21, '2025-09-16', 'paid',    '2025-04-01', 'active'),
+(6, 26, '2025-09-16', 'overdue', NULL,          'active'),
+
+-- ── Groupe 7: Physique 3AM ───────────────────────────────────────────────────
+(7, 13, '2025-09-12', 'paid',    '2025-04-03', 'active'),   -- student 13 in 2 courses
+(7, 24, '2025-09-12', 'paid',    '2025-04-03', 'active'),
+(7, 27, '2025-09-12', 'pending', NULL,          'active'),
+
+-- ── Groupe 8: Français 4AM – Intensif Matin ─────────────────────────────────
+(8, 29, '2026-03-07', 'paid',    '2026-03-07', 'active'),   -- student 29 réactivé
+(8, 22, '2026-03-07', 'paid',    '2026-03-07', 'active'),   -- student 22 in 2 courses
+
+-- ── Groupe 11: Maths 2AS – Section A ────────────────────────────────────────
+(11, 18, '2025-09-15', 'paid',   '2025-04-01', 'active'),   -- student 18 in 2 courses
+(11, 16, '2025-09-15', 'paid',   '2025-04-01', 'active'),
+
+-- ── Groupe 13: Physique 1AS ──────────────────────────────────────────────────
+(13, 20, '2025-09-13', 'overdue', NULL,         'inactive'), -- inactif
+(13, 26, '2025-09-13', 'paid',    '2025-04-05', 'active'),
+
+-- ── Groupe 14: Philo BAC ─────────────────────────────────────────────────────
+(14, 27, '2025-09-12', 'paid',    '2025-04-01', 'active'),
+(14, 28, '2025-09-12', 'paid',    '2025-04-01', 'active'),
+
+-- ── Groupe 15: Anglais Avancé ────────────────────────────────────────────────
+(15, 29, '2025-09-14', 'paid',    '2025-04-02', 'active'),
+(15, 25, '2025-09-14', 'pending', NULL,          'active');
 
 
---
--- Name: session_schedule_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('public.session_schedule_id_seq', 7, true);
-
-
---
--- Name: student_notes_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('public.student_notes_id_seq', 5, true);
+-- ─── Update current_students count ──────────────────────────────────────────
+UPDATE groups g
+SET current_students = (
+  SELECT COUNT(*) FROM group_students gs
+  WHERE gs.group_id = g.id AND gs.status = 'active'
+);
 
 
---
--- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 5. PARENT — STUDENT LINKS
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-SELECT pg_catalog.setval('public.users_id_seq', 26, true);
+INSERT INTO parent_students (parent_id, student_id) VALUES
+(50, 10),   -- Abdelkader → Amine
+(51, 11),   -- Houria → Rania
+(52, 14),   -- Rachid → Sami
+(53, 17),   -- Nadia → Lina
+(54, 18),   -- Salim → Khaled
+(50, 12);   -- Abdelkader also has Ilyas (2 kids same parent)
 
 
---
--- PostgreSQL database dump complete
---
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 6. SESSION SCHEDULE — sample manual sessions for intensive groups
+-- ═══════════════════════════════════════════════════════════════════════════════
 
-\unrestrict gdU9l7qXZOTbZT8aNM92joIaGcmHYRx8SGAZwjHEntVsmPtHEB27LAYWCfQTeOn
+INSERT INTO session_schedule (group_id, session_number, session_date, start_time, end_time, is_cancelled) VALUES
+-- Groupe 4: Stage Intensif 5P Juin 2026
+(4,  1, '2026-06-15', '09:00:00', '11:00:00', false),
+(4,  2, '2026-06-17', '09:00:00', '11:00:00', false),
+(4,  3, '2026-06-19', '09:00:00', '11:00:00', false),
+(4,  4, '2026-06-22', '09:00:00', '11:00:00', false),
+(4,  5, '2026-06-24', '09:00:00', '11:00:00', false),
+(4,  6, '2026-06-26', '09:00:00', '11:00:00', true),  -- annulée (férié)
+(4,  7, '2026-06-29', '09:00:00', '11:00:00', false),
 
+-- Groupe 8: Intensif BEM Français – Avril/Mai 2026
+(8,  1, '2026-04-05', '08:00:00', '10:30:00', false),
+(8,  2, '2026-04-12', '08:00:00', '10:30:00', false),
+(8,  3, '2026-04-19', '08:00:00', '10:30:00', false),
+(8,  4, '2026-04-26', '08:00:00', '10:30:00', false),
+(8,  5, '2026-05-03', '08:00:00', '10:30:00', false),
+(8,  6, '2026-05-10', '08:00:00', '10:30:00', true),  -- annulée
+(8,  7, '2026-05-17', '08:00:00', '10:30:00', false);
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 7. NOTIFICATIONS — welcome messages
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO notifications (user_id, notif_key, message, type, is_read, created_at) VALUES
+(1,  'welcome_admin_seed',   'مرحباً بك في لوحة الإدارة يا كريم! البيانات التجريبية جاهزة.', 'welcome', false, NOW()),
+
+(2,  'welcome_teacher_2',    'مرحباً أستاذ محمد بنعلي! تم تعيينك في 3 مواد: رياضيات.', 'welcome', false, NOW()),
+(3,  'welcome_teacher_3',    'مرحباً أستاذة فاطمة حداد! تم تعيينك في مادتي العربية والفلسفة.', 'welcome', false, NOW()),
+(4,  'welcome_teacher_4',    'مرحباً أستاذ يوسف مبارك! تم تعيينك في الفيزياء.', 'welcome', false, NOW()),
+(5,  'welcome_teacher_5',    'مرحباً أستاذة سميرة والي! تم تعيينك في مادة الإنجليزية.', 'welcome', false, NOW()),
+
+(10, 'welcome_student_10',   'مرحباً أمين! أنت مسجّل في رياضيات 4 ابتدائي. حصتك كل سبت 9:00.', 'welcome', false, NOW()),
+(11, 'welcome_student_11',   'مرحباً رانيا! أنت مسجّلة في رياضيات 4 ابتدائي.', 'welcome', false, NOW()),
+(14, 'notif_overdue_14',     '⚠️ لم يتم تسديد قسط شهر أبريل لمادة الرياضيات. يرجى التواصل مع الإدارة.', 'warning', false, NOW()),
+(18, 'welcome_student_18',   'مرحباً خالد! أنت مسجّل في مادتين هذا الموسم.', 'welcome', false, NOW()),
+(29, 'notif_suspended_29',   '⚠️ تم تعليق تسجيلك في مادة اللغة العربية بسبب التأخر في الدفع. تواصل مع الإدارة.', 'warning', false, NOW()),
+
+(50, 'welcome_parent_50',    'مرحباً! يمكنك متابعة أبنائك أمين وإلياس من خلال لوحة الأولياء.', 'welcome', false, NOW()),
+(51, 'welcome_parent_51',    'مرحباً! يمكنك متابعة ابنتك رانيا من خلال لوحة الأولياء.', 'welcome', false, NOW());
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 8. FAVORITES — some students saved courses
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+INSERT INTO favorites (user_id, course_id) VALUES
+(10, 4),   -- Amine also likes Maths 2AM
+(18, 8),   -- Khaled favorited Maths 2AS
+(22, 6),   -- Adel favorited Français BEM
+(15, 7);   -- Yasmine favorited Anglais 1AM
+
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- ✅ DONE — seed data inserted successfully
+-- ═══════════════════════════════════════════════════════════════════════════════
