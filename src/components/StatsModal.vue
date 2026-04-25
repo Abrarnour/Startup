@@ -225,7 +225,7 @@ const teacherBars = computed(() => {
 
           <!-- ── Error ──────────────────────────────────────────────── -->
           <div v-else-if="error" class="sm-center sm-err">
-            <p>⚠️ خطأ في تحميل البيانات</p>
+            <p>خطأ في تحميل البيانات</p>
             <p style="font-size: 0.75rem; opacity: 0.6">{{ error }}</p>
             <button @click="fetchDash" class="sm-retry">إعادة المحاولة</button>
           </div>
@@ -237,7 +237,7 @@ const teacherBars = computed(() => {
               <!-- Students -->
               <div class="kpi kpi-blue">
                 <div class="kpi-top">
-                  <span class="kpi-ico">👥</span>
+                  <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.students }}</span>
                 </div>
                 <div class="kpi-lbl">إجمالي الطلاب المسجلين</div>
@@ -253,7 +253,7 @@ const teacherBars = computed(() => {
               <!-- Teachers + Courses -->
               <div class="kpi kpi-green">
                 <div class="kpi-top">
-                  <span class="kpi-ico">👨‍🏫</span>
+                  <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.teachers }}</span>
                 </div>
                 <div class="kpi-lbl">الأساتذة النشطون</div>
@@ -265,7 +265,7 @@ const teacherBars = computed(() => {
               <!-- Paid vs Pending -->
               <div class="kpi kpi-amber">
                 <div class="kpi-top">
-                  <span class="kpi-ico">💳</span>
+                  <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.paid }}</span>
                 </div>
                 <div class="kpi-lbl">تسجيلات مدفوعة</div>
@@ -285,7 +285,7 @@ const teacherBars = computed(() => {
               <!-- Fill rate -->
               <div class="kpi kpi-purple">
                 <div class="kpi-top">
-                  <span class="kpi-ico">📊</span>
+                  <span class="kpi-ico"></span>
                   <span class="kpi-num">{{ kpis.avgFill }}%</span>
                 </div>
                 <div class="kpi-lbl">متوسط امتلاء المجموعات</div>
@@ -306,7 +306,7 @@ const teacherBars = computed(() => {
               <!-- Line chart -->
               <div class="card card-wide">
                 <div class="card-hdr">
-                  <span class="card-ttl">📈 منحنى التسجيل حسب الوقت</span>
+                  <span class="card-ttl"> منحنى التسجيل حسب الوقت</span>
                   <span class="badge">آخر 7 أشهر</span>
                 </div>
                 <div v-if="!line" class="no-data">لا توجد بيانات بعد</div>
@@ -377,7 +377,7 @@ const teacherBars = computed(() => {
               <!-- Donut -->
               <div class="card card-narrow">
                 <div class="card-hdr">
-                  <span class="card-ttl">💳 توزيع الدفعات</span>
+                  <span class="card-ttl"> توزيع الدفعات</span>
                 </div>
                 <div v-if="!donut.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="donut-wrap">
@@ -440,7 +440,7 @@ const teacherBars = computed(() => {
             <div class="row3">
               <!-- Level bars -->
               <div class="card">
-                <div class="card-hdr"><span class="card-ttl">🏫 الطلاب حسب المستوى</span></div>
+                <div class="card-hdr"><span class="card-ttl"> الطلاب حسب المستوى</span></div>
                 <div v-if="!levelBars.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="lvl-list">
                   <div v-for="b in levelBars" :key="b.level" class="lvl-item">
@@ -461,7 +461,7 @@ const teacherBars = computed(() => {
               <!-- Revenue bars -->
               <div class="card">
                 <div class="card-hdr">
-                  <span class="card-ttl">💵 الإيرادات الشهرية</span>
+                  <span class="card-ttl">الإيرادات الشهرية</span>
                   <span class="badge">DA</span>
                 </div>
                 <div v-if="!revBars.length" class="no-data">لا توجد مدفوعات مسجلة</div>
@@ -481,7 +481,7 @@ const teacherBars = computed(() => {
 
               <!-- Teacher perf -->
               <div class="card">
-                <div class="card-hdr"><span class="card-ttl">🏆 أداء الأساتذة</span></div>
+                <div class="card-hdr"><span class="card-ttl"> أداء الأساتذة</span></div>
                 <div v-if="!teacherBars.length" class="no-data">لا توجد بيانات</div>
                 <div v-else class="tch-list">
                   <div v-for="t in teacherBars" :key="t.name" class="tch-item">
@@ -504,7 +504,7 @@ const teacherBars = computed(() => {
 
             <!-- ══ ROW 4 · TOP COURSES ═══════════════════════════ -->
             <div class="card card-full">
-              <div class="card-hdr"><span class="card-ttl">📚 أفضل المواد تسجيلاً</span></div>
+              <div class="card-hdr"><span class="card-ttl"> أفضل المواد تسجيلاً</span></div>
               <div v-if="!topCourses.length" class="no-data">لا توجد بيانات</div>
               <div v-else class="tc-grid">
                 <div v-for="c in topCourses" :key="c.title" class="tc-row">
