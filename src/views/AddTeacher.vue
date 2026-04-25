@@ -4,7 +4,54 @@ import { useRouter } from 'vue-router'
 // Removed Calendar since birthday is deleted
 import { UserPlus, Mail, Lock, Phone, User, MapPin } from 'lucide-vue-next'
 import { useLanguage } from '../composables/useLanguage.js'
+import * as api from '../services/api.js'
 
+const handleSubmit = async () => {
+  error.value = ''
+  successMessage.value = ''
+
+  if (
+    !teacherData.name ||
+    !teacherData.last_name ||
+    !teacherData.email ||
+    !teacherData.password ||
+    !teacherData.phone ||
+    !teacherData.gender
+  ) {
+    error.value = t('fill_required_fields')
+    return
+  }
+
+  if (teacherData.password.length < 8) {
+    error.value = t('min_8_chars')
+    return
+  }
+
+  loading.value = true
+
+  try {
+    await api.registerTeacher(teacherData)
+    successMessage.value = t('teacher_created_success')
+
+    setTimeout(() => {
+      Object.assign(teacherData, {
+        name: '',
+        last_name: '',
+        email: '',
+        password: '',
+        phone: '',
+        gender: 'M',
+        birthday: '',
+        city: '',
+      })
+      successMessage.value = ''
+    }, 2000)
+  } catch (err) {
+    error.value = err.message || t('error_creation')
+  } finally {
+    loading.value = false
+  }
+}
 const { t } = useLanguage()
 const router = useRouter()
 
@@ -94,66 +141,6 @@ const teacherData = reactive({
   gender: 'M',
   city: '',
 })
-
-const handleSubmit = async () => {
-  error.value = ''
-  successMessage.value = ''
-
-  if (
-    !teacherData.name ||
-    !teacherData.last_name ||
-    !teacherData.email ||
-    !teacherData.password ||
-    !teacherData.phone ||
-    !teacherData.gender
-  ) {
-    error.value = t('fill_required_fields')
-    return
-  }
-
-  loading.value = true
-
-  try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      'https://belmahi-school-production.up.railway.app/api/auth/register-teacher',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(teacherData),
-      },
-    )
-
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error(data.error || t('error_creation'))
-    }
-
-    const data = await response.json()
-    successMessage.value = t('teacher_created_success')
-
-    // Reset form
-    setTimeout(() => {
-      Object.assign(teacherData, {
-        name: '',
-        last_name: '',
-        email: '',
-        password: '',
-        phone: '',
-        gender: 'M',
-        city: '',
-      })
-      successMessage.value = ''
-    }, 2000)
-  } catch (err) {
-    error.value = err.message || t('error_creation')
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <template>

@@ -1395,3 +1395,17 @@ export const changeMyPassword = async (oldPassword, newPassword) => {
   }
   return res.json()
 }
+// ============= ENSEIGNANTS =============
+
+export const registerTeacher = async (teacherData) => {
+  const response = await fetch(`${API_URL}/auth/register-teacher`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(teacherData),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur création enseignant')
+  }
+  return await response.json()
+}
