@@ -539,7 +539,7 @@ onUnmounted(() => clearInterval(tInterval))
   --navy: #040d1f;
   --blue: #0255ae;
   --electric: #1ba8f4;
-  --amber: #f59e0b;
+  --amber: #fca716;
   --cream: #f4f3ef;
   --gray: #64748b;
   --white: #ffffff;
