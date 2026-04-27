@@ -680,17 +680,16 @@ h3 {
    ═══════════════════════════════════════ */
 .section-nav {
   position: sticky;
-  /* This pushes it exactly below the blue bar */
-  top: var(--navbar-h);
-  /* z-40 ensures it is under the Blue Navbar (z-50) but above the content */
+  /* This must be exactly the height of your blue Navbar */
+  top: 64px;
+  /* Force a lower z-index than the Blue Navbar (z-50) */
   z-index: 40;
-  background: white;
-  width: 100%;
-  /* This shadow helps distinguish it from the boxes below */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  /* Prevents jumping during scroll */
-  backface-visibility: hidden;
-  transform: translate3d(0, 0, 0);
+  /* Important: background must be solid to cover items scrolling under it */
+  background-color: white;
+  /* Add a thin line to define the boundary */
+  border-bottom: 1px solid #e5e7eb;
+  /* Hardware acceleration to stop flickering/dancing */
+  will-change: transform;
 }
 
 .dark-mode .section-nav {
