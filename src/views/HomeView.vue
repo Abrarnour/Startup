@@ -525,15 +525,6 @@ onUnmounted(() => clearInterval(tInterval))
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
   overflow-x: hidden;
-
-  /* 🔥 FIX 1: Set padding exactly equal to the blue navbar height.
-     This removes the blank space and places the sub-navbar exactly
-     at the sticky threshold so it fixes immediately. */
-  padding-top: var(--navbar-h);
-  padding-top: 0; /* Remove the 100px padding */
-  display: flex;
-  flex-direction: column;
-  gap: 0; /* Control gaps per section instead of globally */
 }
 
 h1,
@@ -648,37 +639,6 @@ h3 {
   color: white;
 }
 
-/* ═══════════════════════════════════════
-   SECTION NAV  ← KEY FIX
-   ═══════════════════════════════════════
-   top: var(--navbar-h)  → sticks BELOW the main navbar (not on top of it)
-   z-index: 40           → stays behind the main navbar (z-50 = 50)
-   ═══════════════════════════════════════ */
-.section-nav {
-  position: sticky;
-  top: 64px; /* Ensure this matches your main blue navbar height exactly */
-  z-index: 40;
-  background: white;
-  width: 100%;
-  height: 56px;
-  /* Add this to prevent "ghost" pixels during scroll */
-  margin-top: 0;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: transform;
-}
-
-/* 3. FIX THE OVERLAP (The most important part) */
-/* This selects the very first section after your bar and pushes it down */
-
-.dark-mode .section-nav {
-  background: rgba(4, 13, 31, 0.96);
-  border-bottom-color: rgba(27, 168, 244, 0.12);
-  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
-}
-html {
-  scroll-behavior: smooth;
-}
 .snav-inner {
   display: flex;
   align-items: center;
