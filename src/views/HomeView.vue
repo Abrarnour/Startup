@@ -547,20 +547,21 @@ onUnmounted(() => clearInterval(tInterval))
   --cream: #f4f3ef;
   --gray: #64748b;
   --white: #ffffff;
-  /* Navbar height — keep in sync with NavBar h-16 (64px) */
-  --navbar-h: 64px;
+  --navbar-h: 64px; /* Matches your top blue navbar height */
+  --sub-bar-h: 56px; /* Height of the white bar */
 
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
-  padding-top: 100px;
-  --navbar-h: 64px; /* Adjust to match your blue navbar height */
-  --sub-bar-h: 56px; /* Height of the white bar */
   overflow-x: hidden;
+
+  /* 🔥 FIX 1: Set padding exactly equal to the blue navbar height.
+     This removes the blank space and places the sub-navbar exactly
+     at the sticky threshold so it fixes immediately. */
+  padding-top: var(--navbar-h);
 }
 
 h1,
@@ -684,15 +685,14 @@ h3 {
 .section-nav {
   position: sticky;
   top: var(--navbar-h);
-  z-index: 40; /* Stays below blue bar (z-50) but above boxes */
+  z-index: 40; /* Stays below blue bar (z-50) but above content */
   background: white;
   width: 100%;
   height: var(--sub-bar-h);
 
-  /* Hardware Acceleration: Stops the 'vibration/dancing' */
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
+  /* 🔥 FIX 2: Removed transform and backface-visibility.
+     Using hardware acceleration on a sticky element creates a new
+     stacking context and breaks the sticky trigger in webkit browsers. */
 
   /* Visual separation */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
