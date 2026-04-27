@@ -163,38 +163,6 @@ onUnmounted(() => clearInterval(tInterval))
 <template>
   <div class="home" :class="{ 'dark-mode': darkMode }">
     <!-- ══════════════════════════════════
-         SECTION NAV — sticky sub-navbar
-         ══════════════════════════════════ -->
-    <nav class="section-nav">
-      <div class="snav-inner">
-        <button
-          v-for="sec in sections"
-          :key="sec.id"
-          class="snav-btn"
-          :class="{ 'snav-active': activeSection === sec.id }"
-          @click="scrollToSection(sec.id)"
-        >
-          <span class="snav-icon">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path :d="sec.svgPath" />
-              <g v-if="sec.svgExtra" v-html="sec.svgExtra"></g>
-            </svg>
-          </span>
-          <span class="snav-label">{{ sec.label }}</span>
-        </button>
-      </div>
-    </nav>
-
-    <!-- ══════════════════════════════════
          1. HERO — split dark editorial
          ══════════════════════════════════ -->
     <section id="hero-section" class="hero reveal">
