@@ -679,15 +679,17 @@ h3 {
    ═══════════════════════════════════════ */
 .section-nav {
   position: sticky;
-  top: var(--navbar-h); /* was: top: 0 — was causing overlap with main navbar */
-  z-index: 40; /* was: 90 — was rendering OVER the main navbar (z-50) */
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(2, 85, 174, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 2px 24px rgba(2, 85, 174, 0.08);
-  margin-bottom: 0;
+  /* This pushes it exactly below the blue bar */
+  top: var(--navbar-h);
+  /* z-40 ensures it is under the Blue Navbar (z-50) but above the content */
+  z-index: 40;
+  background: white;
+  width: 100%;
+  /* This shadow helps distinguish it from the boxes below */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  /* Prevents jumping during scroll */
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
 }
 
 .dark-mode .section-nav {
