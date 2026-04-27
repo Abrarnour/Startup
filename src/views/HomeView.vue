@@ -163,6 +163,38 @@ onUnmounted(() => clearInterval(tInterval))
 <template>
   <div class="home" :class="{ 'dark-mode': darkMode }">
     <!-- ══════════════════════════════════
+         SECTION NAV — sticky sub-navbar
+         ══════════════════════════════════ -->
+    <nav class="section-nav">
+      <div class="snav-inner">
+        <button
+          v-for="sec in sections"
+          :key="sec.id"
+          class="snav-btn"
+          :class="{ 'snav-active': activeSection === sec.id }"
+          @click="scrollToSection(sec.id)"
+        >
+          <span class="snav-icon">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path :d="sec.svgPath" />
+              <g v-if="sec.svgExtra" v-html="sec.svgExtra"></g>
+            </svg>
+          </span>
+          <span class="snav-label">{{ sec.label }}</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ══════════════════════════════════
          1. HERO — split dark editorial
          ══════════════════════════════════ -->
     <section id="hero-section" class="hero reveal">
@@ -515,16 +547,16 @@ onUnmounted(() => clearInterval(tInterval))
   --cream: #f4f3ef;
   --gray: #64748b;
   --white: #ffffff;
-  --navbar-h: 64px; /* Matches your top blue navbar height */
-  --sub-bar-h: 56px; /* Height of the white bar */
+  /* Navbar height — keep in sync with NavBar h-16 (64px) */
+  --navbar-h: 64px;
 
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
-  overflow-x: hidden;
 }
 
 h1,
@@ -639,6 +671,31 @@ h3 {
   color: white;
 }
 
+/* ═══════════════════════════════════════
+   SECTION NAV  ← KEY FIX
+   ═══════════════════════════════════════
+   top: var(--navbar-h)  → sticks BELOW the main navbar (not on top of it)
+   z-index: 40           → stays behind the main navbar (z-50 = 50)
+   ═══════════════════════════════════════ */
+.section-nav {
+  position: sticky;
+  top: var(--navbar-h); /* was: top: 0 — was causing overlap with main navbar */
+  z-index: 40; /* was: 90 — was rendering OVER the main navbar (z-50) */
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(2, 85, 174, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 24px rgba(2, 85, 174, 0.08);
+  margin-bottom: 0;
+}
+
+.dark-mode .section-nav {
+  background: rgba(4, 13, 31, 0.96);
+  border-bottom-color: rgba(27, 168, 244, 0.12);
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
+}
+
 .snav-inner {
   display: flex;
   align-items: center;
@@ -732,15 +789,8 @@ h3 {
   border-radius: clamp(12px, 2vw, 24px);
   overflow: hidden;
   position: relative;
+}
 
-  margin-left: auto;
-  margin-right: auto;
-  width: 95%; /* Keeps it centered with a slight gutter like your screenshot */
-  max-width: 1400px;
-}
-.section-nav + .hero {
-  margin-top: 20px; /* Adjust this to create the desired 'breathing room' */
-}
 /* Tablet portrait */
 @media (max-width: 1024px) {
   .hero {
