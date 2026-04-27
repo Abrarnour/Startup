@@ -562,6 +562,10 @@ onUnmounted(() => clearInterval(tInterval))
      This removes the blank space and places the sub-navbar exactly
      at the sticky threshold so it fixes immediately. */
   padding-top: var(--navbar-h);
+  padding-top: 0; /* Remove the 100px padding */
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Control gaps per section instead of globally */
 }
 
 h1,
@@ -684,26 +688,20 @@ h3 {
    ═══════════════════════════════════════ */
 .section-nav {
   position: sticky;
-  top: var(--navbar-h);
-  z-index: 40; /* Stays below blue bar (z-50) but above content */
+  top: 64px; /* Ensure this matches your main blue navbar height exactly */
+  z-index: 40;
   background: white;
   width: 100%;
-  height: var(--sub-bar-h);
-
-  /* 🔥 FIX 2: Removed transform and backface-visibility.
-     Using hardware acceleration on a sticky element creates a new
-     stacking context and breaks the sticky trigger in webkit browsers. */
-
-  /* Visual separation */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid #e5e7eb;
+  height: 56px;
+  /* Add this to prevent "ghost" pixels during scroll */
+  margin-top: 0;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
 }
 
 /* 3. FIX THE OVERLAP (The most important part) */
 /* This selects the very first section after your bar and pushes it down */
-.section-nav + * {
-  margin-top: 20px !important;
-}
 
 .dark-mode .section-nav {
   background: rgba(4, 13, 31, 0.96);
@@ -806,8 +804,15 @@ html {
   border-radius: clamp(12px, 2vw, 24px);
   overflow: hidden;
   position: relative;
-}
 
+  margin-left: auto;
+  margin-right: auto;
+  width: 95%; /* Keeps it centered with a slight gutter like your screenshot */
+  max-width: 1400px;
+}
+.section-nav + .hero {
+  margin-top: 20px; /* Adjust this to create the desired 'breathing room' */
+}
 /* Tablet portrait */
 @media (max-width: 1024px) {
   .hero {
