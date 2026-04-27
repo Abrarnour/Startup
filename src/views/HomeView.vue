@@ -557,6 +557,7 @@ onUnmounted(() => clearInterval(tInterval))
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
+  padding-top: 100px;
 }
 
 h1,
