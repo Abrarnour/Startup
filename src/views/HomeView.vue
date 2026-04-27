@@ -558,6 +558,9 @@ onUnmounted(() => clearInterval(tInterval))
   gap: clamp(0.75rem, 2vw, 1.25rem);
   width: 100%;
   padding-top: 100px;
+  --navbar-h: 64px; /* Adjust to match your blue navbar height */
+  --sub-bar-h: 56px; /* Height of the white bar */
+  overflow-x: hidden;
 }
 
 h1,
@@ -680,16 +683,26 @@ h3 {
    ═══════════════════════════════════════ */
 .section-nav {
   position: sticky;
-  /* This must be exactly the height of your blue Navbar */
-  top: 64px;
-  /* Force a lower z-index than the Blue Navbar (z-50) */
-  z-index: 40;
-  /* Important: background must be solid to cover items scrolling under it */
-  background-color: white;
-  /* Add a thin line to define the boundary */
+  top: var(--navbar-h);
+  z-index: 40; /* Stays below blue bar (z-50) but above boxes */
+  background: white;
+  width: 100%;
+  height: var(--sub-bar-h);
+
+  /* Hardware Acceleration: Stops the 'vibration/dancing' */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+
+  /* Visual separation */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-bottom: 1px solid #e5e7eb;
-  /* Hardware acceleration to stop flickering/dancing */
-  will-change: transform;
+}
+
+/* 3. FIX THE OVERLAP (The most important part) */
+/* This selects the very first section after your bar and pushes it down */
+.section-nav + * {
+  margin-top: 20px !important;
 }
 
 .dark-mode .section-nav {
@@ -697,7 +710,9 @@ h3 {
   border-bottom-color: rgba(27, 168, 244, 0.12);
   box-shadow: 0 2px 24px rgba(0, 0, 0, 0.3);
 }
-
+html {
+  scroll-behavior: smooth;
+}
 .snav-inner {
   display: flex;
   align-items: center;
