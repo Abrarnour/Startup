@@ -4,7 +4,7 @@ import { RouterView, useRouter } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { getCurrentUser, logout as apiLogout } from './services/api.js' // ✅ Import API
 import { useLanguage } from './composables/useLanguage.js'
-import LinkedInButton from './components/LinkedInButton.vue'
+
 const { t, currentLang, toggleLang, initLang, isRTL } = useLanguage()
 
 // Initialiser la langue au démarrage
@@ -174,18 +174,6 @@ const toggleDarkMode = () => {
                 ><u>Zineb HAMZA</u></a
               >
             </p>
-
-            <div class="flex flex-col sm:flex-row gap-4 items-center">
-              <LinkedInButton
-                label="Devlopment by : "
-                url="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
-              />
-
-              <LinkedInButton
-                label="Product Manegment by : "
-                url="https://www.linkedin.com/in/hamza-zineb-052071390"
-              />
-            </div>
 
             <p class="text-sm text-gray-500"></p>
           </div>
