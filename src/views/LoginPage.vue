@@ -244,7 +244,11 @@ const handleRegister = async () => {
           <p class="text-blue-100 leading-relaxed">
             {{ t('have_account_text') }}
           </p>
-          <button :disabled="loading" class="...">
+          <button
+            @click="toggleMode"
+            :disabled="loading"
+            class="mt-8 px-10 py-3 border-2 border-white/50 rounded-full font-bold hover:bg-white hover:text-blue-600 transition-all"
+          >
             <span v-if="!loading">{{ t('login_button') }}</span>
             <div v-else class="flex items-center gap-2">
               <AppLoader size="24px" />
