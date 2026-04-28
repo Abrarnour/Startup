@@ -161,29 +161,20 @@ const toggleDarkMode = () => {
               <br />developed for BELMAHI SCHOOL.Unauthorized Reproduction, Distribution,or
               Commercial Use Prohibited <br />
               DEVELOPED by
-
-              <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b" class="custom-link">
-                Abrar Nour Lacida
-              </a>
+              <a
+                href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+                style="color: pink !important"
+                ><u>Abrar Nour Lacida</u></a
+              >
               <br />
-              MANAGEMENT BY:
-              <a href="https://www.linkedin.com/in/hamza-zineb-052071390" class="custom-link">
-                Hamza Zineb
-              </a>
+              MANEGMENT BY :
+              <a
+                href="https://www.linkedin.com/in/hamza-zineb-052071390"
+                style="color: pink !important"
+                ><u>Hamza Zineb</u></a
+              >
             </p>
-            <style>
-              /* 1. Set the initial color of the links (optional) */
-              .custom-link {
-                color: black; /* Or any color you prefer before hovering */
-                text-decoration: none;
-                transition: color 0.3s ease; /* Makes the color change smooth */
-              }
 
-              /* 2. Change the color on HOVER */
-              .custom-link:hover {
-                color: blueviolet !important;
-              }
-            </style>
             <div class="flex flex-col sm:flex-row gap-4 items-center">
               <LinkedInButton
                 label="Devlopment by : "
