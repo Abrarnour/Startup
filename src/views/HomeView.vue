@@ -478,7 +478,7 @@ onUnmounted(() => clearInterval(tInterval))
         <span class="eyetag eyetag-light">{{ t('cta_eyetag') }}</span>
         <h2 class="cta-title">{{ t('cta_title_1') }}<br />{{ t('cta_title_2') }}</h2>
         <p class="cta-sub">{{ t('cta_sub') }}</p>
-        <AnimatedButton to="/login" label1=" {{ t('cta_btn') }}" label2=" {{ t('cta_btn') }}" />
+        <AnimatedButton to="/login" label1="t('cta_btn')" label2="t('cta_btn')" />
       </div>
     </section>
   </div>
