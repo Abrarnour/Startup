@@ -159,9 +159,13 @@ const toggleDarkMode = () => {
             <p class="text-gray-400 text-sm text-center md:text-left">&copy; 2025–2026</p>
             <p class="text-gray-400 text-sm text-center md:text-left">
               <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b">
-                the founder of this platform
+                click to get the founder of this platform
               </a>
-              <a href="https://www.linkedin.com/in/hamza-zineb-052071390 "> Maneger </a>
+              <br />
+              <br />
+              <a href="https://www.linkedin.com/in/hamza-zineb-052071390 ">
+                click to get the Maneger
+              </a>
             </p>
             <p class="text-sm text-gray-500"></p>
           </div>
