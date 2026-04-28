@@ -4,7 +4,7 @@ import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ 
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
-
+import AppLoader from '../components/AppLoader.vue'
 const showMaterialsModal = ref(false)
 const selectedCourseId = ref(null)
 
@@ -82,7 +82,7 @@ onMounted(() => {
 
 <template>
   <div v-if="loading" class="text-center py-12">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <AppLoader size="80px" />
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
       {{ t('loading_your_courses') }}
     </p>
