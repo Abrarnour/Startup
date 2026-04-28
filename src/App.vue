@@ -161,6 +161,7 @@ const toggleDarkMode = () => {
               <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b">
                 the founder of this platform
               </a>
+              <a href="https://www.linkedin.com/in/hamza-zineb-052071390 "> Maneger </a>
             </p>
             <p class="text-sm text-gray-500"></p>
           </div>
