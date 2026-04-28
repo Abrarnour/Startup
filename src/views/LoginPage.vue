@@ -370,17 +370,6 @@ const handleRegister = async () => {
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
               {{ t('register_link') }}
             </button>
-            <br />
-            <!-- قسم الدعم الفني -->
-            <span class="text-xs opacity-80 mt-2 block">
-              {{ t('prblm_txt') }}
-              <a
-                href="mailto:support@belmahi-school.dz"
-                class="text-blue-600 font-bold hover:underline ms-1"
-              >
-                {{ t('support_link') }}
-              </a>
-            </span>
           </p>
         </div>
       </div>
@@ -454,6 +443,17 @@ const handleRegister = async () => {
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
               {{ t('register_link') }}
             </button>
+            <br />
+            <!-- قسم الدعم الفني -->
+            <span class="text-xs opacity-80 mt-2 block">
+              {{ t('prblm_txt') }}
+              <a
+                href="mailto:support@belmahi-school.dz"
+                class="text-blue-600 font-bold hover:underline ms-1"
+              >
+                {{ t('support_link') }}
+              </a>
+            </span>
           </p>
         </div>
       </div>
