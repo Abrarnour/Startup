@@ -4,7 +4,7 @@ import { RouterView, useRouter } from 'vue-router'
 import NavBar from './components/NavBar.vue'
 import { getCurrentUser, logout as apiLogout } from './services/api.js' // ✅ Import API
 import { useLanguage } from './composables/useLanguage.js'
-
+import LinkedInButton from './components/LinkedInButton.vue'
 const { t, currentLang, toggleLang, initLang, isRTL } = useLanguage()
 
 // Initialiser la langue au démarrage
@@ -155,18 +155,21 @@ const toggleDarkMode = () => {
 
         <!-- Séparateur -->
         <div class="border-t border-gray-700 pt-6">
-          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-gray-400 text-sm text-center md:text-left">&copy; 2025–2026</p>
-            <p class="text-gray-400 text-sm text-center md:text-left">
-              <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b">
-                click to get the founder of this platform
-              </a>
-              <br />
-              <br />
-              <a href="https://www.linkedin.com/in/hamza-zineb-052071390 ">
-                click to get the Maneger
-              </a>
-            </p>
+          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <p class="text-gray-400 text-sm">&copy; 2025–2026</p>
+
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+              <LinkedInButton
+                label="Platform Founder"
+                url="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+              />
+
+              <LinkedInButton
+                label="School Manager"
+                url="https://www.linkedin.com/in/hamza-zineb-052071390"
+              />
+            </div>
+
             <p class="text-sm text-gray-500"></p>
           </div>
         </div>
