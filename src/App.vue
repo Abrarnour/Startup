@@ -159,7 +159,12 @@ const toggleDarkMode = () => {
         <!-- Séparateur -->
         <div class="border-t border-gray-700 pt-6">
           <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p class="text-gray-400 text-sm text-center md:text-left">© 2026 Lacida_Abrar_Nour</p>
+            <p class="text-gray-400 text-sm text-center md:text-left">&copy; 2025–2026</p>
+            <p class="text-gray-400 text-sm text-center md:text-left">
+              <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b">
+                the founder of this platform
+              </a>
+            </p>
             <p class="text-sm text-gray-500"></p>
           </div>
         </div>
