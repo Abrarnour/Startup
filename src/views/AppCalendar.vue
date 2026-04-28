@@ -303,7 +303,6 @@ onMounted(() => {
 
     <!-- ─── Loading ────────────────────────────────────────────────────────── -->
     <div v-if="loading" class="state-box">
-      <div class="spinner"></div>
       <AppLoader size="120px" />
       <p class="mt-4 text-gray-500">{{ t('loading_calendar') }}</p>
     </div>
