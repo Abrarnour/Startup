@@ -156,7 +156,18 @@ const toggleDarkMode = () => {
         <!-- Séparateur -->
         <div class="border-t border-gray-700 pt-6">
           <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <p class="text-gray-400 text-sm">&copy; 2025–2026</p>
+            <p class="text-gray-400 text-sm">
+              &copy; 2025–2026 <br />
+              <br />developed for BELMAHI SCHOOL.Unauthorized Reproduction, Distribution,or
+              Commercial Use Prohibited <br />
+              DEVELOPED by
+              <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+                >Abrar Nour Lacida</a
+              >
+              <br />
+              MANEGMENT BY :
+              <a href="https://www.linkedin.com/in/hamza-zineb-052071390">Hamza Zineb</a>
+            </p>
 
             <div class="flex flex-col sm:flex-row gap-4 items-center">
               <LinkedInButton
