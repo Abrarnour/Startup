@@ -160,6 +160,7 @@
               :style="{ width: uploadProgress + '%' }"
             ></div>
           </div>
+          <AppLoader size="80px" />
           <p class="text-center text-blue-600 font-bold">
             {{ t('uploading_btn') }} {{ uploadProgress }}%
           </p>
@@ -220,6 +221,8 @@
 import { ref, reactive } from 'vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
+
+import AppLoader from '../components/AppLoader.vue'
 const { t } = useLanguage()
 
 const props = defineProps({

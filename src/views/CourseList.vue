@@ -20,7 +20,7 @@ import StudentListModal from '../components/StudentListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 // script
 import StatsModal from '../components/StatsModal.vue'
-
+import AppLoader from '../components/AppLoader.vue'
 // ADD THIS REF (with other refs):
 const showStatsModal = ref(false)
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
@@ -259,11 +259,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="text-center py-12">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    <p :class="props.darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
-      {{ t('loading_courses_list') }}
-    </p>
+  <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+    <AppLoader size="120px" color="#9333ea" />
+    <p class="mt-4 text-gray-500">{{ t('loading_stats') }}</p>
   </div>
 
   <div

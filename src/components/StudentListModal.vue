@@ -159,10 +159,9 @@
       </div>
 
       <div class="flex-1 overflow-y-auto p-4">
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <div
-            class="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full"
-          ></div>
+        <div v-if="loading" class="flex flex-col items-center py-12">
+          <AppLoader size="80px" color="#9333ea" />
+          <p class="mt-4 text-gray-500">Chargement de la liste...</p>
         </div>
 
         <div v-else-if="filteredStudents.length === 0" class="text-center py-12">
@@ -385,7 +384,7 @@ import {
   adminDeleteUser,
   adminCleanupInactiveStudents,
 } from '../services/api.js'
-
+import AppLoader from '../components/AppLoader.vue'
 const handleCleanup = async () => {
   // ⚠️ The Alert Window to make sure
   const confirmed = window.confirm(props.t('confirm_cleanup_msg'))

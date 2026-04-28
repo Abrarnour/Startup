@@ -18,7 +18,7 @@ import {
 import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
 import { useLanguage } from '../composables/useLanguage.js'
-
+import AppLoader from '../components/AppLoader.vue'
 const router = useRouter()
 // دالة لتحديد اتجاه حركة الطبقة الزرقاء بدقة بناءً على اتجاه المتصفح
 import { computed } from 'vue'
@@ -244,11 +244,12 @@ const handleRegister = async () => {
           <p class="text-blue-100 leading-relaxed">
             {{ t('have_account_text') }}
           </p>
-          <button
-            @click="toggleMode"
-            class="mt-8 px-10 py-3 border-2 border-white/50 rounded-full font-bold hover:bg-white hover:text-blue-600 transition-all"
-          >
-            {{ t('login_button') }}
+          <button :disabled="loading" class="...">
+            <span v-if="!loading">{{ t('login_button') }}</span>
+            <div v-else class="flex items-center gap-2">
+              <AppLoader size="24px" />
+              <span>{{ t('loading_connexion') }}</span>
+            </div>
           </button>
         </div>
 

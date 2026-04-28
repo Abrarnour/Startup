@@ -13,7 +13,7 @@ const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
 })
-
+import AppLoader from '../components/AppLoader.vue'
 const { t } = useLanguage() // ✅ Extract t for translations
 
 const showMaterialsModal = ref(false)
@@ -164,7 +164,7 @@ const loadMaterialsCounts = async () => {
 
 <template>
   <div v-if="loading" class="text-center py-12">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <AppLoader size="120px" />
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
       {{ t('loading_your_courses') }}
     </p>

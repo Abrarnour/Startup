@@ -17,7 +17,7 @@ import * as api from '../services/api.js'
 import AddChildModal from '../components/AddChildModal.vue'
 import EnrollChildModal from '../components/EnrollChildModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
-
+import AppLoader from '../components/AppLoader.vue'
 const { t } = useLanguage() // ⬅️ تفعيل الترجمة
 
 const props = defineProps({
@@ -322,9 +322,8 @@ onMounted(() => {
               <h2 class="text-2xl font-bold mb-5">{{ t('courses_of') }}{{ selectedChild.name }}</h2>
 
               <div v-if="loading" class="text-center py-10">
-                <div
-                  class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"
-                ></div>
+                <AppLoader size="120px" />
+                <p class="mt-4 text-gray-500">{{ t('loading_courses') }}</p>
               </div>
 
               <div

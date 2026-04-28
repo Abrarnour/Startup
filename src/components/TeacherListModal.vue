@@ -75,10 +75,9 @@
       </div>
 
       <div class="flex-1 overflow-y-auto p-4">
-        <div v-if="loading" class="flex items-center justify-center py-12">
-          <div
-            class="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"
-          ></div>
+        <div v-if="loading" class="flex flex-col items-center py-12">
+          <AppLoader size="80px" color="#9333ea" />
+          <p class="mt-4 text-gray-500">Chargement de la liste...</p>
         </div>
 
         <div v-else-if="filteredTeachers.length === 0" class="text-center py-12">
@@ -287,7 +286,7 @@ import { getAdminTeachersList } from '../services/api.js'
 import { Search, X, User, Mail, Phone, Trash2, AlertTriangle, Loader2 } from 'lucide-vue-next'
 // In <script setup>
 import { adminDeleteUser } from '../services/api.js' // Add this import
-
+import AppLoader from '../components/AppLoader.vue'
 const confirmTarget = ref(null)
 const deleting = ref(false)
 const props = defineProps({
