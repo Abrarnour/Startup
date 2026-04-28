@@ -364,20 +364,23 @@ const handleRegister = async () => {
           </button>
         </form>
 
-        <div class="text-center mt-6 md:hidden">
+        <div class="text-center mt-6">
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
             {{ t('no_account') }}
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
               {{ t('register_link') }}
             </button>
             <br />
-            {{ t('prblm_txt') }}
-            <a
-              href="mailto:support@belmahi-school.dz"
-              class="text-blue-600 font-bold hover:underline"
-            >
-              {{ t('support_link') }}
-            </a>
+            <!-- قسم الدعم الفني -->
+            <span class="text-xs opacity-80 mt-2 block">
+              {{ t('prblm_txt') }}
+              <a
+                href="mailto:support@belmahi-school.dz"
+                class="text-blue-600 font-bold hover:underline ms-1"
+              >
+                {{ t('support_link') }}
+              </a>
+            </span>
           </p>
         </div>
       </div>
