@@ -163,15 +163,15 @@ const toggleDarkMode = () => {
               DEVELOPED by
               <a
                 href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
-                style="color: pink !important"
-                ><u>Abrar Nour Lacida</u></a
+                style="text-decoration: underline !important; color: pink !important"
+                ><u>Abrar Nour LACIDA</u></a
               >
               <br />
               MANEGMENT BY :
               <a
                 href="https://www.linkedin.com/in/hamza-zineb-052071390"
-                style="color: pink !important"
-                ><u>Hamza Zineb</u></a
+                style="text-decoration: underline !important; color: pink !important"
+                ><u>Zineb HAMZA</u></a
               >
             </p>
 
