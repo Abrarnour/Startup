@@ -4,7 +4,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
-
+import AppLoader from './AppLoader.vue'
 const router = useRouter()
 const route = useRoute()
 const { t, currentLang } = useLanguage()
@@ -99,9 +99,7 @@ onMounted(async () => {
 <template>
   <!-- ══════ LOADING ══════ -->
   <div v-if="loading" class="flex flex-col items-center justify-center py-24 gap-4">
-    <div
-      class="w-14 h-14 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin"
-    ></div>
+    <AppLoader size="120px" />
     <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-sm font-medium">
       {{ t('loading') }}
     </p>

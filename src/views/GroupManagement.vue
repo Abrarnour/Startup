@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   Info,
 } from 'lucide-vue-next'
+import AppLoader from './AppLoader.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 const route = useRoute()
@@ -746,7 +747,7 @@ onMounted(() => {
 
 <template>
   <div v-if="loading" class="text-center py-12">
-    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <AppLoader size="120px" />
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
       {{ t('loading') }}
     </p>
