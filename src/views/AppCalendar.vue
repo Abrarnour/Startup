@@ -18,7 +18,7 @@ import {
 } from 'lucide-vue-next'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
-
+import AppLoader from '../components/AppLoader.vue'
 const { t, currentLang } = useLanguage()
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -304,7 +304,8 @@ onMounted(() => {
     <!-- ─── Loading ────────────────────────────────────────────────────────── -->
     <div v-if="loading" class="state-box">
       <div class="spinner"></div>
-      <p>{{ t('loading_calendar') }}</p>
+      <AppLoader size="120px" />
+      <p class="mt-4 text-gray-500">{{ t('loading_calendar') }}</p>
     </div>
 
     <!-- ─── Error ──────────────────────────────────────────────────────────── -->
