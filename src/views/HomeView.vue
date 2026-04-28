@@ -184,19 +184,11 @@ onUnmounted(() => clearInterval(tInterval))
         </p>
 
         <div class="hero-actions">
-          <RouterLink to="/public-courses" class="btn-electric">
-            {{ t('explore_courses') }}
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </RouterLink>
+          <AnimatedButton
+            to="/public-courses"
+            :label1="t('explore_courses')"
+            :label2="t('explore_courses')"
+          />
           <RouterLink to="/login" class="btn-ghost">{{ t('login_link') }}</RouterLink>
         </div>
 
