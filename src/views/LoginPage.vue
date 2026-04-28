@@ -4,7 +4,8 @@ import { login } from '../services/api.js'
 import axios from 'axios'
 import { useLanguage } from '../composables/useLanguage.js'
 import '../assets/mobile.css'
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, defineProps, defineEmits } from 'vue'
+
 // REMOVED UserPlus and Mail to prevent Vercel linting errors
 import { User, Lock, LogIn, Eye, EyeOff, GraduationCap, Users } from 'lucide-vue-next'
 const router = useRouter()
