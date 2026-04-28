@@ -11,7 +11,8 @@ export const translations = {
     schedule_2: 'Samedi: 8h00 - 12h00',
     closed_friday: 'Fermé le vendredi',
     copyright: '© 2026 Lacida_Abrar_Nour',
-
+    download_btn: 'Télécharger',
+    delete_btn: 'Supprimer',
     // ── NAVBAR ──
     home: 'Accueil',
     courses: 'Cours',
@@ -1115,7 +1116,8 @@ export const translations = {
     gender: 'الجنس',
     male: 'ذكر',
     female: 'أنثى',
-
+    download_btn: 'تحميل',
+    delete_btn: 'حذف',
     // ── SWITCH LOGIN/REGISTER ──
     have_account: 'لديك حساب بالفعل؟',
     no_account: 'ليس لديك حساب؟',
