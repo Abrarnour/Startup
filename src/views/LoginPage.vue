@@ -1,21 +1,12 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  User,
-  Lock,
-  LogIn,
-  Eye,
-  EyeOff,
-  UserPlus,
-  Mail,
-  GraduationCap,
-  Users,
-} from 'lucide-vue-next'
 import { login } from '../services/api.js'
 import axios from 'axios'
 import { useLanguage } from '../composables/useLanguage.js'
 import './assets/mobile.css'
+import { ref, reactive, computed } from 'vue'
+// REMOVED UserPlus and Mail to prevent Vercel linting errors
+import { User, Lock, LogIn, Eye, EyeOff, GraduationCap, Users } from 'lucide-vue-next'
 const router = useRouter()
 const { t, isRTL } = useLanguage()
 
