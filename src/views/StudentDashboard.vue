@@ -82,7 +82,7 @@ onMounted(() => {
 
 <template>
   <div v-if="loading" class="text-center py-12">
-    <AppLoader size="80px" />
+    <AppLoader size="120px" />
     <p :class="darkMode ? 'text-white' : 'text-gray-700'" class="mt-4 font-semibold">
       {{ t('loading_your_courses') }}
     </p>
