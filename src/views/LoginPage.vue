@@ -205,7 +205,7 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="login-page flex items-center justify-center min-h-[calc(100vh-200px)] py-12">
+  <div class="login-page flex items-center justify-center min-h-[calc(100vh-140px)] py-6 md:py-8">
     <div
       :class="darkMode ? 'bg-gray-800' : 'bg-white'"
       class="relative rounded-3xl md:rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 min-h-[700px] md:h-[650px] flex"
