@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Users,
   ArrowRight,
+  BookOpen,
 } from 'lucide-vue-next'
 import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
@@ -226,7 +227,7 @@ const handleRegister = async () => {
               <p class="text-sm">{{ t('secure_login') }}</p>
             </div>
             <div class="flex items-center gap-3">
-              <div class="bg-white/20 p-2 rounded-lg">📚</div>
+              <div class="bg-white/20 p-2 rounded-lg"><BookOpen :size="20" /></div>
               <p class="text-sm">{{ t('personalized_courses') }}</p>
             </div>
           </div>
@@ -369,6 +370,15 @@ const handleRegister = async () => {
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
               {{ t('register_link') }}
             </button>
+          </p>
+          <p class="mt-4 text-xs" :class="darkMode ? 'text-gray-500' : 'text-gray-400'">
+            {{ t('prblm_txt') }}
+            <a
+              href="mailto:support@belmahi-school.dz"
+              class="text-blue-500 hover:underline font-medium"
+            >
+              {{ t('support_link') }}
+            </a>
           </p>
         </div>
       </div>

@@ -710,7 +710,8 @@ export const translations = {
     // ── PARENT DASHBOARD — real price ──
     price_da_label: '{n} DA / mois',
     enroll_child_paid: ' Inscrire mon enfant',
-
+    prblm_txt: '  : Mot de passe oublié ou vous rencontrez un problème ?',
+    support_link: ' Contactez le support',
     // ── STUDENT DASHBOARD — 2 boxes ──
     my_paid_courses: 'Mes Cours Actifs',
     my_stats: 'Mes Statistiques',
@@ -1124,7 +1125,8 @@ export const translations = {
     no_account: 'ليس لديك حساب؟',
     login_link: 'تسجيل الدخول',
     register_link: 'إنشاء حساب',
-
+    prblm_txt: '  هل نسيت كلمة المرور أو تواجه مشكلة؟ ',
+    support_link: '  اتصل بالدعم',
     // ── ERRORS ──
     error_login: 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
     error_registration: 'خطأ أثناء التسجيل',
