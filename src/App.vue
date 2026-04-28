@@ -69,10 +69,7 @@ const toggleDarkMode = () => {
           <!-- À propos -->
           <div>
             <h3 class="text-lg font-bold mb-3 text-blue-400">À Propos</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">
-              Belahi School _ Oran <br />
-              Bir Al djeer
-            </p>
+            <p class="text-gray-400 text-sm leading-relaxed">Belahi School _ Oran <br /></p>
           </div>
 
           <!-- Contact -->
