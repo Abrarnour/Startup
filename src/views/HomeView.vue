@@ -3,7 +3,7 @@ import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
 import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
-import AnimatedButton from './AnimatedButton.vue'
+import AnimatedButton from '../components/AnimatedButton.vue'
 const { t } = useLanguage()
 const router = useRouter()
 const props = defineProps({
