@@ -161,12 +161,16 @@ const toggleDarkMode = () => {
               <br />developed for BELMAHI SCHOOL.Unauthorized Reproduction, Distribution,or
               Commercial Use Prohibited <br />
               DEVELOPED by
-              <a href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+              <a
+                href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+                style="color: blueviolet"
                 >Abrar Nour Lacida</a
               >
               <br />
               MANEGMENT BY :
-              <a href="https://www.linkedin.com/in/hamza-zineb-052071390">Hamza Zineb</a>
+              <a href="https://www.linkedin.com/in/hamza-zineb-052071390" style="color: blueviolet"
+                >Hamza Zineb</a
+              >
             </p>
 
             <div class="flex flex-col sm:flex-row gap-4 items-center">
