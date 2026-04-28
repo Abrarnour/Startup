@@ -607,6 +607,7 @@ export const translations = {
     status: 'Statut',
     notes: 'Notes',
 
+    start_now: 'Commencez maintenant!',
     click_to_mark_unpaid: 'Cliquer pour marquer Non payé',
     click_to_mark_paid: 'Cliquer pour marquer Payé',
     no_student_in_group: 'Aucun étudiant inscrit dans ce groupe',
@@ -1342,7 +1343,7 @@ export const translations = {
     parent_badge: 'ولي',
     teacher_badge: 'أستاذ',
     student_badge: 'طالب',
-
+    start_now: 'ابدأ الآن',
     not_assigned: 'غير معين',
     mister_short: 'أ.',
     madam_short: 'أ.',
