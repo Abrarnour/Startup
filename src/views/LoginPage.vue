@@ -370,12 +370,11 @@ const handleRegister = async () => {
             <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
               {{ t('register_link') }}
             </button>
-          </p>
-          <p class="mt-4 text-xs" :class="darkMode ? 'text-gray-500' : 'text-gray-400'">
+            <br />
             {{ t('prblm_txt') }}
             <a
               href="mailto:support@belmahi-school.dz"
-              class="text-blue-500 hover:underline font-medium"
+              class="text-blue-600 font-bold hover:underline"
             >
               {{ t('support_link') }}
             </a>
