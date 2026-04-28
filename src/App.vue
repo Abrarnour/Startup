@@ -62,11 +62,7 @@ const toggleDarkMode = () => {
       </RouterView>
     </main>
 
-    <footer
-      :class="darkMode ? 'bg-gray-800' : 'bg-gray-900'"
-      class="text-white mt-12"
-      :dir="isRTL ? 'rtl' : 'ltr'"
-    >
+    <footer :class="darkMode ? 'bg-gray-800' : 'bg-gray-900'" class="text-white mt-12">
       <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Section principale -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">

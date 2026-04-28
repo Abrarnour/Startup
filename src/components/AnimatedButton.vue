@@ -9,8 +9,8 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const chars1 = computed(() => props.label1.split(''))
-const chars2 = computed(() => props.label2.split(''))
+const chars1 = computed(() => props.label1.split(' ').filter(Boolean))
+const chars2 = computed(() => props.label2.split(' ').filter(Boolean))
 const handle = () => router.push(props.to)
 </script>
 
@@ -164,7 +164,9 @@ const handle = () => router.push(props.to)
   letter-spacing: -0.5px;
   border: 0;
   position: relative;
-  width: 240px;
+  width: auto;
+  min-width: 200px;
+  padding: 0 28px;
   height: 64px;
   transform: rotate(353deg) skewX(4deg);
 }
