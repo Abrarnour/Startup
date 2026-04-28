@@ -3,6 +3,7 @@ import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
 import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
+import AnimatedButton from './AnimatedButton.vue'
 const { t } = useLanguage()
 const router = useRouter()
 const props = defineProps({
@@ -183,7 +184,7 @@ onUnmounted(() => clearInterval(tInterval))
         </p>
 
         <div class="hero-actions">
-          <RouterLink to="/courses" class="btn-electric">
+          <RouterLink to="/public-courses" class="btn-electric">
             {{ t('explore_courses') }}
             <svg
               width="17"
@@ -477,19 +478,7 @@ onUnmounted(() => clearInterval(tInterval))
         <span class="eyetag eyetag-light">{{ t('cta_eyetag') }}</span>
         <h2 class="cta-title">{{ t('cta_title_1') }}<br />{{ t('cta_title_2') }}</h2>
         <p class="cta-sub">{{ t('cta_sub') }}</p>
-        <RouterLink to="/login" class="btn-electric btn-large">
-          {{ t('cta_btn') }}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </RouterLink>
+        <AnimatedButton to="/login" label1=" {{ t('cta_btn') }}" label2=" {{ t('cta_btn') }}" />
       </div>
     </section>
   </div>
