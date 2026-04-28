@@ -160,12 +160,12 @@ const toggleDarkMode = () => {
 
             <div class="flex flex-col sm:flex-row gap-4 items-center">
               <LinkedInButton
-                label="Platform Founder"
+                label="Devlopment by : "
                 url="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
               />
 
               <LinkedInButton
-                label="School Manager"
+                label="Product Manegment by : "
                 url="https://www.linkedin.com/in/hamza-zineb-052071390"
               />
             </div>
