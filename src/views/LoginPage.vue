@@ -268,9 +268,9 @@ const handleRegister = async () => {
       </div>
 
       <div
-        class="absolute md:relative top-0 end-0 w-full md:w-1/2 h-full p-6 md:p-12 flex flex-col justify-center transition-all duration-700"
+        class="absolute md:relative top-0 start-0 w-full md:w-1/2 h-full p-6 md:p-12 flex flex-col justify-center transition-all duration-700"
         :class="[
-          isSignUp ? 'opacity-0 z-0 pointer-events-none' : 'opacity-100 z-10',
+          isSignUp ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none',
           darkMode ? 'bg-gray-800' : 'bg-white',
         ]"
       >
@@ -374,8 +374,11 @@ const handleRegister = async () => {
       </div>
 
       <div
-        class="w-1/2 h-full p-12 flex flex-col justify-center transition-all duration-700"
-        :class="isSignUp ? 'opacity-0 z-0 pointer-events-none' : 'opacity-100 z-10'"
+        class="absolute md:relative top-0 end-0 w-full md:w-1/2 h-full p-6 md:p-12 flex flex-col justify-center transition-all duration-700"
+        :class="[
+          isSignUp ? 'opacity-0 z-0 pointer-events-none' : 'opacity-100 z-10',
+          darkMode ? 'bg-gray-800' : 'bg-white',
+        ]"
       >
         <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
           {{ t('login_title') }}
