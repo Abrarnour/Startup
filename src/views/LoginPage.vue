@@ -208,10 +208,10 @@ const handleRegister = async () => {
   <div class="login-page flex items-center justify-center min-h-[calc(100vh-200px)] py-12">
     <div
       :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-      class="relative rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 h-[650px] flex"
+      class="relative rounded-3xl md:rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 min-h-[700px] md:h-[650px] flex"
     >
       <div
-        class="absolute top-0 start-0 w-1/2 h-full z-10 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex flex-col justify-center items-center text-center p-12"
+        class="hidden md:flex absolute top-0 start-0 w-1/2 h-full z-20 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex-col justify-center items-center text-center p-12"
         :style="{ transform: overlayTransform }"
       >
         <div v-if="!isSignUp" class="space-y-6">
@@ -268,8 +268,11 @@ const handleRegister = async () => {
       </div>
 
       <div
-        class="w-1/2 h-full p-12 flex flex-col justify-center transition-all duration-700"
-        :class="isSignUp ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'"
+        class="absolute md:relative top-0 end-0 w-full md:w-1/2 h-full p-6 md:p-12 flex flex-col justify-center transition-all duration-700"
+        :class="[
+          isSignUp ? 'opacity-0 z-0 pointer-events-none' : 'opacity-100 z-10',
+          darkMode ? 'bg-gray-800' : 'bg-white',
+        ]"
       >
         <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
           {{ t('register_title') }}
@@ -359,6 +362,15 @@ const handleRegister = async () => {
             {{ loading ? t('loading_inscription') : t('register_button') }}
           </button>
         </form>
+
+        <div class="text-center mt-6 md:hidden">
+          <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-sm">
+            {{ t('no_account') }}
+            <button @click="toggleMode" class="text-blue-600 font-bold hover:underline">
+              {{ t('register_link') }}
+            </button>
+          </p>
+        </div>
       </div>
 
       <div
