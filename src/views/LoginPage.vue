@@ -15,7 +15,7 @@ import {
 import { login } from '../services/api.js'
 import axios from 'axios'
 import { useLanguage } from '../composables/useLanguage.js'
-
+import './assets/mobile.css'
 const router = useRouter()
 const { t, isRTL } = useLanguage()
 
