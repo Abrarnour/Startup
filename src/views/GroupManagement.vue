@@ -26,7 +26,7 @@ import {
   AlertTriangle,
   Info,
 } from 'lucide-vue-next'
-import AppLoader from './AppLoader.vue'
+import AppLoader from '../components/AppLoader.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 const route = useRoute()

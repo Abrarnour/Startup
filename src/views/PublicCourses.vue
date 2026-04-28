@@ -4,7 +4,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
-import AppLoader from './AppLoader.vue'
+import AppLoader from '../components/AppLoader.vue'
 const router = useRouter()
 const route = useRoute()
 const { t, currentLang } = useLanguage()
