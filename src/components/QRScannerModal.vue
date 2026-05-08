@@ -100,23 +100,31 @@ const resultConfig = computed(() => {
 })
 
 const onScanSuccess = async (decodedText) => {
-  let isPaused = false
+  let hasBeenPaused = false // ✅ Track if we actually stopped the camera
+
   try {
     const payload = JSON.parse(decodedText)
-    if (!payload.student_id) throw new Error('QR non valide')
 
-    // 1. Stop the camera ONLY if we have a valid ID
-    html5QrcodeScanner.pause(true)
-    isPaused = true
+    // 1. Check if the QR has the right data
+    if (!payload.student_id) {
+      throw new Error('QR Code non reconnu')
+    }
 
-    // 2. Talk to the server
+    // 2. ONLY NOW we pause the camera hardware
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.pause(true)
+      hasBeenPaused = true
+    }
+
+    // 3. Request the status (Green/Red/Orange) from your backend
+    // This calls the route: /api/groups/:groupId/scan/:studentId
     scanResult.value = await api.scanStudentInGroup(props.groupId, payload.student_id)
   } catch (error) {
-    console.error('Scan Error:', error)
-    alert('QR Code invalide ou erreur réseau.')
+    console.error('Scan Logic Error:', error)
+    alert('Format de carte invalide ou erreur de connexion.')
 
-    // 3. Only resume if we actually paused it earlier
-    if (isPaused) {
+    // 4. Only resume IF we actually paused it. This prevents the console crash.
+    if (hasBeenPaused && html5QrcodeScanner) {
       html5QrcodeScanner.resume()
     }
   }

@@ -89,7 +89,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import QrcodeVue from 'qrcode.vue'
+import QrcodeVue from 'qrcode.vue' // Ensure this is installed: npm install qrcode.vue
 
 const props = defineProps({
   show: Boolean,
@@ -99,14 +99,16 @@ const props = defineProps({
 
 defineEmits(['close'])
 
-// ✅ FIX: Define the missing variable and format the data for the scanner
+// ✅ THE FIX: Define the missing variable
+// This creates a JSON string that the admin's camera will decode
 const qrValue = computed(() => {
-  if (!props.profile?.id) return ''
+  if (!props.profile || !props.profile.id) return ''
 
-  // We wrap the ID in a JSON object so the scanner knows what it's reading
+  // We send a JSON object so the scanner knows this is a "student_id"
   return JSON.stringify({
     student_id: props.profile.id,
-    generated_at: new Date().toISOString(),
+    name: props.profile.name,
+    type: 'school_access',
   })
 })
 </script>
