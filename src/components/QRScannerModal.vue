@@ -99,34 +99,53 @@ const resultConfig = computed(() => {
   return map[scanResult.value.access] || map['NOT_ENROLLED']
 })
 
+// 1. Add this variable at the top of your script
+const isProcessing = ref(false)
+
 const onScanSuccess = async (decodedText) => {
-  let hasBeenPaused = false // ✅ Track if we actually stopped the camera
+  // 2. THE GATEKEEPER: If we are already processing a scan, ignore this frame
+  if (isProcessing.value) return
 
   try {
+    isProcessing.value = true // Lock the gate
+
     const payload = JSON.parse(decodedText)
+    if (!payload.student_id) throw new Error('Format invalide')
 
-    // 1. Check if the QR has the right data
-    if (!payload.student_id) {
-      throw new Error('QR Code non reconnu')
-    }
-
-    // 2. ONLY NOW we pause the camera hardware
+    // 3. SAFE PAUSE: Check if the scanner is active before pausing
+    // We wrap this in a try/catch to prevent the "Cannot pause" crash
     if (html5QrcodeScanner) {
-      html5QrcodeScanner.pause(true)
-      hasBeenPaused = true
+      try {
+        await html5QrcodeScanner.pause(true)
+      } catch (e) {
+        console.warn('Scanner was already paused or not running.')
+      }
     }
 
-    // 3. Request the status (Green/Red/Orange) from your backend
-    // This calls the route: /api/groups/:groupId/scan/:studentId
+    // 4. Send to backend
     scanResult.value = await api.scanStudentInGroup(props.groupId, payload.student_id)
   } catch (error) {
     console.error('Scan Logic Error:', error)
-    alert('Format de carte invalide ou erreur de connexion.')
+    alert('Erreur: ' + error.message)
 
-    // 4. Only resume IF we actually paused it. This prevents the console crash.
-    if (hasBeenPaused && html5QrcodeScanner) {
-      html5QrcodeScanner.resume()
+    // 5. If it fails, unlock the gate and resume the camera
+    isProcessing.value = false
+    if (html5QrcodeScanner) {
+      try {
+        await html5QrcodeScanner.resume()
+      } catch (e) {
+        console.error('Could not resume camera')
+      }
     }
+  }
+}
+
+// 6. Reset the lock when closing the result view
+const resetScanner = () => {
+  scanResult.value = null
+  isProcessing.value = false
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.resume()
   }
 }
 
@@ -146,11 +165,6 @@ const stopScanner = () => {
     html5QrcodeScanner.clear().catch((e) => console.error(e))
   }
   emit('close')
-}
-
-const resetScanner = () => {
-  scanResult.value = null
-  startScanner()
 }
 
 watch(
