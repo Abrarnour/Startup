@@ -1431,7 +1431,7 @@ export const scanStudentInGroup = async (groupId, studentId) => {
 }
 
 // backend/routes/groups.js
-
+import express from 'express'
 import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 
