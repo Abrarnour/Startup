@@ -100,8 +100,15 @@ const props = defineProps({
 defineEmits(['close'])
 
 // The JSON payload injected into the QR Code
+
+// ✅ ADD THIS: This creates the missing qrValue variable
 const qrValue = computed(() => {
-  if (!props.profile) return ''
-  return JSON.stringify({ student_id: props.profile.id, origin: 'belmahi' })
+  if (!props.profile?.id) return ''
+
+  // We create a JSON string so the scanner knows exactly who this is
+  return JSON.stringify({
+    student_id: props.profile.id,
+    origin: 'belmahi-school',
+  })
 })
 </script>

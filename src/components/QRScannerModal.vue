@@ -100,31 +100,32 @@ const resultConfig = computed(() => {
 })
 
 const onScanSuccess = async (decodedText) => {
-  let wasHardwarePaused = false
-
   try {
-    // 1. Validate the payload logically before altering hardware state
     const payload = JSON.parse(decodedText)
+
+    // 1. Safety check: make sure the QR has a student_id
     if (!payload.student_id) {
-      throw new Error('Format QR Invalide: student_id manquant')
+      alert('QR Code invalide : ID étudiant manquant')
+      return
     }
 
-    // 2. Suspend the video feed to prevent buffer overflow and duplicate API calls
-    html5QrcodeScanner.pause(true)
-    wasHardwarePaused = true
+    // 2. Pause the scanner hardware BEFORE making the API call
+    if (html5QrcodeScanner) {
+      await html5QrcodeScanner.pause(true) // 'true' makes it show a "paused" UI
+    }
 
-    // 3. Await network resolution
+    // 3. Call the backend
     scanResult.value = await api.scanStudentInGroup(props.groupId, payload.student_id)
   } catch (error) {
-    console.error("Erreur d'analyse ou réseau:", error)
-    alert('Erreur de scan ou QR Code invalide. Veuillez réessayer.')
+    console.error('Scan error:', error)
+    alert('Format QR Code incorrect.')
 
-    // 4. Safely restore hardware state only if it was successfully suspended
-    if (wasHardwarePaused && html5QrcodeScanner) {
+    // 4. Only resume if the scanner actually exists
+    if (html5QrcodeScanner) {
       try {
         html5QrcodeScanner.resume()
-      } catch (resumeError) {
-        console.error('Échec de la reprise du scanner:', resumeError)
+      } catch (e) {
+        console.warn('Scanner was already running')
       }
     }
   }
