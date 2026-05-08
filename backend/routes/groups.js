@@ -1135,6 +1135,14 @@ router.get(
   adminOrTeacherMiddleware,
   async (req, res) => {
     const { groupId, studentId } = req.params
+
+    // 1. Strict validation: Prevent 'undefined' string from hitting PostgreSQL
+    if (!groupId || groupId === 'undefined' || !studentId || studentId === 'undefined') {
+      return res
+        .status(400)
+        .json({ error: "Paramètres invalides : identifiant de groupe ou d'étudiant manquant" })
+    }
+
     try {
       const result = await pool.query(
         `SELECT u.id, u.name, u.last_name, u.birthday, u.gender, u.photo_url,

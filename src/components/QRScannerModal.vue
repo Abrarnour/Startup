@@ -102,44 +102,57 @@ const resultConfig = computed(() => {
 // 1. Add this variable at the top of your script
 const isProcessing = ref(false)
 
+// Inside frontend/src/components/QRScannerModal.vue
+
 const onScanSuccess = async (decodedText) => {
-  // 2. THE GATEKEEPER: If we are already processing a scan, ignore this frame
+  // 1. Lock the scanner immediately to prevent duplicate rapid scans
   if (isProcessing.value) return
+  isProcessing.value = true
+
+  let payload
+
+  // 2. Safely parse the QR code data
+  try {
+    payload = JSON.parse(decodedText)
+    if (!payload.student_id) throw new Error('Format QR invalide : student_id manquant')
+  } catch (e) {
+    console.error('Erreur de format QR:', e)
+    alert('QR Code non reconnu. Veuillez scanner un pass étudiant valide.')
+    isProcessing.value = false // Release the lock
+    return
+  }
+
+  // 3. Verify groupId is present to prevent backend crashes
+  if (!props.groupId) {
+    console.error('Group ID manquant dans le composant Scanner')
+    alert('Erreur système : Groupe non sélectionné.')
+    isProcessing.value = false
+    return
+  }
 
   try {
-    isProcessing.value = true // Lock the gate
-
-    const payload = JSON.parse(decodedText)
-    if (!payload.student_id) throw new Error('Format invalide')
-
-    // 3. SAFE PAUSE: Check if the scanner is active before pausing
-    // We wrap this in a try/catch to prevent the "Cannot pause" crash
+    // 4. Safely pause the scanner
     if (html5QrcodeScanner) {
-      try {
-        await html5QrcodeScanner.pause(true)
-      } catch (e) {
-        console.warn('Scanner was already paused or not running.')
-      }
+      html5QrcodeScanner.pause(true)
     }
 
-    // 4. Send to backend
+    // 5. Send to backend
     scanResult.value = await api.scanStudentInGroup(props.groupId, payload.student_id)
   } catch (error) {
     console.error('Scan Logic Error:', error)
     alert('Erreur: ' + error.message)
 
-    // 5. If it fails, unlock the gate and resume the camera
+    // 6. Resume on failure
     isProcessing.value = false
     if (html5QrcodeScanner) {
       try {
-        await html5QrcodeScanner.resume()
+        html5QrcodeScanner.resume()
       } catch (e) {
-        console.error('Could not resume camera')
+        console.warn('Could not resume camera', e)
       }
     }
   }
 }
-
 // 6. Reset the lock when closing the result view
 const resetScanner = () => {
   scanResult.value = null
