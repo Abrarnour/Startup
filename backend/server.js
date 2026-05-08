@@ -80,7 +80,7 @@ app.use('/api/parents', parentsRoutes)
 app.use('/api/public', publicRoutes)
 app.use('/api/materials', materialsRoutes)
 app.use('/api/notifications', notificationsRouter)
-
+app.use('/uploads', express.static('./uploads'))
 app.get('/', (req, res) => {
   res.json({
     message: '🎓 API Portail Belmahi School - Serveur actif !',

@@ -1052,12 +1052,6 @@ onMounted(() => {
             </button>
           </div>
 
-          <QRScannerModal
-            :show="showScannerModal"
-            :groupId="selectedGroup?.id"
-            @close="showScannerModal = false"
-          />
-
           <!-- Table des étudiants -->
           <div class="overflow-x-auto">
             <table class="w-full">
@@ -2746,6 +2740,12 @@ onMounted(() => {
         </div>
       </div>
     </Teleport>
+    <QRScannerModal
+      v-model="showScannerModal"
+      :group-id="selectedGroup?.id"
+      :group-name="selectedGroup?.group_name"
+      :dark-mode="darkMode"
+    />
   </div>
 </template>
 

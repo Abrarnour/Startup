@@ -1,31 +1,23 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next'
+import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ FIX 1: Lock was missing
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
+
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
 import AppLoader from '../components/AppLoader.vue'
-
-const { t } = useLanguage()
-const props = defineProps({
-  darkMode: { type: Boolean, default: false },
-  user: { type: Object, default: null },
-})
-
-// UI State
-const loading = ref(true)
-const error = ref(null)
-const enrolledCourses = ref([])
 const showMaterialsModal = ref(false)
 const selectedCourseId = ref(null)
-const showProfileModal = ref(false)
-const studentProfile = ref({}) // Initialize as empty object
 
 const openMaterialsModal = (courseId) => {
+  console.log('Fetching materials for:', courseId)
   selectedCourseId.value = courseId
   showMaterialsModal.value = true
 }
+// StudentDashboard.vue <script setup>
+const showProfileModal = ref(false)
+const studentProfile = ref({}) // Use an empty object, not null, to prevent render crashes
 
 const openProfile = async () => {
   try {
@@ -35,30 +27,73 @@ const openProfile = async () => {
     console.error('Profile load failed:', err)
     studentProfile.value = props.user || {}
   } finally {
+    // ALWAYS open the modal, even if the API fails, so you know the button works
     showProfileModal.value = true
   }
 }
+const { t } = useLanguage()
+const props = defineProps({
+  darkMode: { type: Boolean, default: false },
+  user: { type: Object, default: null },
+})
 
+// État
+const loading = ref(true)
+const error = ref(null)
+const enrolledCourses = ref([])
+
+// Charger les cours de l'étudiant
 const loadCourses = async () => {
   loading.value = true
   error.value = null
+
   try {
-    const data = await api.getStudentCourses() // Ensure this matches your api.js function name
+    const response = await fetch(
+      'https://belmahi-school-production.up.railway.app/api/students/my-courses',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error('Erreur lors du chargement des cours')
+    }
+
+    const data = await response.json()
     enrolledCourses.value = data
+
+    console.log('Courses loaded:', data)
   } catch (err) {
-    error.value = t('error_loading_courses')
+    console.error('Erreur chargement cours:', err)
+    error.value = err.message || 'Erreur lors du chargement des cours'
   } finally {
     loading.value = false
   }
 }
 
-const formatTeacherName = (course) => {
-  if (!course.teacher_name) return t('no_teacher')
-  const prefix = course.teacher_gender === 'F' ? 'Mme' : 'Mr'
-  return `${prefix} ${course.teacher_name} ${course.teacher_last_name}`
+// Labels des niveaux
+const getLevelLabel = (level) => {
+  const labels = {
+    primaire: t('level_primary_full'),
+    moyen: t('level_middle_full'),
+    secondaire: t('level_secondary_full'),
+  }
+  return labels[level] || level
 }
 
-onMounted(loadCourses)
+// Format teacher name
+const formatTeacherName = (course) => {
+  if (!course.teacher_name) return t('not_assigned')
+  const prefix = course.teacher_gender === 'M' ? t('mister_short') : t('madam_short')
+  return `${prefix} ${course.teacher_name} ${course.teacher_last_name || ''}`
+}
+
+onMounted(() => {
+  loadCourses()
+})
 </script>
 
 <template>
@@ -304,10 +339,15 @@ onMounted(loadCourses)
       @close="showMaterialsModal = false"
     />
     <StudentProfileModal
-      :show="showProfileModal"
-      :darkMode="darkMode"
+      v-model="showProfileModal"
+      :dark-mode="darkMode"
       :profile="studentProfile"
-      @close="showProfileModal = false"
+      :courses="enrolledCourses"
+      @photo-updated="
+        (url) => {
+          studentProfile.photo_url = url
+        }
+      "
     />
   </div>
 </template>

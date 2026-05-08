@@ -15,6 +15,10 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false, // Nécessaire pour Supabase
   },
+  max: 10,
+  idleTimeoutMillis: 20000, // close idle connections after 20s
+  connectionTimeoutMillis: 5000, // fail fast if can't connect
+  keepAlive: true,
 })
 
 // Tester la connexion

@@ -2,8 +2,28 @@
 import express from 'express'
 import pool from '../db.js'
 import { authMiddleware } from './auth.js'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
 
-// Note: If your middleware is in a different folder, adjust the path.
+const uploadDir = './uploads'
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname)
+    cb(null, `student_${req.user.id}_${Date.now()}${ext}`)
+  },
+})
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true)
+    else cb(new Error('Only images allowed'))
+  },
+})
 const router = express.Router()
 
 const studentMiddleware = (req, res, next) => {
@@ -129,6 +149,24 @@ router.get('/profile', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error fetching profile:', error)
     res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+router.post('/upload-photo', authMiddleware, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
+
+    // Build the public URL (Railway serves static files from /uploads)
+    const BASE_URL = process.env.BASE_URL || 'https://belmahi-school-production.up.railway.app'
+    const photoUrl = `${BASE_URL}/uploads/${req.file.filename}`
+
+    // Update in database
+    await pool.query('UPDATE users SET photo_url = $1 WHERE id = $2', [photoUrl, req.user.id])
+
+    res.json({ photo_url: photoUrl, message: 'Photo updated successfully' })
+  } catch (error) {
+    console.error('Photo upload error:', error)
+    res.status(500).json({ error: 'Upload failed: ' + error.message })
   }
 })
 export default router
