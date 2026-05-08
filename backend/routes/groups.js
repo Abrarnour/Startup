@@ -2,6 +2,7 @@
 import express from 'express'
 import pool from '../db.js'
 import { authMiddleware } from './auth.js'
+
 import { sendNotif, notifyAllAdmins, notifyParentsOf } from '../notifHelper.js'
 
 const router = express.Router()
@@ -18,44 +19,6 @@ const adminOrTeacherMiddleware = (req, res, next) => {
   next()
 }
 
-router.get(
-  '/:groupId/scan/:studentId',
-  authMiddleware,
-  adminOrTeacherMiddleware,
-  async (req, res) => {
-    const { groupId, studentId } = req.params
-    try {
-      const result = await pool.query(
-        `SELECT
-        u.id, u.name, u.last_name, u.birthday, u.gender, u.photo_url,
-        gs.status as enrollment_status, gs.payment_status, g.group_name
-       FROM users u
-       LEFT JOIN group_students gs ON u.id = gs.student_id AND gs.group_id = $1
-       LEFT JOIN groups g ON g.id = $1
-       WHERE u.id = $2`,
-        [groupId, studentId],
-      )
-
-      if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
-
-      const data = result.rows[0]
-      if (data.birthday) {
-        const ageDiff = Date.now() - new Date(data.birthday).getTime()
-        data.age = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970)
-      }
-
-      if (!data.enrollment_status) data.access = 'NOT_ENROLLED'
-      else if (data.enrollment_status === 'inactive') data.access = 'INACTIVE'
-      else if (data.payment_status !== 'paid') data.access = 'NOT_PAID'
-      else data.access = 'GRANTED'
-
-      res.json(data)
-    } catch (error) {
-      console.error('Scan Error:', error)
-      res.status(500).json({ error: 'Erreur serveur' })
-    }
-  },
-)
 // ─── GET groups of a course ───────────────────────────────────────────────────
 router.get('/course/:courseId', authMiddleware, async (req, res) => {
   try {
@@ -1166,5 +1129,41 @@ router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) =
   }
 })
 // Add inside backend/routes/groups.js
+router.get(
+  '/:groupId/scan/:studentId',
+  authMiddleware,
+  adminOrTeacherMiddleware,
+  async (req, res) => {
+    const { groupId, studentId } = req.params
+    try {
+      const result = await pool.query(
+        `SELECT u.id, u.name, u.last_name, u.birthday, u.gender, u.photo_url,
+              gs.status as enrollment_status, gs.payment_status, g.group_name
+       FROM users u
+       LEFT JOIN group_students gs ON u.id = gs.student_id AND gs.group_id = $1
+       LEFT JOIN groups g ON g.id = $1
+       WHERE u.id = $2`,
+        [groupId, studentId],
+      )
 
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
+
+      const data = result.rows[0]
+      if (data.birthday) {
+        const ageDiff = Date.now() - new Date(data.birthday).getTime()
+        data.age = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970)
+      }
+
+      if (!data.enrollment_status) data.access = 'NOT_ENROLLED'
+      else if (data.enrollment_status === 'inactive') data.access = 'INACTIVE'
+      else if (data.payment_status !== 'paid') data.access = 'NOT_PAID'
+      else data.access = 'GRANTED'
+
+      res.json(data)
+    } catch (error) {
+      console.error('Scan Error:', error)
+      res.status(500).json({ error: 'Erreur serveur' })
+    }
+  },
+)
 export default router
