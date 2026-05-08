@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ FIX 1: Lock was missing
 import MaterialsListModal from '../components/MaterialsListModal.vue'
+import StudentProfileModal from '../components/StudentProfileModal.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
 import AppLoader from '../components/AppLoader.vue'
@@ -15,7 +16,8 @@ const openMaterialsModal = (courseId) => {
 }
 
 const { t } = useLanguage()
-
+const showProfileModal = ref(false)
+const studentProfile = ref(null)
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -116,6 +118,25 @@ onMounted(() => {
           </p>
         </div>
       </div>
+
+      <button
+        @click="openProfile"
+        class="p-3 bg-white/20 hover:bg-white/40 dark:bg-gray-700 rounded-full shadow-lg transition-transform transform hover:scale-105 border border-gray-200 dark:border-gray-600"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          class="text-blue-600 dark:text-blue-400"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </button>
     </div>
 
     <div
@@ -302,6 +323,12 @@ onMounted(() => {
       :dark-mode="darkMode"
       :user-role="user?.role"
       @close="showMaterialsModal = false"
+    />
+    <StudentProfileModal
+      :show="showProfileModal"
+      :darkMode="darkMode"
+      :profile="studentProfile"
+      @close="showProfileModal = false"
     />
   </div>
 </template>

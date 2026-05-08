@@ -27,6 +27,7 @@ import {
   Info,
 } from 'lucide-vue-next'
 import AppLoader from '../components/AppLoader.vue'
+import QRScannerModal from '../components/QRScannerModal.vue'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 const route = useRoute()
@@ -1015,7 +1016,27 @@ onMounted(() => {
             <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold">
               Étudiants ({{ students.length }})
             </h2>
-
+            <button
+              v-if="(isAdmin || isTeacher) && selectedGroup"
+              @click="showScannerModal = true"
+              class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-lg"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                <rect x="7" y="7" width="10" height="10" rx="1" />
+              </svg>
+              Scan
+            </button>
             <button
               v-if="isAdmin || isTeacher"
               @click="openAddStudentModal"
@@ -1025,6 +1046,12 @@ onMounted(() => {
               Ajouter étudiant
             </button>
           </div>
+
+          <QRScannerModal
+            :show="showScannerModal"
+            :groupId="selectedGroup?.id"
+            @close="showScannerModal = false"
+          />
 
           <!-- Table des étudiants -->
           <div class="overflow-x-auto">

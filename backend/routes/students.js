@@ -106,4 +106,33 @@ router.get('/:id/admin-enrollments', authMiddleware, async (req, res) => {
   }
 })
 
+// Add inside backend/routes/students.js
+
+// GET /api/students/profile
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, last_name, email, birthday, gender, city, phone, photo_url
+       FROM users WHERE id = $1`,
+      [req.user.id],
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
+
+    // Calculate Age
+    const student = result.rows[0]
+    if (student.birthday) {
+      const birthDate = new Date(student.birthday)
+      const diff = Date.now() - birthDate.getTime()
+      const ageDate = new Date(diff)
+      student.age = Math.abs(ageDate.getUTCFullYear() - 1970)
+    } else {
+      student.age = 'N/A'
+    }
+
+    res.json(student)
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 export default router

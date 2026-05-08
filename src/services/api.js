@@ -1409,3 +1409,23 @@ export const registerTeacher = async (teacherData) => {
   }
   return await response.json()
 }
+// Add to src/services/api.js
+
+export const getStudentProfile = async () => {
+  const response = await fetch(`${API_URL}/students/profile`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) throw new Error('Erreur récupération profil')
+  return await response.json()
+}
+
+export const scanStudentInGroup = async (groupId, studentId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/scan/${studentId}`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur scan')
+  }
+  return await response.json()
+}
