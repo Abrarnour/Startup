@@ -134,16 +134,32 @@
         </div>
 
         <!-- Result Card — shown after scan -->
-        <div v-if="scanResult" class="p-5">
-          <!-- Access GRANTED -->
+        <div v-if="scanResult" class="p-4">
+          <!-- ── Status banner ── -->
           <div
-            v-if="scanResult.access === 'GRANTED'"
-            class="rounded-xl border-2 border-green-500 bg-green-50 dark:bg-green-900/20 overflow-hidden"
+            class="rounded-xl overflow-hidden border-2 mb-4"
+            :class="{
+              'border-green-500': scanResult.access === 'GRANTED',
+              'border-red-500': scanResult.access === 'NOT_PAID',
+              'border-yellow-500': scanResult.access === 'INACTIVE',
+              'border-gray-400': scanResult.access === 'NOT_ENROLLED',
+            }"
           >
-            <div class="bg-green-500 px-4 py-2 flex items-center gap-2">
+            <!-- Banner header -->
+            <div
+              class="px-4 py-3 flex items-center gap-3"
+              :class="{
+                'bg-green-500': scanResult.access === 'GRANTED',
+                'bg-red-600': scanResult.access === 'NOT_PAID',
+                'bg-yellow-500': scanResult.access === 'INACTIVE',
+                'bg-gray-600': scanResult.access === 'NOT_ENROLLED',
+              }"
+            >
+              <!-- GRANTED icon -->
               <svg
-                width="20"
-                height="20"
+                v-if="scanResult.access === 'GRANTED'"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
@@ -151,36 +167,17 @@
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span class="text-white font-bold text-sm">ACCÈS AUTORISÉ</span>
-            </div>
-            <div class="p-4">
-              <StudentResultCard :data="scanResult" color="green" />
-            </div>
-          </div>
-
-          <!-- NOT PAID -->
-          <div
-            v-else-if="scanResult.access === 'NOT_PAID'"
-            class="rounded-xl border-2 border-red-500 bg-red-50 dark:bg-red-900/20 overflow-hidden"
-          >
-            <div class="bg-red-600 px-4 py-3 flex items-center gap-3">
-              <span class="text-white font-black text-3xl leading-none">✕</span>
-              <span class="text-white font-bold text-sm">PAIEMENT NON EFFECTUÉ</span>
-            </div>
-            <div class="p-4">
-              <StudentResultCard :data="scanResult" color="red" />
-            </div>
-          </div>
-
-          <!-- INACTIVE -->
-          <div
-            v-else-if="scanResult.access === 'INACTIVE'"
-            class="rounded-xl border-2 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 overflow-hidden"
-          >
-            <div class="bg-yellow-500 px-4 py-2 flex items-center gap-2">
+              <!-- NOT_PAID icon -->
+              <span
+                v-else-if="scanResult.access === 'NOT_PAID'"
+                class="text-white font-black text-2xl leading-none"
+                >✕</span
+              >
+              <!-- INACTIVE icon -->
               <svg
-                width="20"
-                height="20"
+                v-else-if="scanResult.access === 'INACTIVE'"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
@@ -192,22 +189,11 @@
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <span class="text-white font-bold text-sm">INSCRIPTION INACTIVE</span>
-            </div>
-            <div class="p-4">
-              <StudentResultCard :data="scanResult" color="yellow" />
-            </div>
-          </div>
-
-          <!-- NOT ENROLLED -->
-          <div
-            v-else
-            class="rounded-xl border-2 border-gray-500 bg-gray-50 dark:bg-gray-800 overflow-hidden"
-          >
-            <div class="bg-gray-600 px-4 py-2 flex items-center gap-2">
+              <!-- NOT_ENROLLED icon -->
               <svg
-                width="20"
-                height="20"
+                v-else
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
@@ -216,17 +202,130 @@
                 <circle cx="12" cy="12" r="10" />
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
               </svg>
-              <span class="text-white font-bold text-sm">NON INSCRIT DANS CE GROUPE</span>
+
+              <span class="text-white font-bold text-sm tracking-wide">
+                <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
+                <template v-else-if="scanResult.access === 'NOT_PAID'"
+                  >PAIEMENT NON EFFECTUÉ</template
+                >
+                <template v-else-if="scanResult.access === 'INACTIVE'"
+                  >INSCRIPTION INACTIVE</template
+                >
+                <template v-else>NON INSCRIT DANS CE GROUPE</template>
+              </span>
             </div>
-            <div class="p-4">
-              <StudentResultCard :data="scanResult" color="gray" />
+
+            <!-- ── Student info body ── -->
+            <div
+              class="p-4"
+              :class="{
+                'bg-green-50': scanResult.access === 'GRANTED',
+                'bg-red-50': scanResult.access === 'NOT_PAID',
+                'bg-yellow-50': scanResult.access === 'INACTIVE',
+                'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
+              }"
+            >
+              <!-- Photo + Nom/Prénom -->
+              <div class="flex items-center gap-4 mb-4">
+                <!-- Photo -->
+                <img
+                  v-if="scanResult.photo_url"
+                  :src="scanResult.photo_url"
+                  class="w-20 h-20 rounded-2xl object-cover border-2 flex-shrink-0"
+                  :class="{
+                    'border-green-400': scanResult.access === 'GRANTED',
+                    'border-red-400': scanResult.access === 'NOT_PAID',
+                    'border-yellow-400': scanResult.access === 'INACTIVE',
+                    'border-gray-400': scanResult.access === 'NOT_ENROLLED',
+                  }"
+                />
+                <div
+                  v-else
+                  class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black border-2"
+                  :class="{
+                    'bg-green-100 text-green-600 border-green-300': scanResult.access === 'GRANTED',
+                    'bg-red-100 text-red-600 border-red-300': scanResult.access === 'NOT_PAID',
+                    'bg-yellow-100 text-yellow-600 border-yellow-300':
+                      scanResult.access === 'INACTIVE',
+                    'bg-gray-200 text-gray-500 border-gray-300':
+                      scanResult.access === 'NOT_ENROLLED',
+                  }"
+                >
+                  {{ (scanResult.last_name || scanResult.name || '?')[0].toUpperCase() }}
+                </div>
+
+                <!-- Nom + Prénom -->
+                <div>
+                  <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                    Nom &amp; Prénom
+                  </p>
+                  <p class="font-black text-xl text-gray-900 leading-tight">
+                    {{ scanResult.last_name }}
+                  </p>
+                  <p class="font-semibold text-base text-gray-700 leading-tight">
+                    {{ scanResult.name }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Sexe / Âge / Groupe -->
+              <div class="grid grid-cols-3 gap-2 mb-3">
+                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
+                  <p class="text-gray-400 text-xs mb-1">Sexe</p>
+                  <p class="font-bold text-gray-800 text-sm">
+                    {{ scanResult.gender === 'F' ? '👩 Fille' : '👦 Garçon' }}
+                  </p>
+                </div>
+                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
+                  <p class="text-gray-400 text-xs mb-1">Âge</p>
+                  <p class="font-bold text-gray-800 text-sm">{{ scanResult.age ?? '—' }} ans</p>
+                </div>
+                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
+                  <p class="text-gray-400 text-xs mb-1">Groupe</p>
+                  <p class="font-bold text-gray-800 text-xs truncate">
+                    {{ scanResult.group_name || '—' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Inscription / Paiement -->
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl bg-white/80 px-3 py-2">
+                  <p class="text-gray-400 text-xs mb-1">Inscription</p>
+                  <p
+                    class="font-bold text-sm"
+                    :class="
+                      scanResult.enrollment_status === 'active'
+                        ? 'text-green-600'
+                        : 'text-yellow-600'
+                    "
+                  >
+                    {{
+                      scanResult.enrollment_status === 'active'
+                        ? '✓ Active'
+                        : scanResult.enrollment_status || '—'
+                    }}
+                  </p>
+                </div>
+                <div class="rounded-xl bg-white/80 px-3 py-2">
+                  <p class="text-gray-400 text-xs mb-1">Paiement</p>
+                  <p
+                    class="font-bold text-sm"
+                    :class="
+                      scanResult.payment_status === 'paid' ? 'text-green-600' : 'text-red-600'
+                    "
+                  >
+                    {{ scanResult.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Scan again button -->
           <button
             @click="resetScan"
-            class="mt-4 w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            class="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
           >
             <svg
               width="18"
@@ -258,68 +357,6 @@
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
 import * as api from '../services/api.js'
-
-// ── Sub-component for the result card ──────────────────────────────
-const StudentResultCard = {
-  props: ['data', 'color'],
-  template: `
-    <div>
-      <!-- Photo + name row -->
-      <div class="flex items-center gap-4 mb-4">
-        <!-- Photo -->
-        <img v-if="data.photo_url" :src="data.photo_url"
-          class="w-20 h-20 rounded-2xl object-cover border-3 flex-shrink-0"
-          :class="color === 'green' ? 'border-green-400' : color === 'red' ? 'border-red-400' : color === 'yellow' ? 'border-yellow-400' : 'border-gray-400'" />
-        <div v-else
-          class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black"
-          :class="color === 'green' ? 'bg-green-100 text-green-600' : color === 'red' ? 'bg-red-100 text-red-600' : color === 'yellow' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-200 text-gray-500'">
-          {{ (data.name || '?')[0].toUpperCase() }}
-        </div>
-
-        <!-- Nom / Prénom -->
-        <div>
-          <p class="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Nom & Prénom</p>
-          <p class="font-black text-lg text-gray-900 leading-tight">{{ data.last_name }}</p>
-          <p class="font-bold text-base text-gray-700 leading-tight">{{ data.name }}</p>
-        </div>
-      </div>
-
-      <!-- Info grid: Sexe / Age / Groupe -->
-      <div class="grid grid-cols-3 gap-2 mb-3">
-        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
-          <p class="text-gray-400 text-xs mb-0.5">Sexe</p>
-          <p class="font-bold text-gray-800 text-sm">{{ data.gender === 'F' ? '👩 Fille' : '👦 Garçon' }}</p>
-        </div>
-        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
-          <p class="text-gray-400 text-xs mb-0.5">Âge</p>
-          <p class="font-bold text-gray-800 text-sm">{{ data.age ?? '—' }} ans</p>
-        </div>
-        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
-          <p class="text-gray-400 text-xs mb-0.5">Groupe</p>
-          <p class="font-bold text-gray-800 text-xs truncate">{{ data.group_name || '—' }}</p>
-        </div>
-      </div>
-
-      <!-- Status row: Inscription / Paiement -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="rounded-xl px-3 py-2 bg-white/70">
-          <p class="text-gray-400 text-xs mb-0.5">Inscription</p>
-          <p class="font-bold text-sm"
-            :class="data.enrollment_status === 'active' ? 'text-green-600' : 'text-yellow-600'">
-            {{ data.enrollment_status === 'active' ? '✓ Active' : data.enrollment_status || '—' }}
-          </p>
-        </div>
-        <div class="rounded-xl px-3 py-2 bg-white/70">
-          <p class="text-gray-400 text-xs mb-0.5">Paiement</p>
-          <p class="font-bold text-sm"
-            :class="data.payment_status === 'paid' ? 'text-green-600' : 'text-red-600'">
-            {{ data.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
-          </p>
-        </div>
-      </div>
-    </div>
-  `,
-}
 
 // ── Props & Emits ───────────────────────────────────────────────────
 const props = defineProps({
