@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ FIX 1: Lock was missing
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
+
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
 import AppLoader from '../components/AppLoader.vue'
@@ -14,10 +15,23 @@ const openMaterialsModal = (courseId) => {
   selectedCourseId.value = courseId
   showMaterialsModal.value = true
 }
-
-const { t } = useLanguage()
+// StudentDashboard.vue <script setup>
 const showProfileModal = ref(false)
-const studentProfile = ref(null)
+const studentProfile = ref({}) // Use an empty object, not null, to prevent render crashes
+
+const openProfile = async () => {
+  try {
+    const data = await api.getStudentProfile()
+    studentProfile.value = data || {}
+  } catch (err) {
+    console.error('Profile load failed:', err)
+    studentProfile.value = props.user || {}
+  } finally {
+    // ALWAYS open the modal, even if the API fails, so you know the button works
+    showProfileModal.value = true
+  }
+}
+const { t } = useLanguage()
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -28,26 +42,6 @@ const loading = ref(true)
 const error = ref(null)
 const enrolledCourses = ref([])
 
-// Add these imports at the top:
-import StudentProfileModal from '../components/StudentProfileModal.vue'
-
-// Add these state variables:
-const showProfileModal = ref(false)
-const studentProfile = ref(null)
-
-// Add this function:
-const openProfile = async () => {
-  try {
-    const data = await api.getStudentProfile()
-    studentProfile.value = data
-    showProfileModal.value = true
-  } catch (err) {
-    console.error('Failed to load profile:', err)
-    // Fallback if API fails so the modal still opens
-    studentProfile.value = props.user
-    showProfileModal.value = true
-  }
-}
 // Charger les cours de l'étudiant
 const loadCourses = async () => {
   loading.value = true
