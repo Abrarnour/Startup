@@ -1114,17 +1114,27 @@ router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, 
   }
 })
 
-// 2. مسار التنظيف الشامل للطلاب المعلقين أكثر من 14 يوم
+// 2. مسار التنظيف الشامل للطلاب المعلقين — يقبل ?days=N (افتراضي: 14)
 router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
+
+  const rawDays = parseInt(req.query.days, 10)
+  const days = Number.isFinite(rawDays) && rawDays > 0 ? rawDays : 14
+
   try {
-    const result = await pool.query(`
-      DELETE FROM group_students
-      WHERE status = 'inactive'
-      AND enrollment_date < NOW() - INTERVAL '14 days'
-    `)
-    res.json({ deleted: result.rowCount })
+    const result = await pool.query(
+      `DELETE FROM group_students
+       WHERE status = 'inactive'
+         AND enrollment_date < NOW() - ($1 || ' days')::INTERVAL
+       RETURNING id`,
+      [days],
+    )
+    console.log(
+      `[CLEANUP] Admin ${req.user.id} removed ${result.rowCount} pending enrollments (threshold: ${days} days)`,
+    )
+    res.json({ deleted: result.rowCount, days })
   } catch (err) {
+    console.error('Pending cleanup error:', err)
     res.status(500).json({ error: err.message })
   }
 })

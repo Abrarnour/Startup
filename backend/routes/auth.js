@@ -262,25 +262,35 @@ router.get('/users/students', authMiddleware, adminMiddleware, async (req, res) 
 })
 
 // ─── CLEANUP INACTIVE STUDENTS ────────────────────────────────────────────────
+// Accepts optional ?days=N query param (default: 60)
 router.delete(
   '/users/cleanup/inactive-students',
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const rawDays = parseInt(req.query.days, 10)
+    const days = Number.isFinite(rawDays) && rawDays > 0 ? rawDays : 60
+
     try {
-      const result = await pool.query(`
-      DELETE FROM users
-      WHERE role = 'student'
-      AND id NOT IN (SELECT student_id FROM group_students)
-      AND created_at < NOW() - INTERVAL '60 days'
-      RETURNING id
-    `)
+      const result = await pool.query(
+        `DELETE FROM users
+         WHERE role = 'student'
+           AND id NOT IN (SELECT student_id FROM group_students)
+           AND created_at < NOW() - ($1 || ' days')::INTERVAL
+         RETURNING id`,
+        [days],
+      )
+      console.log(
+        `[CLEANUP] Admin ${req.user.id} deleted ${result.rowCount} inactive students (threshold: ${days} days)`,
+      )
       res.json({
         success: true,
         count: result.rowCount,
-        message: `${result.rowCount} étudiants inactifs supprimés.`,
+        days,
+        message: `${result.rowCount} étudiants inactifs supprimés (seuil: ${days} jours).`,
       })
     } catch (error) {
+      console.error('Cleanup inactive students error:', error)
       res.status(500).json({ error: 'Erreur lors du nettoyage des données' })
     }
   },

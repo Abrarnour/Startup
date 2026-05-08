@@ -8,6 +8,7 @@
       :class="darkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'"
       class="relative w-full max-w-4xl max-h-[85vh] flex flex-col rounded-2xl shadow-2xl m-4"
     >
+      <!-- ── Header ── -->
       <div
         class="flex items-center justify-between p-6 border-b"
         :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
@@ -36,98 +37,89 @@
             </p>
           </div>
         </div>
-        <div
-          class="flex items-center justify-between p-6 border-b"
-          :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
-        >
-          <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold">{{ t('student_list') }}</h2>
-          </div>
 
-          <div class="flex items-center gap-2">
-            <!-- Purge pending > 14 days + info button -->
-            <div class="flex items-center gap-1">
-              <button
-                @click="handleCleanupPending"
-                class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
-              >
-                {{ t('cleanup_pending_14d') }}
-              </button>
-              <div class="relative group">
-                <button
-                  class="w-5 h-5 rounded-full bg-orange-200 text-orange-700 text-xs font-bold flex items-center justify-center hover:bg-orange-300 transition-colors cursor-help"
-                  title="Info"
-                >
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
-                    <line x1="12" y1="12" x2="12" y2="16" />
-                  </svg>
-                </button>
-                <!-- Tooltip -->
-                <div
-                  class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                >
-                  <p class="font-bold mb-1 text-orange-300">{{ t('cleanup_pending_14d') }}</p>
-                  <p>{{ t('info_cleanup_pending') }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Clean inactive > 60 days + info button -->
-            <div class="flex items-center gap-1">
-              <button
-                @click="handleCleanup"
-                class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-              >
-                {{ t('cleanup_inactive') }}
-              </button>
-              <div class="relative group">
-                <button
-                  class="w-5 h-5 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center hover:bg-red-300 transition-colors cursor-help"
-                  title="Info"
-                >
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
-                    <line x1="12" y1="12" x2="12" y2="16" />
-                  </svg>
-                </button>
-                <!-- Tooltip -->
-                <div
-                  class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                >
-                  <p class="font-bold mb-1 text-red-300">{{ t('cleanup_inactive') }}</p>
-                  <p>{{ t('info_cleanup_inactive') }}</p>
-                </div>
-              </div>
-            </div>
-
+        <div class="flex items-center gap-2">
+          <!-- ── Orange: إلغاء المعلقين ── -->
+          <div class="flex items-center gap-1">
             <button
-              @click="$emit('close')"
-              class="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              :class="darkMode ? 'hover:bg-gray-800' : ''"
+              @click="openCleanupDialog('pending')"
+              class="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm font-medium"
             >
-              <X :size="24" />
+              {{ t('cleanup_pending_14d') }}
             </button>
+            <div class="relative group">
+              <button
+                class="w-5 h-5 rounded-full bg-orange-200 text-orange-700 text-xs font-bold flex items-center justify-center hover:bg-orange-300 transition-colors cursor-help"
+                title="Info"
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
+                  <line x1="12" y1="12" x2="12" y2="16" />
+                </svg>
+              </button>
+              <div
+                class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              >
+                <p class="font-bold mb-1 text-orange-300">{{ t('cleanup_pending_14d') }}</p>
+                <p>{{ t('info_cleanup_pending') }}</p>
+              </div>
+            </div>
           </div>
+
+          <!-- ── Red: تنظيف (inactive students) ── -->
+          <div class="flex items-center gap-1">
+            <button
+              @click="openCleanupDialog('inactive')"
+              class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+            >
+              {{ t('cleanup_inactive') }}
+            </button>
+            <div class="relative group">
+              <button
+                class="w-5 h-5 rounded-full bg-red-200 text-red-700 text-xs font-bold flex items-center justify-center hover:bg-red-300 transition-colors cursor-help"
+                title="Info"
+              >
+                <svg
+                  width="11"
+                  height="11"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3" />
+                  <line x1="12" y1="12" x2="12" y2="16" />
+                </svg>
+              </button>
+              <div
+                class="absolute right-0 top-7 z-50 w-72 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+              >
+                <p class="font-bold mb-1 text-red-300">{{ t('cleanup_inactive') }}</p>
+                <p>{{ t('info_cleanup_inactive') }}</p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            @click="$emit('close')"
+            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            :class="darkMode ? 'hover:bg-gray-800' : ''"
+          >
+            <X :size="24" />
+          </button>
         </div>
       </div>
 
+      <!-- ── Search bar ── -->
       <div class="p-4 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
         <div class="relative">
           <svg
@@ -158,6 +150,7 @@
         </div>
       </div>
 
+      <!-- ── Students table ── -->
       <div class="flex-1 overflow-y-auto p-4">
         <div v-if="loading" class="flex flex-col items-center py-12">
           <AppLoader size="80px" color="#9333ea" />
@@ -238,6 +231,162 @@
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         CLEANUP DAYS DIALOG  (shared for both buttons)
+    ══════════════════════════════════════════════ -->
+    <div
+      v-if="cleanupDialog.open"
+      class="absolute inset-0 flex items-center justify-center bg-black/50 z-[80]"
+    >
+      <div
+        :class="darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'"
+        class="rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4"
+        @click.stop
+      >
+        <!-- Icon -->
+        <div class="flex items-center justify-center mb-5">
+          <div
+            :class="cleanupDialog.type === 'pending' ? 'bg-orange-100' : 'bg-red-100'"
+            class="w-16 h-16 rounded-full flex items-center justify-center"
+          >
+            <svg
+              class="w-8 h-8"
+              :class="cleanupDialog.type === 'pending' ? 'text-orange-500' : 'text-red-500'"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <h3 class="text-lg font-bold text-center mb-1">
+          {{ cleanupDialog.type === 'pending' ? t('cleanup_pending_14d') : t('cleanup_inactive') }}
+        </h3>
+        <p class="text-sm text-center mb-5" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+          {{
+            cleanupDialog.type === 'pending'
+              ? 'حدد عدد الأيام — سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة'
+              : 'حدد عدد الأيام — سيتم حذف الطلاب الغير نشطين الذين تجاوزوا هذه المدة'
+          }}
+        </p>
+
+        <!-- Days input -->
+        <div class="mb-5">
+          <label class="block text-sm font-semibold mb-2 text-center"> عدد الأيام </label>
+          <div class="flex items-center gap-3">
+            <!-- Quick presets -->
+            <div class="flex gap-2 flex-wrap justify-center w-full">
+              <button
+                v-for="preset in cleanupDialog.type === 'pending' ? [7, 14, 30] : [30, 60, 90]"
+                :key="preset"
+                @click="cleanupDialog.days = preset"
+                :class="[
+                  'px-3 py-1 rounded-lg text-sm font-bold transition-all border-2',
+                  cleanupDialog.days === preset
+                    ? cleanupDialog.type === 'pending'
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-red-500 text-white border-red-500'
+                    : darkMode
+                      ? 'bg-gray-700 text-gray-200 border-gray-600 hover:border-orange-400'
+                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:border-red-300',
+                ]"
+              >
+                {{ preset }} يوم
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual number input -->
+          <div class="mt-3 relative">
+            <input
+              v-model.number="cleanupDialog.days"
+              type="number"
+              min="1"
+              max="365"
+              :class="[
+                'w-full text-center text-2xl font-bold py-3 px-4 border-2 rounded-xl focus:outline-none transition-all',
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white focus:border-orange-400'
+                  : 'bg-gray-50 border-gray-200 text-gray-900',
+                cleanupDialog.type === 'pending'
+                  ? 'focus:border-orange-500'
+                  : 'focus:border-red-500',
+              ]"
+              placeholder="أدخل العدد"
+            />
+            <span
+              class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
+              :class="darkMode ? 'text-gray-400' : 'text-gray-400'"
+            >
+              يوم
+            </span>
+          </div>
+
+          <!-- Warning when days < 7 -->
+          <p
+            v-if="cleanupDialog.days && cleanupDialog.days < 7"
+            class="mt-2 text-xs text-center text-amber-500 font-semibold"
+          >
+            ⚠️ تحذير: عدد الأيام صغير جداً، تأكد قبل المتابعة
+          </p>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="flex gap-3">
+          <button
+            @click="cleanupDialog.open = false"
+            :class="
+              darkMode ? 'border-gray-600 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'
+            "
+            class="flex-1 py-3 rounded-xl font-bold border transition-all"
+          >
+            {{ t('cancel') }}
+          </button>
+          <button
+            @click="executeCleanup"
+            :disabled="cleanupDialog.loading || !cleanupDialog.days || cleanupDialog.days < 1"
+            :class="[
+              'flex-1 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+              cleanupDialog.type === 'pending'
+                ? 'bg-orange-500 hover:bg-orange-600'
+                : 'bg-red-500 hover:bg-red-600',
+            ]"
+          >
+            <span v-if="cleanupDialog.loading" class="flex items-center justify-center gap-2">
+              <svg
+                class="animate-spin w-4 h-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              جاري التنفيذ...
+            </span>
+            <span v-else> تأكيد ({{ cleanupDialog.days }} يوم) </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Delete student confirm dialog ── -->
     <div
       v-if="confirmTarget"
       class="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
@@ -293,6 +442,8 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Manage enrollments sub-modal ── -->
     <div
       v-if="managingStudent"
       class="fixed inset-0 flex items-center justify-center bg-black/60 z-[70]"
@@ -376,35 +527,18 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { X, Users, Search, Loader2 } from 'lucide-vue-next'
-import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
+import { ref, computed, reactive, watch } from 'vue'
+import { X } from 'lucide-vue-next'
+import { useLanguage } from '../composables/useLanguage.js'
 import {
   getAdminStudentsList,
   adminDeleteUser,
   adminCleanupInactiveStudents,
 } from '../services/api.js'
 import AppLoader from '../components/AppLoader.vue'
-const handleCleanup = async () => {
-  // ⚠️ The Alert Window to make sure
-  const confirmed = window.confirm(props.t('confirm_cleanup_msg'))
 
-  if (!confirmed) return
+const { t } = useLanguage()
 
-  try {
-    loading.value = true
-    const result = await adminCleanupInactiveStudents()
-    alert(`${props.t('cleanup_success_1')}${result.count}${props.t('cleanup_success_2')}`)
-
-    // Refresh the list after deletion
-    await loadStudents()
-  } catch (e) {
-    alert(props.t('cleanup_error') + e.message)
-  } finally {
-    loading.value = false
-  }
-}
-const { t } = useLanguage() // ✅ Extract t for translations
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
@@ -413,12 +547,61 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'student-deleted'])
 
+// ── State ──────────────────────────────────────────────
 const students = ref([])
 const search = ref('')
 const loading = ref(false)
 const confirmTarget = ref(null)
 const deleting = ref(false)
+const managingStudent = ref(null)
+const studentEnrollments = ref([])
 
+// ── Cleanup dialog state ────────────────────────────────
+const cleanupDialog = reactive({
+  open: false,
+  type: 'pending', // 'pending' | 'inactive'
+  days: 14,
+  loading: false,
+})
+
+function openCleanupDialog(type) {
+  cleanupDialog.type = type
+  cleanupDialog.days = type === 'pending' ? 14 : 60
+  cleanupDialog.loading = false
+  cleanupDialog.open = true
+}
+
+async function executeCleanup() {
+  if (!cleanupDialog.days || cleanupDialog.days < 1) return
+  cleanupDialog.loading = true
+
+  try {
+    if (cleanupDialog.type === 'inactive') {
+      // Red button — delete inactive students
+      const result = await adminCleanupInactiveStudents(cleanupDialog.days)
+      alert(`✅ تم حذف ${result.count} طالب(ة) غير نشط/ة (الأقدم من ${cleanupDialog.days} يوم).`)
+      await loadStudents()
+    } else {
+      // Orange button — cancel pending enrollments
+      const token = localStorage.getItem('token')
+      const res = await fetch(
+        `https://belmahi-school-production.up.railway.app/api/groups/cleanup/pending-enrollments?days=${cleanupDialog.days}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
+      )
+      if (!res.ok) throw new Error((await res.json()).error || 'خطأ في الخادم')
+      const data = await res.json()
+      alert(`✅ تم إزالة ${data.deleted} تسجيل(ات) معلق(ة) (الأقدم من ${cleanupDialog.days} يوم).`)
+    }
+
+    cleanupDialog.open = false
+  } catch (e) {
+    alert('❌ حدث خطأ: ' + e.message)
+  } finally {
+    cleanupDialog.loading = false
+  }
+}
+
+// ── Students list ───────────────────────────────────────
 const filteredStudents = computed(() => {
   const q = search.value.toLowerCase().trim()
   if (!q) return students.value
@@ -429,6 +612,31 @@ const filteredStudents = computed(() => {
   )
 })
 
+async function loadStudents() {
+  loading.value = true
+  try {
+    students.value = await getAdminStudentsList()
+  } catch (e) {
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(
+  () => props.show,
+  async (val) => {
+    if (val) {
+      await loadStudents()
+    } else {
+      search.value = ''
+      confirmTarget.value = null
+      cleanupDialog.open = false
+    }
+  },
+)
+
+// ── Delete student ──────────────────────────────────────
 const initiateDelete = (student) => {
   confirmTarget.value = student
 }
@@ -438,7 +646,6 @@ const confirmDelete = async () => {
   deleting.value = true
   try {
     await adminDeleteUser(confirmTarget.value.id)
-    // Retirer de la liste locale
     students.value = students.value.filter((s) => s.id !== confirmTarget.value.id)
     confirmTarget.value = null
     emit('student-deleted')
@@ -449,28 +656,7 @@ const confirmDelete = async () => {
   }
 }
 
-watch(
-  () => props.show,
-  async (val) => {
-    if (val) {
-      loading.value = true
-      try {
-        students.value = await getAdminStudentsList()
-      } catch (e) {
-        console.error(e)
-      } finally {
-        loading.value = false
-      }
-    } else {
-      search.value = ''
-      confirmTarget.value = null
-    }
-  },
-)
-
-const managingStudent = ref(null)
-const studentEnrollments = ref([])
-
+// ── Enrollment management ───────────────────────────────
 const manageStudentEnrollments = async (student) => {
   managingStudent.value = student
   await fetchEnrollments(student.id)
@@ -481,9 +667,7 @@ const fetchEnrollments = async (studentId) => {
     const token = localStorage.getItem('token')
     const res = await fetch(
       `https://belmahi-school-production.up.railway.app/api/students/${studentId}/admin-enrollments`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
+      { headers: { Authorization: `Bearer ${token}` } },
     )
     studentEnrollments.value = await res.json()
   } catch (e) {
@@ -502,7 +686,7 @@ const updateEnrollment = async (enr, newStatus, newPayment) => {
         body: JSON.stringify({ status: newStatus, payment_status: newPayment }),
       },
     )
-    await fetchEnrollments(managingStudent.value.id) // Refresh
+    await fetchEnrollments(managingStudent.value.id)
   } catch (e) {
     alert('خطأ في التحديث')
   }
@@ -514,32 +698,11 @@ const deleteEnrollment = async (enr) => {
     const token = localStorage.getItem('token')
     await fetch(
       `https://belmahi-school-production.up.railway.app/api/groups/${enr.group_id}/students/${enr.student_id}`,
-      {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      },
+      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
     )
-    await fetchEnrollments(managingStudent.value.id) // Refresh
+    await fetchEnrollments(managingStudent.value.id)
   } catch (e) {
     alert('خطأ في الحذف')
-  }
-}
-
-const handleCleanupPending = async () => {
-  if (!confirm(t('confirm_cleanup_pending'))) return
-  try {
-    const token = localStorage.getItem('token')
-    const res = await fetch(
-      `https://belmahi-school-production.up.railway.app/api/groups/cleanup/pending-enrollments`,
-      {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    )
-    const data = await res.json()
-    alert(`تم إزالة ${data.deleted} تسجيل(ات) بنجاح.`)
-  } catch (e) {
-    alert('خطأ في التنظيف')
   }
 }
 </script>
