@@ -317,7 +317,7 @@ onMounted(() => {
             :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'"
             class="rounded-xl p-5 opacity-80 border-2 border-orange-200"
           >
-            <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-lg font-bold mb-2">
+            <h3 :class="darkMode ? 'text-white' : 'text-gray-901'" class="text-lg font-bold mb-2">
               {{ course.title }}
             </h3>
             <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-sm mb-3">
