@@ -263,31 +263,57 @@ import * as api from '../services/api.js'
 const StudentResultCard = {
   props: ['data', 'color'],
   template: `
-    <div class="space-y-2">
-      <div class="flex items-center gap-3">
+    <div>
+      <!-- Photo + name row -->
+      <div class="flex items-center gap-4 mb-4">
+        <!-- Photo -->
         <img v-if="data.photo_url" :src="data.photo_url"
-          class="w-14 h-14 rounded-xl object-cover border-2"
-          :class="color === 'green' ? 'border-green-400' : color === 'red' ? 'border-red-400' : 'border-gray-400'" />
-        <div v-else class="w-14 h-14 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-2xl font-bold text-gray-500">
-          {{ (data.name || '?')[0] }}
+          class="w-20 h-20 rounded-2xl object-cover border-3 flex-shrink-0"
+          :class="color === 'green' ? 'border-green-400' : color === 'red' ? 'border-red-400' : color === 'yellow' ? 'border-yellow-400' : 'border-gray-400'" />
+        <div v-else
+          class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black"
+          :class="color === 'green' ? 'bg-green-100 text-green-600' : color === 'red' ? 'bg-red-100 text-red-600' : color === 'yellow' ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-200 text-gray-500'">
+          {{ (data.name || '?')[0].toUpperCase() }}
         </div>
+
+        <!-- Nom / Prénom -->
         <div>
-          <p class="font-bold text-gray-900 dark:text-white">{{ data.name }} {{ data.last_name }}</p>
-          <p class="text-sm text-gray-500">{{ data.gender === 'F' ? 'Fille' : 'Garçon' }} · {{ data.age }} ans</p>
-          <p class="text-sm text-gray-500">{{ data.group_name }}</p>
+          <p class="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Nom & Prénom</p>
+          <p class="font-black text-lg text-gray-900 leading-tight">{{ data.last_name }}</p>
+          <p class="font-bold text-base text-gray-700 leading-tight">{{ data.name }}</p>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-2 text-xs mt-2">
-        <div class="rounded-lg px-3 py-2 bg-white/60 dark:bg-black/20">
-          <p class="text-gray-400 mb-0.5">Inscription</p>
-          <p class="font-semibold" :class="data.enrollment_status === 'active' ? 'text-green-600' : 'text-yellow-600'">
-            {{ data.enrollment_status === 'active' ? 'Active' : data.enrollment_status || '—' }}
+
+      <!-- Info grid: Sexe / Age / Groupe -->
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
+          <p class="text-gray-400 text-xs mb-0.5">Sexe</p>
+          <p class="font-bold text-gray-800 text-sm">{{ data.gender === 'F' ? '👩 Fille' : '👦 Garçon' }}</p>
+        </div>
+        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
+          <p class="text-gray-400 text-xs mb-0.5">Âge</p>
+          <p class="font-bold text-gray-800 text-sm">{{ data.age ?? '—' }} ans</p>
+        </div>
+        <div class="rounded-xl px-3 py-2 bg-white/70 text-center">
+          <p class="text-gray-400 text-xs mb-0.5">Groupe</p>
+          <p class="font-bold text-gray-800 text-xs truncate">{{ data.group_name || '—' }}</p>
+        </div>
+      </div>
+
+      <!-- Status row: Inscription / Paiement -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="rounded-xl px-3 py-2 bg-white/70">
+          <p class="text-gray-400 text-xs mb-0.5">Inscription</p>
+          <p class="font-bold text-sm"
+            :class="data.enrollment_status === 'active' ? 'text-green-600' : 'text-yellow-600'">
+            {{ data.enrollment_status === 'active' ? '✓ Active' : data.enrollment_status || '—' }}
           </p>
         </div>
-        <div class="rounded-lg px-3 py-2 bg-white/60 dark:bg-black/20">
-          <p class="text-gray-400 mb-0.5">Paiement</p>
-          <p class="font-semibold" :class="data.payment_status === 'paid' ? 'text-green-600' : 'text-red-600'">
-            {{ data.payment_status === 'paid' ? 'Payé ✓' : 'Non payé ✕' }}
+        <div class="rounded-xl px-3 py-2 bg-white/70">
+          <p class="text-gray-400 text-xs mb-0.5">Paiement</p>
+          <p class="font-bold text-sm"
+            :class="data.payment_status === 'paid' ? 'text-green-600' : 'text-red-600'">
+            {{ data.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
           </p>
         </div>
       </div>
