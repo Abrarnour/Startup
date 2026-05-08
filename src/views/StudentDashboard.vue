@@ -28,6 +28,26 @@ const loading = ref(true)
 const error = ref(null)
 const enrolledCourses = ref([])
 
+// Add these imports at the top:
+import StudentProfileModal from '../components/StudentProfileModal.vue'
+
+// Add these state variables:
+const showProfileModal = ref(false)
+const studentProfile = ref(null)
+
+// Add this function:
+const openProfile = async () => {
+  try {
+    const data = await api.getStudentProfile()
+    studentProfile.value = data
+    showProfileModal.value = true
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+    // Fallback if API fails so the modal still opens
+    studentProfile.value = props.user
+    showProfileModal.value = true
+  }
+}
 // Charger les cours de l'étudiant
 const loadCourses = async () => {
   loading.value = true

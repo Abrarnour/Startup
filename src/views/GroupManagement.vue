@@ -28,6 +28,9 @@ import {
 } from 'lucide-vue-next'
 import AppLoader from '../components/AppLoader.vue'
 import QRScannerModal from '../components/QRScannerModal.vue'
+
+// Add the state variable right under your other Modals (around line 43):
+const showScannerModal = ref(false)
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
 const route = useRoute()
@@ -1012,10 +1015,11 @@ onMounted(() => {
         </div>
 
         <div v-else :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-xl shadow-lg p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold">
+          <div class="flex items-center gap-2 mb-6">
+            <h2 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-xl font-bold flex-1">
               Étudiants ({{ students.length }})
             </h2>
+
             <button
               v-if="(isAdmin || isTeacher) && selectedGroup"
               @click="showScannerModal = true"
@@ -1037,6 +1041,7 @@ onMounted(() => {
               </svg>
               Scan
             </button>
+
             <button
               v-if="isAdmin || isTeacher"
               @click="openAddStudentModal"

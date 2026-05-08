@@ -3,9 +3,9 @@ import express from 'express'
 import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 
+// Note: If your middleware is in a different folder, adjust the path.
 const router = express.Router()
 
-// Middleware للتحقق من أن المستخدم طالب
 const studentMiddleware = (req, res, next) => {
   if (req.user.role !== 'student') {
     return res.status(403).json({ error: 'Accès réservé aux étudiants' })
@@ -13,6 +13,30 @@ const studentMiddleware = (req, res, next) => {
   next()
 }
 
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, last_name, email, birthday, gender, city, phone, photo_url
+       FROM users WHERE id = $1`,
+      [req.user.id],
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
+
+    const student = result.rows[0]
+    if (student.birthday) {
+      const birthDate = new Date(student.birthday)
+      const diff = Date.now() - birthDate.getTime()
+      const ageDate = new Date(diff)
+      student.age = Math.abs(ageDate.getUTCFullYear() - 1970)
+    } else {
+      student.age = 'N/A'
+    }
+    res.json(student)
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 // GET /api/students/my-courses - جلب دروس الطالب
 router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) => {
   try {
@@ -108,31 +132,4 @@ router.get('/:id/admin-enrollments', authMiddleware, async (req, res) => {
 
 // Add inside backend/routes/students.js
 
-// GET /api/students/profile
-router.get('/profile', authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT id, name, last_name, email, birthday, gender, city, phone, photo_url
-       FROM users WHERE id = $1`,
-      [req.user.id],
-    )
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
-
-    // Calculate Age
-    const student = result.rows[0]
-    if (student.birthday) {
-      const birthDate = new Date(student.birthday)
-      const diff = Date.now() - birthDate.getTime()
-      const ageDate = new Date(diff)
-      student.age = Math.abs(ageDate.getUTCFullYear() - 1970)
-    } else {
-      student.age = 'N/A'
-    }
-
-    res.json(student)
-  } catch (error) {
-    console.error('Error fetching profile:', error)
-    res.status(500).json({ error: 'Erreur serveur' })
-  }
-})
 export default router
