@@ -299,15 +299,32 @@ onMounted(() => {
           </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <!-- Card 1: Courses -->
+          <!-- Card 1: Detailed Stats (was the 4th card originally) -->
           <div
-            class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
+            v-if="user?.role === 'admin'"
+            @click="showStatsModal = true"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
           >
-            <BookOpen class="mx-auto mb-2" :size="28" />
-            <div class="text-2xl font-bold">{{ courses.length }}</div>
-            <div class="text-sm text-blue-100">
-              {{ user?.role === 'teacher' ? t('courses_assigned') : t('courses_available') }}
-            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="mx-auto mb-2"
+              :width="28"
+              :height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <div class="text-2xl font-bold">{{ stats.totalCourses }}</div>
+            <div class="text-sm text-blue-100">{{ t('detailed_stats') }}</div>
+            <p class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1">
+              👆 {{ t('click_to_manage') }}
+            </p>
           </div>
 
           <!-- Card 2: Students -->
