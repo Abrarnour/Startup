@@ -255,4 +255,158 @@ router.get('/teacher', authMiddleware, async (req, res) => {
   }
 })
 
+// ── GET /api/stats/search-students?q=xxx ──────────────────────────────────
+// Admin-only: search students by name / email for the history modal
+router.get('/search-students', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
+    const q = `%${(req.query.q || '').trim()}%`
+    const result = await pool.query(
+      `SELECT id, name, last_name, email, phone, created_at
+       FROM users
+       WHERE role = 'student'
+         AND (name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1)
+       ORDER BY name, last_name
+       LIMIT 20`,
+      [q],
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Erreur search-students:', err.message)
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
+  }
+})
+
+// ── GET /api/stats/student-history/:studentId ──────────────────────────────
+// Admin-only: full timeline for one student (account, enrollments, payments)
+router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
+
+    const { studentId } = req.params
+
+    // 1. Basic student info
+    const student = await pool.query(
+      `SELECT id, name, last_name, email, phone, gender, city, birthday, created_at
+       FROM users WHERE id = $1 AND role = 'student'`,
+      [studentId],
+    )
+    if (student.rows.length === 0) return res.status(404).json({ error: 'Étudiant introuvable' })
+
+    // 2. All enrollments with course / group / teacher / payment details
+    const enrollments = await pool.query(
+      `SELECT
+         gs.id                AS enrollment_id,
+         gs.enrollment_date,
+         gs.enrollment_type,
+         gs.status            AS enrollment_status,
+         gs.payment_status,
+         gs.amount_paid,
+         gs.payment_due,
+         gs.payment_deadline,
+         gs.last_payment_date,
+         g.group_name,
+         g.start_date         AS group_start_date,
+         c.id                 AS course_id,
+         c.title              AS course_title,
+         c.education_level,
+         c.year_level,
+         c.branch,
+         c.price,
+         (u.name || ' ' || u.last_name) AS teacher_name
+       FROM group_students gs
+       JOIN groups  g  ON g.id  = gs.group_id
+       JOIN courses c  ON c.id  = g.course_id
+       LEFT JOIN users u ON u.id = c.teacher_id
+       WHERE gs.student_id = $1
+       ORDER BY gs.enrollment_date DESC`,
+      [studentId],
+    )
+
+    // 3. Payment records (rows that have last_payment_date set)
+    const payments = await pool.query(
+      `SELECT
+         gs.id,
+         gs.last_payment_date AS payment_date,
+         gs.amount_paid,
+         gs.payment_status,
+         gs.payment_due,
+         c.title AS course_title,
+         c.price
+       FROM group_students gs
+       JOIN groups  g ON g.id = gs.group_id
+       JOIN courses c ON c.id = g.course_id
+       WHERE gs.student_id = $1
+         AND gs.last_payment_date IS NOT NULL
+       ORDER BY gs.last_payment_date DESC`,
+      [studentId],
+    )
+
+    // 4. Build unified timeline
+    const timeline = []
+
+    // Account creation
+    timeline.push({
+      type: 'account_created',
+      date: student.rows[0].created_at,
+      label: 'Compte créé',
+      detail: `Inscription de ${student.rows[0].name} ${student.rows[0].last_name}`,
+      icon: '👤',
+    })
+
+    for (const e of enrollments.rows) {
+      // Enrollment event
+      timeline.push({
+        type: 'enrollment',
+        date: e.enrollment_date,
+        label: 'Inscription au cours',
+        detail: `${e.course_title} — ${e.group_name}`,
+        icon: '📚',
+        meta: {
+          course_title: e.course_title,
+          group_name: e.group_name,
+          teacher_name: e.teacher_name,
+          education_level: e.education_level,
+          year_level: e.year_level,
+          branch: e.branch,
+          enrollment_type: e.enrollment_type,
+          status: e.enrollment_status,
+          payment_status: e.payment_status,
+          price: e.price,
+        },
+      })
+
+      // Payment event (only if payment was recorded)
+      if (e.last_payment_date) {
+        timeline.push({
+          type: 'payment',
+          date: e.last_payment_date,
+          label: 'Paiement enregistré',
+          detail: `${e.course_title} — ${e.amount_paid} DA`,
+          icon: '💳',
+          meta: {
+            course_title: e.course_title,
+            amount_paid: e.amount_paid,
+            payment_due: e.payment_due,
+            payment_status: e.payment_status,
+          },
+        })
+      }
+    }
+
+    // Sort newest first
+    timeline.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+    res.json({
+      student: student.rows[0],
+      timeline,
+      enrollments: enrollments.rows,
+      payments: payments.rows,
+    })
+  } catch (err) {
+    console.error('Erreur student-history:', err.message)
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
+  }
+})
+
 export default router

@@ -1429,3 +1429,25 @@ export const scanStudentInGroup = async (groupId, studentId) => {
   }
   return await response.json()
 }
+
+export const searchStudents = async (q) => {
+  const response = await fetch(`${API_URL}/stats/search-students?q=${encodeURIComponent(q)}`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur recherche étudiants')
+  }
+  return response.json()
+}
+
+export const getStudentHistory = async (studentId) => {
+  const response = await fetch(`${API_URL}/stats/student-history/${studentId}`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || "Erreur récupération de l'historique")
+  }
+  return response.json()
+}

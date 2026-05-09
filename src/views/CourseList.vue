@@ -17,16 +17,20 @@ import CourseModal from '../components/CourseModal.vue'
 import * as api from '../services/api.js'
 import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
-import { useLanguage } from '../composables/useLanguage.js' // ✅ Import Language
-// script
+import { useLanguage } from '../composables/useLanguage.js'
 import StatsModal from '../components/StatsModal.vue'
 import AppLoader from '../components/AppLoader.vue'
-// ADD THIS REF (with other refs):
-const showStatsModal = ref(false)
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
+// ── NEW: Student History Modal ─────────────────────────────────────────────
+import StudentHistoryModal from '../components/StudentHistoryModal.vue'
+
+const showStatsModal = ref(false)
 const showChangePwdModal = ref(false)
-const { t } = useLanguage() // ✅ Extract t for translations
+const { t } = useLanguage()
 const showStudentModal = ref(false)
+// ── NEW ───────────────────────────────────────────────────────────────────
+const showHistoryModal = ref(false)
+
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -81,7 +85,7 @@ const handleDeleteTeacher = async (teacherId) => {
   try {
     await api.deleteTeacher(teacherId)
     teachersList.value = teachersList.value.filter((t) => t.id !== teacherId)
-    await loadStats() // refresh the count in the card
+    await loadStats()
   } catch (err) {
     alert(t('error') + ': ' + err.message)
   }
@@ -295,6 +299,7 @@ onMounted(() => {
           </div>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- Card 1: Courses -->
           <div
             class="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
           >
@@ -305,6 +310,7 @@ onMounted(() => {
             </div>
           </div>
 
+          <!-- Card 2: Students -->
           <div
             v-if="user?.role === 'admin'"
             @click="showStudentModal = true"
@@ -318,6 +324,7 @@ onMounted(() => {
             </p>
           </div>
 
+          <!-- Card 3: Teachers -->
           <div
             v-if="user?.role === 'admin'"
             @click="showTeacherModal = true"
@@ -331,29 +338,36 @@ onMounted(() => {
             </p>
           </div>
 
+          <!-- Card 4: HISTORY (replaces old "Statistiques détaillées") -->
           <div
-            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all"
-            @click="showStatsModal = true"
+            v-if="user?.role === 'admin'"
+            @click="showHistoryModal = true"
+            class="cursor-pointer hover:scale-105 transition-transform bg-white/10 backdrop-blur-sm rounded-lg p-4 text-center hover:bg-white/20 transition-all relative overflow-hidden"
           >
+            <!-- Subtle animated ring in background -->
+            <div class="hist-ring"></div>
+            <!-- Clock icon -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              class="mx-auto mb-2"
+              class="mx-auto mb-2 relative z-10"
               :width="28"
               :height="28"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
-            <div class="text-2xl font-bold">{{ stats.totalCourses }}</div>
-            <div class="text-sm text-blue-100">{{ t('detailed_stats') }}</div>
-            <p class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1">
-              👆 {{ t('click_to_manage') }}
+            <div class="text-2xl font-bold relative z-10">{{ stats.students }}</div>
+            <div class="text-sm text-blue-100 relative z-10">Historique étudiants</div>
+            <p
+              class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1 relative z-10"
+            >
+              👆 Cliquer pour consulter
             </p>
           </div>
         </div>
@@ -631,6 +645,7 @@ onMounted(() => {
     @close="showStudentModal = false"
     @student-deleted="loadStats"
   />
+
   <ChangePasswordModal
     :show="showChangePwdModal"
     :dark-mode="darkMode"
@@ -643,10 +658,36 @@ onMounted(() => {
     :base-stats="stats"
     @close="showStatsModal = false"
   />
+
+  <!-- ── NEW: Student History Modal ──────────────────────────────────────── -->
+  <StudentHistoryModal
+    :show="showHistoryModal"
+    :dark-mode="props.darkMode"
+    @close="showHistoryModal = false"
+  />
 </template>
 
 <style scoped>
 .deep-blue-gradient {
   background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+}
+
+/* Animated ring on the history card */
+.hist-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: radial-gradient(circle at 70% 30%, rgba(99, 218, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  animation: hist-pulse 3s ease-in-out infinite;
+}
+@keyframes hist-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 </style>
