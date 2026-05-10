@@ -71,7 +71,7 @@ const activeFilters = ref([]) // [] = all types shown
 const ALL_TYPES = ['account_created', 'enrollment', 'payment']
 const TYPE_LABEL = { account_created: 'Compte', enrollment: 'Inscription', payment: 'Paiement' }
 const TYPE_COLOR = { account_created: '#8b5cf6', enrollment: '#3b82f6', payment: '#10b981' }
-const TYPE_ICON = { account_created: '👤', enrollment: '📚', payment: '💳' }
+const TYPE_ICON = { account_created: '✦', enrollment: '≡', payment: '▣' }
 
 const toggleFilter = (t) => {
   activeFilters.value = activeFilters.value.includes(t)
@@ -316,13 +316,13 @@ watch(
                 <div class="hm-banner-email">{{ historyData.student.email }}</div>
                 <div class="hm-banner-chips">
                   <span v-if="historyData.student.phone" class="hm-chip"
-                    >📞 {{ historyData.student.phone }}</span
+                    >✆ {{ historyData.student.phone }}</span
                   >
                   <span v-if="historyData.student.city" class="hm-chip"
-                    >📍 {{ historyData.student.city }}</span
+                    >◉ {{ historyData.student.city }}</span
                   >
                   <span v-if="historyData.student.birthday" class="hm-chip"
-                    >🎂 {{ fmtDateShort(historyData.student.birthday) }}</span
+                    >✿ {{ fmtDateShort(historyData.student.birthday) }}</span
                   >
                   <span class="hm-chip">
                     {{

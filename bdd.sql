@@ -1363,6 +1363,7 @@ ALTER TABLE ONLY public.favorites
 --
 -- Name: favorites favorites_user_id_course_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
+ALTER TABLE users ADD COLUMN photo_url VARCHAR(255);
 
 ALTER TABLE ONLY public.favorites
     ADD CONSTRAINT favorites_user_id_course_id_key UNIQUE (user_id, course_id);
