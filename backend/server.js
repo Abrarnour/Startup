@@ -42,22 +42,6 @@ const runCircleResetIfFirstOfMonth = async () => {
   }
 }
 
-const scheduleCircleReset = () => {
-  const now = new Date()
-  const midnight = new Date(now)
-  midnight.setHours(24, 0, 0, 0)
-  const msUntilMidnight = midnight - now
-
-  setTimeout(() => {
-    runCircleResetIfFirstOfMonth()
-    setInterval(runCircleResetIfFirstOfMonth, 24 * 60 * 60 * 1000)
-  }, msUntilMidnight)
-
-  console.log(`⏰ Circle reset scheduled — runs daily at midnight, resets on 1st of each month`)
-}
-
-scheduleCircleReset()
-
 // ─── Middlewares ─────────────────────────────────────────────────────────────
 app.use(
   cors({
