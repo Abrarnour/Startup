@@ -28,7 +28,7 @@ import {
 } from 'lucide-vue-next'
 import AppLoader from '../components/AppLoader.vue'
 import QRScannerModal from '../components/QRScannerModal.vue'
-
+import AbsentStudentsModal from '../components/AbsentStudentsModal.vue'
 // Add the state variable right under your other Modals (around line 43):
 const showScannerModal = ref(false)
 import * as api from '../services/api.js'
@@ -40,7 +40,9 @@ const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, required: true },
 })
-
+const showAbsentModal = ref(false)
+const absentGroupId = ref(null)
+const absentGroupName = ref('')
 // État
 const course = ref(null)
 const groups = ref([])
@@ -167,7 +169,38 @@ watch(
     }
   },
 )
+// ── Mark a student as paid and reset their session counter ─────────────────
+const markStudentPaid = async (student) => {
+  if (!selectedGroup.value) return
+  try {
+    await api.markStudentPaid(selectedGroup.value.id, student.student_id)
+    // Update locally so the UI reflects the change immediately
+    const found = students.value.find((s) => s.student_id === student.student_id)
+    if (found) {
+      found.payment_status = 'paid'
+      found.sessions_attended = 0
+    }
+    successMessage.value = `✅ ${student.name} ${student.last_name} marqué(e) comme payé — cycle remis à zéro.`
+    setTimeout(() => (successMessage.value = ''), 4000)
+  } catch (err) {
+    console.error('Mark paid error:', err)
+    error.value = err.message
+  }
+}
 
+// ── Open the absent students modal for the currently selected group ─────────
+const openAbsentModal = (group) => {
+  absentGroupId.value = group.id
+  absentGroupName.value = group.group_name
+  showAbsentModal.value = true
+}
+
+// ── Refresh student list after bulk-delete from absent modal ────────────────
+const onStudentsDeleted = async () => {
+  if (selectedGroup.value) {
+    await loadStudents(selectedGroup.value.id)
+  }
+}
 // Charger les données
 const loadCourse = async () => {
   try {
@@ -1041,7 +1074,33 @@ onMounted(() => {
               </svg>
               Scan
             </button>
-
+            <!-- Absent students button -->
+            <button
+              @click="openAbsentModal(selectedGroup)"
+              class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border"
+              :class="
+                darkMode
+                  ? 'bg-orange-900/30 text-orange-300 border-orange-700 hover:bg-orange-800/50'
+                  : 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
+              "
+              title="Voir les absents aujourd'hui"
+            >
+              <!-- User-X icon -->
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="18" y1="8" x2="23" y2="13" />
+                <line x1="23" y1="8" x2="18" y2="13" />
+              </svg>
+              Absents
+            </button>
             <button
               v-if="isAdmin || isTeacher"
               @click="openAddStudentModal"
@@ -1130,6 +1189,25 @@ onMounted(() => {
                       "
                     >
                       {{ formatPaymentStatus(student.payment_status) }}
+                    </button>
+
+                    <!-- Sessions attended this cycle -->
+                    <span
+                      v-if="student.sessions_attended !== undefined"
+                      class="text-xs text-gray-400"
+                      :title="`${student.sessions_attended} séances ce cycle`"
+                    >
+                      #{{ student.sessions_attended }}
+                    </span>
+
+                    <!-- Mark-paid toggle (admin only, only shown when not yet paid) -->
+                    <button
+                      v-if="isAdmin && student.payment_status !== 'paid'"
+                      @click="markStudentPaid(student)"
+                      class="text-xs px-2 py-0.5 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700"
+                      title="Marquer comme payé et réinitialiser le compteur de séances"
+                    >
+                      Marquer payé
                     </button>
                     <span
                       v-else
@@ -2745,6 +2823,22 @@ onMounted(() => {
       :group-id="selectedGroup?.id"
       :group-name="selectedGroup?.group_name"
       :dark-mode="darkMode"
+    />
+    <!-- QR Scanner Modal (already present, ensure groupName prop is passed) -->
+    <QRScannerModal
+      v-model="showScannerModal"
+      :groupId="selectedGroup?.id"
+      :groupName="selectedGroup?.group_name"
+      :darkMode="darkMode"
+    />
+
+    <!-- Absent Students Modal (new) -->
+    <AbsentStudentsModal
+      v-model="showAbsentModal"
+      :groupId="absentGroupId"
+      :groupName="absentGroupName"
+      :darkMode="darkMode"
+      @students-deleted="onStudentsDeleted"
     />
   </div>
 </template>

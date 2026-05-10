@@ -1419,8 +1419,23 @@ export const getStudentProfile = async () => {
   return await response.json()
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILE : src/services/api_ticket_additions.js
+//
+// INSTRUCTIONS
+// ─────────────
+// In your existing src/services/api.js:
+//
+//  1. REPLACE the old `scanStudentInGroup` function (GET → POST).
+//  2. ADD the three new exports below it.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── [REPLACE] scanStudentInGroup ────────────────────────────────────────────
+// Changed from GET → POST because the backend now increments the session counter
+// as a side effect of scanning.
 export const scanStudentInGroup = async (groupId, studentId) => {
   const response = await fetch(`${API_URL}/groups/${groupId}/scan/${studentId}`, {
+    method: 'POST', // ← was GET
     headers: getHeaders(),
   })
   if (!response.ok) {
@@ -1430,6 +1445,48 @@ export const scanStudentInGroup = async (groupId, studentId) => {
   return await response.json()
 }
 
+// ─── [NEW] markStudentPaid ───────────────────────────────────────────────────
+// Admin action: marks a student as paid and resets their session counter to 0.
+export const markStudentPaid = async (groupId, studentId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/students/${studentId}/mark-paid`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur lors du marquage payé')
+  }
+  return await response.json()
+}
+
+// ─── [NEW] getAbsentStudentsToday ────────────────────────────────────────────
+// Returns all active students in a group who have NOT been scanned today.
+export const getAbsentStudentsToday = async (groupId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/absent-today`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur récupération absents')
+  }
+  return await response.json()
+}
+
+// ─── [NEW] bulkRemoveStudents ────────────────────────────────────────────────
+// Permanently removes multiple students from a group in one request.
+// studentIds: number[]
+export const bulkRemoveStudents = async (groupId, studentIds) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/bulk-remove-students`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+    body: JSON.stringify({ student_ids: studentIds }),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur suppression en lot')
+  }
+  return await response.json()
+}
 export const searchStudents = async (q) => {
   const response = await fetch(`${API_URL}/stats/search-students?q=${encodeURIComponent(q)}`, {
     headers: getHeaders(),

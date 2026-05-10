@@ -51,9 +51,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
 })
 
 // ─── CREATE GROUP ─────────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Responsible teacher: "A new group was created for your course"
-//   → All admins:          "New group created"
 router.post('/', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
     return res.status(403).json({ error: 'Accès refusé' })
@@ -138,7 +135,6 @@ router.post('/', authMiddleware, async (req, res) => {
     const dayLabel = day_of_week ? `يوم ${day_of_week}` : ''
     const timeLabel = session_start_time ? `الساعة ${session_start_time}` : ''
 
-    // 🔔 Notify responsible teacher (if admin created the group)
     if (courseInfo.teacher_id && req.user.role === 'admin') {
       await sendNotif(
         pool,
@@ -149,7 +145,6 @@ router.post('/', authMiddleware, async (req, res) => {
       )
     }
 
-    // 🔔 Notify all admins (if teacher created the group)
     if (req.user.role === 'teacher') {
       await notifyAllAdmins(
         pool,
@@ -170,10 +165,6 @@ router.post('/', authMiddleware, async (req, res) => {
 })
 
 // ─── UPDATE GROUP ─────────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Teacher: "Group schedule was updated"
-//   → Students in group: "Your group schedule changed"
-//   → Parents of students: same
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const {
     group_name,
@@ -191,7 +182,6 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   } = req.body
 
   try {
-    // Get group info before update (for notifications)
     const before = await pool.query(
       `SELECT g.group_name, g.salle, g.day_of_week, g.session_start_time,
               c.title as course_title, c.teacher_id
@@ -235,7 +225,6 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     const newName = group_name || oldInfo.group_name
     const newSalle = salle || oldInfo.salle
 
-    // Detect if schedule actually changed
     const scheduleChanged =
       (day_of_week && day_of_week !== oldInfo.day_of_week) ||
       (session_start_time && session_start_time !== oldInfo.session_start_time) ||
@@ -244,7 +233,6 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     if (scheduleChanged) {
       const changedMsg = `📅 تم تعديل جدول المجموعة "${newName}" في مادة "${oldInfo.course_title}": يوم ${newDay} الساعة ${newTime}، ${newSalle ? 'القاعة ' + newSalle : ''}.`
 
-      // 🔔 Notify teacher
       if (oldInfo.teacher_id) {
         await sendNotif(
           pool,
@@ -255,7 +243,6 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         )
       }
 
-      // 🔔 Notify all students in group + their parents
       const students = await pool.query(
         `SELECT student_id FROM group_students WHERE group_id = $1 AND status = 'active'`,
         [req.params.id],
@@ -286,10 +273,6 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 })
 
 // ─── DELETE GROUP ─────────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Teacher: "Your group was removed"
-//   → Students: "Your group was removed"
-//   → Parents: same
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const info = await pool.query(
@@ -309,7 +292,6 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 
     const ts = Date.now()
 
-    // 🔔 Notify teacher
     if (gi.teacher_id) {
       await sendNotif(
         pool,
@@ -320,7 +302,6 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       )
     }
 
-    // 🔔 Notify students + parents
     for (const st of students.rows) {
       const msg = `⚠️ المجموعة "${gi.group_name}" في مادة "${gi.course_title}" تم حذفها. يرجى التواصل مع الإدارة.`
       await sendNotif(
@@ -346,8 +327,6 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 })
 
 // ─── TOGGLE REGISTRATION ──────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Teacher: registrations opened/closed for their group
 router.patch('/:id/toggle-registration', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
@@ -394,11 +373,6 @@ router.get('/:groupId/students', authMiddleware, async (req, res) => {
 })
 
 // ─── ADD STUDENT TO GROUP ─────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Student enrolled:  "You have been enrolled in a course"
-//   → Parent:            "Your child was enrolled in a course"
-//   → Teacher:           "A new student joined your group"
-//   → Admin (if teacher did it): "Teacher added a student"
 router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
   const { groupId } = req.params
   const {
@@ -428,7 +402,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
         )
         studentId = newStudent.rows[0].id
 
-        // 🔔 Notify new student about their account
         await sendNotif(
           pool,
           studentId,
@@ -468,9 +441,10 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
     const info = courseInfo.rows[0]
 
     const result = await pool.query(
-      `INSERT INTO group_students (group_id, student_id, status, payment_status, amount_paid, payment_due,
-        enrollment_type, requested_by, last_payment_date)
-       VALUES ($1,$2,'active','paid',0,$3,'direct',$4,CURRENT_DATE) RETURNING *`,
+      `INSERT INTO group_students
+         (group_id, student_id, status, payment_status, amount_paid, payment_due,
+          enrollment_type, requested_by, last_payment_date, sessions_attended, cycle_start_date)
+       VALUES ($1,$2,'active','paid',0,$3,'direct',$4,CURRENT_DATE,0,NOW()) RETURNING *`,
       [groupId, studentId, info.price, req.user.id],
     )
 
@@ -487,7 +461,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
     const salleLabel = info.salle ? `، القاعة: ${info.salle}` : ''
     const teacherTitle = info.teacher_gender === 'F' ? 'أ.' : 'أ.'
 
-    // 🔔 Notify student
     await sendNotif(
       pool,
       studentId,
@@ -496,7 +469,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
       'assignment',
     )
 
-    // 🔔 Notify parents of the student
     await notifyParentsOf(
       pool,
       studentId,
@@ -505,7 +477,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
       'assignment',
     )
 
-    // 🔔 Notify teacher
     if (info.teacher_id) {
       await sendNotif(
         pool,
@@ -516,7 +487,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
       )
     }
 
-    // 🔔 Notify admins if teacher added the student
     if (req.user.role === 'teacher') {
       await notifyAllAdmins(
         pool,
@@ -534,10 +504,6 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
 })
 
 // ─── REMOVE STUDENT FROM GROUP ────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Student: "You have been removed from a group"
-//   → Parent: same
-//   → Teacher: "A student was removed from your group"
 router.delete(
   '/:groupId/students/:studentId',
   authMiddleware,
@@ -573,7 +539,6 @@ router.delete(
         const ts = Date.now()
         const msg = `❌ تم إلغاء تسجيلك في مجموعة "${gi.group_name}" لمادة "${gi.title}". يرجى التواصل مع الإدارة.`
 
-        // 🔔 Notify student
         await sendNotif(
           pool,
           studentId,
@@ -582,7 +547,6 @@ router.delete(
           'warning',
         )
 
-        // 🔔 Notify parents
         await notifyParentsOf(
           pool,
           studentId,
@@ -591,7 +555,6 @@ router.delete(
           'warning',
         )
 
-        // 🔔 Notify teacher
         if (gi.teacher_id) {
           await sendNotif(
             pool,
@@ -612,9 +575,6 @@ router.delete(
 )
 
 // ─── UPDATE PAYMENT ───────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Student: "Your payment status was updated"
-//   → Parent: same
 router.patch(
   '/:groupId/students/:studentId/payment',
   authMiddleware,
@@ -647,10 +607,8 @@ router.patch(
         const statusAr = payment_status === 'paid' ? 'مدفوع ✅' : 'في الانتظار ⏳'
         const msg = `💳 تم تحديث حالة دفعتك في مادة "${info.rows[0].title}" (${info.rows[0].group_name}) إلى: ${statusAr}.`
 
-        // 🔔 Notify student
         await sendNotif(pool, studentId, `payment_${studentId}_${groupId}_${ts}`, msg, 'info')
 
-        // 🔔 Notify parents
         await notifyParentsOf(
           pool,
           studentId,
@@ -705,9 +663,6 @@ router.get('/:groupId/students/:studentId/notes', authMiddleware, async (req, re
 })
 
 // ─── ADD NOTE ─────────────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → Student: "Your teacher left a note on your record"
-//   → Parent:  "Teacher left a note about your child"
 router.post(
   '/:groupId/students/:studentId/notes',
   authMiddleware,
@@ -741,7 +696,6 @@ router.post(
         [noteId.rows[0].id],
       )
 
-      // Only notify if note is not private
       if (!is_private) {
         const info = await pool.query(
           `SELECT c.title, g.group_name, s.name as sname, s.last_name as slast
@@ -755,7 +709,6 @@ router.post(
           const ts = Date.now()
           const importance = is_important ? ' ⚠️ مهم' : ''
 
-          // 🔔 Notify student
           await sendNotif(
             pool,
             studentId,
@@ -764,7 +717,6 @@ router.post(
             is_important ? 'warning' : 'info',
           )
 
-          // 🔔 Notify parents
           await notifyParentsOf(
             pool,
             studentId,
@@ -799,7 +751,7 @@ router.delete('/:groupId/students/:studentId/notes/:noteId', authMiddleware, asy
   }
 })
 
-// ─── CALENDAR / SESSIONS (unchanged logic) ───────────────────────────────────
+// ─── CALENDAR / SESSIONS ──────────────────────────────────────────────────────
 router.get('/:groupId/calendar', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM get_group_calendar($1)', [req.params.groupId])
@@ -826,9 +778,6 @@ router.post('/:groupId/calendar', authMiddleware, adminMiddleware, async (req, r
 })
 
 // ─── SESSION CANCEL ───────────────────────────────────────────────────────────
-// 🔔 NOTIFICATIONS:
-//   → All students in group + their parents
-//   → Teacher
 router.patch(
   '/sessions/:sessionId/cancel',
   authMiddleware,
@@ -837,7 +786,6 @@ router.patch(
     const { sessionId } = req.params
     const { reason } = req.body
     try {
-      // Get session info before cancelling
       const sessionInfo = await pool.query(
         `SELECT ss.session_date, ss.start_time, ss.session_title,
               g.id as group_id, g.group_name, g.salle,
@@ -860,7 +808,6 @@ router.patch(
         const dateStr = si.session_date ? new Date(si.session_date).toLocaleDateString('ar-DZ') : ''
         const cancelMsg = `❌ تم إلغاء الحصة "${si.session_title || si.course_title}" بتاريخ ${dateStr} ${si.start_time || ''} (${si.group_name}). ${reasonText}`
 
-        // 🔔 Notify students + parents
         const students = await pool.query(
           `SELECT student_id FROM group_students WHERE group_id = $1 AND status = 'active'`,
           [si.group_id],
@@ -882,7 +829,6 @@ router.patch(
           )
         }
 
-        // 🔔 Notify teacher (if admin cancelled it)
         if (si.teacher_id && req.user.role === 'admin') {
           await sendNotif(
             pool,
@@ -893,7 +839,6 @@ router.patch(
           )
         }
 
-        // 🔔 Notify admins if teacher cancelled
         if (req.user.role === 'teacher') {
           await notifyAllAdmins(
             pool,
@@ -1092,7 +1037,6 @@ router.patch('/:id/sessions', authMiddleware, adminOrTeacherMiddleware, async (r
   }
 })
 
-// 1. مسار تغيير حالة الطالب من الإدارة
 router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
   const { groupId, studentId } = req.params
@@ -1103,7 +1047,6 @@ router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, 
        WHERE group_id = $3 AND student_id = $4`,
       [status, payment_status, groupId, studentId],
     )
-    // تحديث عدد الطلاب الفعليين (النشطين فقط يحجزون مكاناً)
     await pool.query(
       `UPDATE groups SET current_students = (SELECT COUNT(*) FROM group_students WHERE group_id = $1 AND status = 'active') WHERE id = $1`,
       [groupId],
@@ -1114,7 +1057,6 @@ router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, 
   }
 })
 
-// 2. مسار التنظيف الشامل للطلاب المعلقين — يقبل ?days=N (افتراضي: 14)
 router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
 
@@ -1138,27 +1080,44 @@ router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) =
     res.status(500).json({ error: err.message })
   }
 })
-// Add inside backend/routes/groups.js
-router.get(
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TICKET SYSTEM ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── POST /:groupId/scan/:studentId ──────────────────────────────────────────
+// Replaces the old GET version. Changed to POST because this route has a
+// side-effect: it increments sessions_attended and inserts into attendance_log.
+// Double-scan protection: a unique index on (group_id, student_id, date) in
+// attendance_log prevents the counter from incrementing more than once per day.
+router.post(
   '/:groupId/scan/:studentId',
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
     const { groupId, studentId } = req.params
+
     try {
       const result = await pool.query(
-        `SELECT u.id, u.name, u.last_name, u.birthday, u.gender, u.photo_url,
-              gs.status as enrollment_status, gs.payment_status, g.group_name
-       FROM users u
-       LEFT JOIN group_students gs ON u.id = gs.student_id AND gs.group_id = $1
-       LEFT JOIN groups g ON g.id = $1
-       WHERE u.id = $2`,
+        `SELECT
+           u.id, u.name, u.last_name, u.birthday, u.gender, u.photo_url,
+           gs.status          AS enrollment_status,
+           gs.payment_status,
+           gs.sessions_attended,
+           gs.cycle_start_date,
+           g.group_name
+         FROM users u
+         LEFT JOIN group_students gs
+               ON u.id = gs.student_id AND gs.group_id = $1
+         LEFT JOIN groups g ON g.id = $1
+         WHERE u.id = $2`,
         [groupId, studentId],
       )
 
       if (result.rows.length === 0) return res.status(404).json({ error: 'Étudiant non trouvé' })
 
       const data = result.rows[0]
+
       if (data.birthday) {
         const ageDiff = Date.now() - new Date(data.birthday).getTime()
         data.age = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970)
@@ -1169,11 +1128,232 @@ router.get(
       else if (data.payment_status !== 'paid') data.access = 'NOT_PAID'
       else data.access = 'GRANTED'
 
+      if (data.access === 'GRANTED') {
+        const today = new Date().toISOString().split('T')[0]
+
+        const alreadyScanned = await pool.query(
+          `SELECT id FROM attendance_log
+           WHERE group_id   = $1
+             AND student_id = $2
+             AND scanned_at::date = $3::date`,
+          [groupId, studentId, today],
+        )
+
+        if (alreadyScanned.rows.length === 0) {
+          // First scan today — increment ticket counter
+          const updated = await pool.query(
+            `UPDATE group_students
+             SET sessions_attended = sessions_attended + 1
+             WHERE group_id = $1 AND student_id = $2
+             RETURNING sessions_attended`,
+            [groupId, studentId],
+          )
+          data.sessions_attended = updated.rows[0].sessions_attended
+
+          await pool.query(
+            `INSERT INTO attendance_log (group_id, student_id, session_number, scanned_by)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (group_id, student_id, (scanned_at::date)) DO NOTHING`,
+            [groupId, studentId, data.sessions_attended, req.user.id],
+          )
+
+          data.already_scanned_today = false
+        } else {
+          // Already scanned today — return current count, do NOT increment
+          data.already_scanned_today = true
+        }
+
+        data.session_number = data.sessions_attended
+      }
+
       res.json(data)
     } catch (error) {
       console.error('Scan Error:', error)
-      res.status(500).json({ error: 'Erreur serveur' })
+      res.status(500).json({ error: 'Erreur serveur lors du scan' })
     }
   },
 )
+
+// ─── PATCH /:groupId/students/:studentId/mark-paid ────────────────────────────
+// Admin marks a student as paid → resets sessions_attended to 0 and starts a
+// new billing cycle (cycle_start_date = NOW()).
+router.patch(
+  '/:groupId/students/:studentId/mark-paid',
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    const { groupId, studentId } = req.params
+
+    try {
+      const result = await pool.query(
+        `UPDATE group_students
+         SET
+           payment_status    = 'paid',
+           sessions_attended = 0,
+           cycle_start_date  = NOW(),
+           last_payment_date = CURRENT_DATE
+         WHERE group_id = $1 AND student_id = $2
+         RETURNING *`,
+        [groupId, studentId],
+      )
+
+      if (result.rows.length === 0)
+        return res.status(404).json({ error: 'Inscription non trouvée' })
+
+      // Notify student
+      const ts = Date.now()
+      const studentInfo = await pool.query(
+        `SELECT u.name, u.last_name, c.title
+         FROM users u
+         JOIN group_students gs ON gs.student_id = u.id
+         JOIN groups g          ON g.id = gs.group_id
+         JOIN courses c         ON c.id = g.course_id
+         WHERE gs.group_id = $1 AND gs.student_id = $2`,
+        [groupId, studentId],
+      )
+      if (studentInfo.rows.length > 0) {
+        const si = studentInfo.rows[0]
+        await sendNotif(
+          pool,
+          Number(studentId),
+          `paid_cycle_${groupId}_${studentId}_${ts}`,
+          `✅ تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة بدأت — حضورك يُحسب من الجلسة القادمة.`,
+          'payment',
+        )
+      }
+
+      res.json({ success: true, enrollment: result.rows[0] })
+    } catch (err) {
+      console.error('Mark-paid error:', err)
+      res.status(500).json({ error: err.message })
+    }
+  },
+)
+
+// ─── GET /:groupId/absent-today ───────────────────────────────────────────────
+// Returns all active students in the group who have NOT been scanned today.
+// Used by the AbsentStudentsModal in GroupManagement.vue.
+router.get('/:groupId/absent-today', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+  const { groupId } = req.params
+  const today = new Date().toISOString().split('T')[0]
+
+  try {
+    const result = await pool.query(
+      `SELECT
+           u.id,
+           u.name,
+           u.last_name,
+           u.photo_url,
+           gs.payment_status,
+           gs.sessions_attended,
+           gs.status AS enrollment_status
+         FROM group_students gs
+         JOIN users u ON gs.student_id = u.id
+         WHERE gs.group_id = $1
+           AND gs.status   = 'active'
+           AND u.id NOT IN (
+             SELECT student_id
+             FROM   attendance_log
+             WHERE  group_id        = $1
+               AND  scanned_at::date = $2::date
+           )
+         ORDER BY u.last_name, u.name`,
+      [groupId, today],
+    )
+
+    res.json(result.rows)
+  } catch (err) {
+    console.error('Absent-today error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ─── DELETE /:groupId/bulk-remove-students ────────────────────────────────────
+// Permanently removes multiple students from a group in one request.
+// Body: { student_ids: [1, 2, 3] }
+// Uses a distinct URL (/bulk-remove-students) to avoid Express conflicts with
+// the existing DELETE /:groupId/students/:studentId route.
+router.delete(
+  '/:groupId/bulk-remove-students',
+  authMiddleware,
+  adminOrTeacherMiddleware,
+  async (req, res) => {
+    const { groupId } = req.params
+    const { student_ids } = req.body
+
+    if (!Array.isArray(student_ids) || student_ids.length === 0) {
+      return res.status(400).json({ error: 'student_ids (array) requis' })
+    }
+
+    const ids = student_ids.map(Number).filter((n) => Number.isFinite(n) && n > 0)
+    if (ids.length === 0) {
+      return res.status(400).json({ error: 'Aucun identifiant valide fourni' })
+    }
+
+    try {
+      // Fetch info for notifications before deletion
+      const infoRes = await pool.query(
+        `SELECT
+           u.id AS student_id,
+           u.name, u.last_name,
+           c.title  AS course_title,
+           c.teacher_id,
+           g.group_name
+         FROM group_students gs
+         JOIN users   u ON gs.student_id = u.id
+         JOIN groups  g ON g.id = gs.group_id
+         JOIN courses c ON c.id = g.course_id
+         WHERE gs.group_id = $1 AND gs.student_id = ANY($2)`,
+        [groupId, ids],
+      )
+
+      const delRes = await pool.query(
+        `DELETE FROM group_students
+         WHERE group_id = $1 AND student_id = ANY($2)
+         RETURNING student_id`,
+        [groupId, ids],
+      )
+
+      // Recount active students
+      await pool.query(
+        `UPDATE groups
+         SET current_students = (
+           SELECT COUNT(*) FROM group_students
+           WHERE group_id = $1 AND status = 'active'
+         )
+         WHERE id = $1`,
+        [groupId],
+      )
+
+      // Send notifications
+      const ts = Date.now()
+      for (const si of infoRes.rows) {
+        const msg = `❌ تم إلغاء تسجيلك في مجموعة "${si.group_name}" لمادة "${si.course_title}". يرجى التواصل مع الإدارة.`
+        await sendNotif(
+          pool,
+          si.student_id,
+          `bulk_removed_s${si.student_id}_${groupId}_${ts}`,
+          msg,
+          'warning',
+        )
+        await notifyParentsOf(
+          pool,
+          si.student_id,
+          `bulk_removed_p${si.student_id}_${groupId}_${ts}`,
+          `❌ تم إلغاء تسجيل ابنك ${si.name} ${si.last_name} من مجموعة "${si.group_name}" لمادة "${si.course_title}".`,
+          'warning',
+        )
+      }
+
+      res.json({
+        deleted: delRes.rowCount,
+        removed_ids: delRes.rows.map((r) => r.student_id),
+      })
+    } catch (err) {
+      console.error('Bulk-remove error:', err)
+      res.status(500).json({ error: err.message })
+    }
+  },
+)
+
 export default router

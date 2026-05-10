@@ -1760,3 +1760,73 @@ ALTER TABLE group_students ADD COLUMN status VARCHAR(20) DEFAULT 'active';
 SELECT 'Migration complete. Notification constraints are now correct.' AS status;
 \unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
 
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- MIGRATION: Individualized Ticket / Attendance System
+-- Project : Belmahi School
+-- Purpose : Replace calendar-based monthly reset with per-student scan-driven
+--           billing cycles. A student's session counter only increments when
+--           their physical QR code is scanned. Paying resets the counter to 0.
+-- Apply   : psql -d <your_db> -f migration_ticket_system.sql
+-- Safe    : All statements are idempotent (IF NOT EXISTS / IF EXISTS guards).
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- ─── 1. Extend group_students ─────────────────────────────────────────────────
+-- sessions_attended : number of scans in the CURRENT billing cycle (resets on payment)
+-- cycle_start_date  : timestamp when the current billing cycle began
+ALTER TABLE group_students
+  ADD COLUMN IF NOT EXISTS sessions_attended INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS cycle_start_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Index to quickly find students by sessions attended (for admin dashboards)
+CREATE INDEX IF NOT EXISTS idx_gs_sessions_attended
+  ON group_students (group_id, sessions_attended);
+
+-- ─── 2. attendance_log table ──────────────────────────────────────────────────
+-- Full, permanent audit trail: one row per physical scan per student per group.
+-- This is NEVER reset — it is the true history.
+CREATE TABLE IF NOT EXISTS attendance_log (
+  id               SERIAL PRIMARY KEY,
+  group_id         INTEGER NOT NULL REFERENCES groups(id)  ON DELETE CASCADE,
+  student_id       INTEGER NOT NULL REFERENCES users(id)   ON DELETE CASCADE,
+  scanned_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- Snapshot of the session number AT THE TIME OF SCAN for this billing cycle
+  session_number   INTEGER NOT NULL,
+  -- Who performed the scan (admin or teacher user id)
+  scanned_by       INTEGER REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Fast look-up by group / student / date
+CREATE INDEX IF NOT EXISTS idx_att_group_student
+  ON attendance_log (group_id, student_id);
+CREATE INDEX IF NOT EXISTS idx_att_date
+  ON attendance_log (group_id, (scanned_at::date));
+
+-- ── Prevent double-scanning the SAME student in the SAME group on the SAME day ──
+-- If a student is accidentally scanned twice in one day, the second scan is
+-- silently ignored by the backend (INSERT … ON CONFLICT DO NOTHING).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_att_no_double_scan
+  ON attendance_log (group_id, student_id, (scanned_at::date));
+
+-- ─── 3. Drop the old monthly-reset cron logic artefact ───────────────────────
+-- The server.js cron that reset payment_status → 'pending' on the 1st of each
+-- month is now DISABLED in favour of per-student mark-paid flows.
+-- No schema change needed — just remove the scheduleCircleReset() call from
+-- server.js (see server_circle_reset_removal.md).
+
+-- ─── 4. Backfill existing rows ───────────────────────────────────────────────
+-- Existing enrollments get sessions_attended = 0 and cycle_start_date = now.
+UPDATE group_students
+SET
+  sessions_attended = 0,
+  cycle_start_date  = CURRENT_TIMESTAMP
+WHERE sessions_attended IS NULL OR cycle_start_date IS NULL;
+
+-- ─── 5. Verification query (run manually to confirm) ─────────────────────────
+-- SELECT column_name, data_type
+-- FROM information_schema.columns
+-- WHERE table_name = 'group_students'
+--   AND column_name IN ('sessions_attended','cycle_start_date');
+--
+-- SELECT COUNT(*) FROM attendance_log;
+
+SELECT 'Ticket system migration complete.' AS status;

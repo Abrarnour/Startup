@@ -65,10 +65,9 @@
 
         <!-- Camera Area -->
         <div class="relative">
-          <!-- QR Reader container — html5-qrcode mounts here -->
           <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
 
-          <!-- Scanning overlay frame (shown while scanning) -->
+          <!-- Scanning overlay frame -->
           <div
             v-if="scanState === 'scanning'"
             class="absolute inset-0 pointer-events-none flex items-center justify-center"
@@ -86,7 +85,6 @@
               <div
                 class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"
               ></div>
-              <!-- Scanning line animation -->
               <div class="absolute left-2 right-2 h-0.5 bg-blue-400 opacity-80 scan-line"></div>
             </div>
           </div>
@@ -133,7 +131,7 @@
           </div>
         </div>
 
-        <!-- Result Card — shown after scan -->
+        <!-- ── Result Card ── -->
         <div v-if="scanResult" class="p-4">
           <!-- ── Status banner ── -->
           <div
@@ -145,9 +143,9 @@
               'border-gray-400': scanResult.access === 'NOT_ENROLLED',
             }"
           >
-            <!-- Banner header -->
+            <!-- Banner header row -->
             <div
-              class="px-4 py-3 flex items-center gap-3"
+              class="px-4 py-3 flex items-center justify-between gap-3"
               :class="{
                 'bg-green-500': scanResult.access === 'GRANTED',
                 'bg-red-600': scanResult.access === 'NOT_PAID',
@@ -155,33 +153,95 @@
                 'bg-gray-600': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <!-- GRANTED icon -->
+              <div class="flex items-center gap-3">
+                <!-- GRANTED icon -->
+                <svg
+                  v-if="scanResult.access === 'GRANTED'"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="3"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <!-- NOT_PAID icon -->
+                <span
+                  v-else-if="scanResult.access === 'NOT_PAID'"
+                  class="text-white font-black text-2xl leading-none"
+                  >✕</span
+                >
+                <!-- INACTIVE icon -->
+                <svg
+                  v-else-if="scanResult.access === 'INACTIVE'"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                  />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <!-- NOT_ENROLLED icon -->
+                <svg
+                  v-else
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                </svg>
+
+                <span class="text-white font-bold text-sm tracking-wide">
+                  <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
+                  <template v-else-if="scanResult.access === 'NOT_PAID'"
+                    >PAIEMENT NON EFFECTUÉ</template
+                  >
+                  <template v-else-if="scanResult.access === 'INACTIVE'"
+                    >INSCRIPTION INACTIVE</template
+                  >
+                  <template v-else>NON INSCRIT DANS CE GROUPE</template>
+                </span>
+              </div>
+
+              <!-- ── SESSION NUMBER BADGE (GRANTED only) ── -->
+              <div
+                v-if="scanResult.access === 'GRANTED' && scanResult.session_number"
+                class="flex-shrink-0 bg-white/20 border border-white/40 rounded-xl px-3 py-1 text-center"
+              >
+                <p
+                  class="text-white/80 text-[10px] font-semibold uppercase tracking-widest leading-none mb-0.5"
+                >
+                  Séance
+                </p>
+                <p class="text-white font-black text-2xl leading-none">
+                  #{{ scanResult.session_number }}
+                </p>
+              </div>
+            </div>
+
+            <!-- ── Already scanned today warning ── -->
+            <div
+              v-if="scanResult.access === 'GRANTED' && scanResult.already_scanned_today"
+              class="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200"
+            >
               <svg
-                v-if="scanResult.access === 'GRANTED'"
-                width="22"
-                height="22"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="white"
-                stroke-width="3"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <!-- NOT_PAID icon -->
-              <span
-                v-else-if="scanResult.access === 'NOT_PAID'"
-                class="text-white font-black text-2xl leading-none"
-                >✕</span
-              >
-              <!-- INACTIVE icon -->
-              <svg
-                v-else-if="scanResult.access === 'INACTIVE'"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                stroke-width="2"
+                stroke="#d97706"
+                stroke-width="2.5"
               >
                 <path
                   d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
@@ -189,30 +249,9 @@
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <!-- NOT_ENROLLED icon -->
-              <svg
-                v-else
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                stroke-width="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-              </svg>
-
-              <span class="text-white font-bold text-sm tracking-wide">
-                <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
-                <template v-else-if="scanResult.access === 'NOT_PAID'"
-                  >PAIEMENT NON EFFECTUÉ</template
-                >
-                <template v-else-if="scanResult.access === 'INACTIVE'"
-                  >INSCRIPTION INACTIVE</template
-                >
-                <template v-else>NON INSCRIT DANS CE GROUPE</template>
-              </span>
+              <p class="text-amber-700 text-xs font-semibold">
+                Déjà scanné aujourd'hui — compteur non incrémenté
+              </p>
             </div>
 
             <!-- ── Student info body ── -->
@@ -225,9 +264,8 @@
                 'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <!-- Photo + Nom/Prénom -->
+              <!-- Photo + Name -->
               <div class="flex items-center gap-4 mb-4">
-                <!-- Photo -->
                 <img
                   v-if="scanResult.photo_url"
                   :src="scanResult.photo_url"
@@ -244,17 +282,16 @@
                   class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black border-2"
                   :class="{
                     'bg-green-100 text-green-600 border-green-300': scanResult.access === 'GRANTED',
-                    'bg-red-100 text-red-600 border-red-300': scanResult.access === 'NOT_PAID',
+                    'bg-red-100   text-red-600   border-red-300': scanResult.access === 'NOT_PAID',
                     'bg-yellow-100 text-yellow-600 border-yellow-300':
                       scanResult.access === 'INACTIVE',
-                    'bg-gray-200 text-gray-500 border-gray-300':
+                    'bg-gray-200  text-gray-500  border-gray-300':
                       scanResult.access === 'NOT_ENROLLED',
                   }"
                 >
                   {{ (scanResult.last_name || scanResult.name || '?')[0].toUpperCase() }}
                 </div>
 
-                <!-- Nom + Prénom -->
                 <div>
                   <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
                     Nom &amp; Prénom
@@ -288,8 +325,8 @@
                 </div>
               </div>
 
-              <!-- Inscription / Paiement -->
-              <div class="grid grid-cols-2 gap-2">
+              <!-- Inscription / Paiement / Sessions this cycle -->
+              <div class="grid grid-cols-3 gap-2">
                 <div class="rounded-xl bg-white/80 px-3 py-2">
                   <p class="text-gray-400 text-xs mb-1">Inscription</p>
                   <p
@@ -316,6 +353,16 @@
                     "
                   >
                     {{ scanResult.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
+                  </p>
+                </div>
+                <!-- Sessions this cycle (only meaningful when enrolled) -->
+                <div v-if="scanResult.enrollment_status" class="rounded-xl bg-white/80 px-3 py-2">
+                  <p class="text-gray-400 text-xs mb-1">Ce cycle</p>
+                  <p class="font-bold text-sm text-blue-700">
+                    {{ scanResult.sessions_attended ?? '—' }}
+                    <span class="text-gray-400 font-normal text-xs"
+                      >séance{{ (scanResult.sessions_attended ?? 0) > 1 ? 's' : '' }}</span
+                    >
                   </p>
                 </div>
               </div>
@@ -371,18 +418,16 @@ const emit = defineEmits(['update:modelValue'])
 const scanState = ref('idle') // idle | loading | scanning | error
 const errorMessage = ref('')
 const scanResult = ref(null)
-let html5QrCode = null // html5-qrcode instance
-let isCurrentlyScanning = false // guard flag
+let html5QrCode = null
+let isCurrentlyScanning = false
 
 // ── Scanner lifecycle ───────────────────────────────────────────────
 const startScanner = async () => {
-  // Wait for DOM
   await nextTick()
   scanResult.value = null
   scanState.value = 'loading'
   errorMessage.value = ''
 
-  // Make sure old instance is cleaned up
   await safeStop()
 
   const container = document.getElementById('qr-reader-container')
@@ -393,17 +438,14 @@ const startScanner = async () => {
   }
 
   try {
-    // Request camera permission first
     const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-    stream.getTracks().forEach((t) => t.stop()) // just checking permission
+    stream.getTracks().forEach((t) => t.stop())
 
-    // Get camera list
     const cameras = await Html5Qrcode.getCameras()
     if (!cameras || cameras.length === 0) {
       throw new Error('Aucune caméra détectée sur cet appareil.')
     }
 
-    // Prefer back camera on mobile, otherwise use last one (usually back)
     const backCamera = cameras.find(
       (c) =>
         c.label.toLowerCase().includes('back') ||
@@ -416,14 +458,9 @@ const startScanner = async () => {
 
     await html5QrCode.start(
       selectedCamera.id,
-      {
-        fps: 10,
-        qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.0,
-        disableFlip: false,
-      },
+      { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false },
       onScanSuccess,
-      () => {}, // ignore per-frame errors (not real errors)
+      () => {},
     )
 
     isCurrentlyScanning = true
@@ -449,7 +486,7 @@ const safeStop = async () => {
     try {
       await html5QrCode.stop()
     } catch {
-      // ignore stop errors
+      /* ignore */
     }
     isCurrentlyScanning = false
   }
@@ -457,7 +494,7 @@ const safeStop = async () => {
     try {
       html5QrCode.clear()
     } catch {
-      // ignore
+      /* ignore */
     }
     html5QrCode = null
   }
@@ -465,7 +502,6 @@ const safeStop = async () => {
 
 // ── QR scan success handler ─────────────────────────────────────────
 const onScanSuccess = async (decodedText) => {
-  // Pause scanning while we process
   if (!isCurrentlyScanning) return
 
   try {
@@ -473,15 +509,13 @@ const onScanSuccess = async (decodedText) => {
   } catch {
     /* ignore */
   }
-
   scanState.value = 'loading'
 
-  // Parse QR data — format: "BELMAHI_STUDENT:ID"  or just the ID
+  // Parse QR format: "BELMAHI_STUDENT:ID"  |  plain ID  |  JSON {"id":123}
   let studentId = decodedText.trim()
   if (studentId.startsWith('BELMAHI_STUDENT:')) {
     studentId = studentId.split(':')[1]
   }
-  // Also handle JSON format: {"id": 123, ...}
   if (studentId.startsWith('{')) {
     try {
       const parsed = JSON.parse(studentId)
@@ -492,6 +526,7 @@ const onScanSuccess = async (decodedText) => {
   }
 
   try {
+    // NOTE: api.scanStudentInGroup now uses POST (side-effect: increments counter)
     const result = await api.scanStudentInGroup(props.groupId, studentId)
     scanResult.value = result
     scanState.value = 'idle'
@@ -501,7 +536,6 @@ const onScanSuccess = async (decodedText) => {
     scanResult.value = null
     scanState.value = 'error'
     errorMessage.value = err.message || 'Étudiant non trouvé'
-    // Resume scanning on error
     try {
       await html5QrCode?.resume()
       scanState.value = 'scanning'
@@ -525,12 +559,10 @@ const closeModal = async () => {
   emit('update:modelValue', false)
 }
 
-// Watch for modal open
 watch(
   () => props.modelValue,
   async (open) => {
     if (open) {
-      // Small delay to let DOM mount
       setTimeout(() => startScanner(), 150)
     } else {
       await safeStop()
@@ -540,7 +572,6 @@ watch(
   },
 )
 
-// Cleanup on component destroy
 onUnmounted(async () => {
   await safeStop()
 })
@@ -551,7 +582,6 @@ onUnmounted(async () => {
   top: 30%;
   animation: scanMove 2s ease-in-out infinite;
 }
-
 @keyframes scanMove {
   0% {
     top: 10%;
@@ -566,8 +596,6 @@ onUnmounted(async () => {
     opacity: 1;
   }
 }
-
-/* Force html5-qrcode to fill container and hide its default UI noise */
 :deep(#qr-reader-container video) {
   width: 100% !important;
   height: 100% !important;

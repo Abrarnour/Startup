@@ -178,7 +178,7 @@ router.post('/', authMiddleware, async (req, res) => {
         pool,
         teacher_id,
         `course_assigned_${newCourse.id}_${ts}`,
-        `📚 تم تعيينك كأستاذ لمادة جديدة: "${title}" — يمكنك الآن رؤيتها في لوحة القيادة.`,
+        `<i class="fa-solid fa-book"></i> تم تعيينك كأستاذ لمادة جديدة: "${title}" — يمكنك الآن رؤيتها في لوحة القيادة.`,
         'assignment',
       )
     } else {
@@ -186,7 +186,7 @@ router.post('/', authMiddleware, async (req, res) => {
       await notifyAllAdmins(
         pool,
         `course_created_teacher_${newCourse.id}_${ts}`,
-        `📚 الأستاذ ${teacher.name} ${teacher.last_name} أنشأ مادة جديدة: "${title}".`,
+        `<i class="fa-solid fa-book"></i> الأستاذ ${teacher.name} ${teacher.last_name} أنشأ مادة جديدة: "${title}".`,
         'info',
       )
     }
