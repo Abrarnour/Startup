@@ -572,6 +572,7 @@ onUnmounted(async () => {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
+  z-index: 1 !important;
 }
 
 /* Hide only the noisy UI chrome the library injects — NOT buttons/video */
