@@ -439,6 +439,20 @@ const startScanner = async () => {
       () => {}, // ignore per-frame errors (not real errors)
     )
 
+    setTimeout(() => {
+      const v = document.querySelector('#qr-reader-container video')
+
+      console.log(v)
+
+      if (v) {
+        v.style.display = 'block'
+        v.style.opacity = '1'
+        v.style.visibility = 'visible'
+        v.style.zIndex = '999999'
+        v.style.position = 'relative'
+      }
+    }, 1000)
+
     isCurrentlyScanning = true
     scanState.value = 'scanning'
   } catch (err) {
