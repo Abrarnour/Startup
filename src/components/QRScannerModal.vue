@@ -64,14 +64,20 @@
         </div>
 
         <!-- Camera Area -->
-        <div class="relative">
-          <!-- QR Reader container — html5-qrcode mounts here -->
-          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
+        <div class="relative overflow-hidden" style="height: 300px; background: #000">
+          <!-- QR Reader container — html5-qrcode mounts here.
+               Positioned absolute so the library's injected DOM
+               never pushes the overlay out of place. -->
+          <div
+            id="qr-reader-container"
+            style="position: absolute; inset: 0; width: 100%; height: 100%"
+          ></div>
 
-          <!-- Scanning overlay frame (shown while scanning) -->
+          <!-- Scanning overlay frame (shown while scanning) — sits above the video via z-index -->
           <div
             v-if="scanState === 'scanning'"
             class="absolute inset-0 pointer-events-none flex items-center justify-center"
+            style="z-index: 10"
           >
             <div class="relative w-52 h-52">
               <div
@@ -95,7 +101,7 @@
           <div
             v-if="scanState === 'loading'"
             class="absolute inset-0 flex flex-col items-center justify-center bg-black/90"
-            style="min-height: 300px"
+            style="z-index: 10"
           >
             <div
               class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"
@@ -107,7 +113,7 @@
           <div
             v-if="scanState === 'error'"
             class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-6"
-            style="min-height: 300px"
+            style="z-index: 10"
           >
             <div class="w-14 h-14 rounded-full bg-red-900/60 flex items-center justify-center mb-3">
               <svg
@@ -547,38 +553,94 @@ onUnmounted(async () => {
 </script>
 
 <style scoped>
+/* ── Scan-line animation ──────────────────────────────────────────── */
 .scan-line {
-  top: 30%;
+  top: 10%;
   animation: scanMove 2s ease-in-out infinite;
 }
-
 @keyframes scanMove {
-  0% {
-    top: 10%;
-    opacity: 1;
+  0%,
+  100% {
+    top: 15%;
+    opacity: 0.8;
   }
   50% {
     top: 85%;
     opacity: 1;
   }
-  100% {
-    top: 10%;
-    opacity: 1;
-  }
 }
 
-/* Force html5-qrcode to fill container and hide its default UI noise */
-:deep(#qr-reader-container video) {
+/* ── 1. Kill every piece of the library's own UI chrome ─────────────
+   html5-qrcode injects: a header message div, a dashboard section
+   with file-upload buttons, camera-select dropdowns, and status text.
+   None of that should be visible — hide it all. */
+:deep(#qr-reader-container__dashboard),
+:deep(#qr-reader-container__dashboard_section),
+:deep(#qr-reader-container__dashboard_section_swaplink),
+:deep(#qr-reader-container__dashboard_section_csr),
+:deep(#qr-reader-container__header_message),
+:deep(#qr-reader-container__status_span),
+:deep(#qr-reader-container select),
+:deep(#qr-reader-container__filescan_input),
+:deep(img[alt='Info icon']) {
+  display: none !important;
+}
+
+/* ── 2. Make the scan_region fill our fixed-height container ─────────
+   The library sets its own width/height on this div; override them so
+   it covers the entire 300 px slot we gave the parent. */
+:deep(#qr-reader-container__scan_region) {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
-:deep(#qr-reader-container img[alt='Info icon']),
-:deep(#qr-reader-container select),
-:deep(#qr-reader-container #qr-reader__camera_selection) {
-  display: none !important;
+
+/* ── 3. Stretch the video to fill the scan_region ────────────────────
+   The library positions the <video> with inline styles; override them
+   so the feed covers the full container (cover = crops edges cleanly). */
+:deep(#qr-reader-container__scan_region video) {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  z-index: 1 !important; /* below our overlay (z-index: 10) */
+  border: none !important;
+  border-radius: 0 !important;
 }
-:deep(#qr-reader-container #qr-reader__header_message) {
-  display: none !important;
+
+/* ── 4. The detection canvas sits on top of the video ────────────────
+   Keep it invisible (opacity 0) so it doesn't block the live feed,
+   but leave pointer events off so QR detection still works. */
+:deep(#qr-reader-container__scan_region canvas) {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+/* ── 5. The root container itself ────────────────────────────────────
+   Needs relative positioning so child absolutes are anchored here.
+   No background, no border — the video IS the background. */
+:deep(#qr-reader-container) {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 </style>
