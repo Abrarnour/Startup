@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       @click.self="closeModal"
     >
       <div
@@ -582,6 +582,7 @@ onUnmounted(async () => {
   top: 30%;
   animation: scanMove 2s ease-in-out infinite;
 }
+
 @keyframes scanMove {
   0% {
     top: 10%;
@@ -597,46 +598,19 @@ onUnmounted(async () => {
   }
 }
 
-/* ── Contain the library inside our div ── */
-:deep(#qr-reader-container) {
-  border: none !important;
-  padding: 0 !important;
-  background: black;
-  position: relative !important;
-}
-
-/* ── Make the scan region fill our container, no overflow ── */
-:deep(#qr-reader-container #qr-reader__scan_region) {
-  position: relative !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-
-/* ── Video fills the box cleanly ── */
+/* Force html5-qrcode to fill width but let it calculate its own height to prevent collapse */
 :deep(#qr-reader-container video) {
   width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-  position: relative !important;
+  object-fit: cover;
 }
 
-/* ── Hide the library's own dark shading overlay (the full-screen black cause) ── */
-:deep(#qr-reader-container #qr-reader__scan_region > img),
-:deep(#qr-reader-container #qr-reader__scan_region > div[style*='position: absolute']),
-:deep(#qr-reader-container img[alt='QR code']),
-:deep(#qr-reader-container img[alt='']) {
+:deep(#qr-reader-container img[alt='Info icon']),
+:deep(#qr-reader-container select),
+:deep(#qr-reader-container #qr-reader__camera_selection) {
   display: none !important;
 }
 
-/* ── Hide all library UI chrome ── */
-:deep(#qr-reader-container img[alt='Info icon']),
-:deep(#qr-reader-container select),
-:deep(#qr-reader-container #qr-reader__camera_selection),
-:deep(#qr-reader-container #qr-reader__header_message),
-:deep(#qr-reader-container #qr-reader__status_span),
-:deep(#qr-reader-container #qr-reader__dashboard),
-:deep(#qr-reader-container button) {
+:deep(#qr-reader-container #qr-reader__header_message) {
   display: none !important;
 }
 </style>
