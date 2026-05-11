@@ -68,10 +68,6 @@
           <!-- QR Reader container — html5-qrcode mounts here.
                Positioned absolute so the library's injected DOM
                never pushes the overlay out of place. -->
-          <div
-            id="qr-reader-container"
-            style="position: absolute; inset: 0; width: 100%; height: 100%"
-          ></div>
 
           <!-- Scanning overlay frame (shown while scanning) — sits above the video via z-index -->
           <div
@@ -402,16 +398,6 @@ const startScanner = async () => {
   }
 
   try {
-    // Request camera permission first
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'environment',
-      },
-      audio: false,
-    })
-
-    stream.getTracks().forEach((t) => t.stop()) // just checking permission
-
     // Get camera list
     const cameras = await Html5Qrcode.getCameras()
     if (!cameras || cameras.length === 0) {
@@ -435,26 +421,12 @@ const startScanner = async () => {
       {
         fps: 10,
         qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.0,
+        aspectRatio: 1.7778,
         disableFlip: false,
       },
       onScanSuccess,
       () => {}, // ignore per-frame errors (not real errors)
     )
-
-    setTimeout(() => {
-      const v = document.querySelector('#qr-reader-container video')
-
-      console.log(v)
-
-      if (v) {
-        v.style.display = 'block'
-        v.style.opacity = '1'
-        v.style.visibility = 'visible'
-        v.style.zIndex = '999999'
-        v.style.position = 'relative'
-      }
-    }, 1000)
 
     isCurrentlyScanning = true
     scanState.value = 'scanning'
@@ -619,7 +591,11 @@ onUnmounted(async () => {
   box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5);
   animation: scanMove 2s infinite linear;
 }
-
+#qr-reader-container video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
 @keyframes scanMove {
   0% {
     top: 0%;
