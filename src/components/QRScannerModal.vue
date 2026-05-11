@@ -596,17 +596,47 @@ onUnmounted(async () => {
     opacity: 1;
   }
 }
+
+/* ── Contain the library inside our div ── */
+:deep(#qr-reader-container) {
+  border: none !important;
+  padding: 0 !important;
+  background: black;
+  position: relative !important;
+}
+
+/* ── Make the scan region fill our container, no overflow ── */
+:deep(#qr-reader-container #qr-reader__scan_region) {
+  position: relative !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+/* ── Video fills the box cleanly ── */
 :deep(#qr-reader-container video) {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover;
+  object-fit: cover !important;
+  display: block !important;
+  position: relative !important;
 }
-:deep(#qr-reader-container img[alt='Info icon']),
-:deep(#qr-reader-container select),
-:deep(#qr-reader-container #qr-reader__camera_selection) {
+
+/* ── Hide the library's own dark shading overlay (the full-screen black cause) ── */
+:deep(#qr-reader-container #qr-reader__scan_region > img),
+:deep(#qr-reader-container #qr-reader__scan_region > div[style*='position: absolute']),
+:deep(#qr-reader-container img[alt='QR code']),
+:deep(#qr-reader-container img[alt='']) {
   display: none !important;
 }
-:deep(#qr-reader-container #qr-reader__header_message) {
+
+/* ── Hide all library UI chrome ── */
+:deep(#qr-reader-container img[alt='Info icon']),
+:deep(#qr-reader-container select),
+:deep(#qr-reader-container #qr-reader__camera_selection),
+:deep(#qr-reader-container #qr-reader__header_message),
+:deep(#qr-reader-container #qr-reader__status_span),
+:deep(#qr-reader-container #qr-reader__dashboard),
+:deep(#qr-reader-container button) {
   display: none !important;
 }
 </style>
