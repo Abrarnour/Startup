@@ -64,35 +64,19 @@
         </div>
 
         <!-- Camera Area -->
-        <div class="relative overflow-hidden bg-transparent" style="height: 300px">
+        <div class="relative overflow-hidden bg-transparent min-height: 320px;">
           <!-- QR Reader container — html5-qrcode mounts here.
                Positioned absolute so the library's injected DOM
                never pushes the overlay out of place. -->
 
           <!-- Scanning overlay frame (shown while scanning) — sits above the video via z-index -->
           <div
-            class="relative w-full aspect-square bg-black overflow-hidden flex items-center justify-center"
+            class="relative w-full h-full bg-black overflow-hidden flex items-center justify-center"
           >
             <div id="qr-reader-container" class="w-full h-full"></div>
 
             <div v-if="scanState === 'scanning'" class="absolute inset-0 z-10 pointer-events-none">
               <div class="scanner-line"></div>
-            </div>
-            <div class="relative w-52 h-52">
-              <div
-                class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"
-              ></div>
-              <div
-                class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"
-              ></div>
-              <div
-                class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"
-              ></div>
-              <div
-                class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"
-              ></div>
-              <!-- Scanning line animation -->
-              <div class="absolute left-2 right-2 h-0.5 bg-blue-400 opacity-80 scan-line"></div>
             </div>
           </div>
 
@@ -421,7 +405,7 @@ const startScanner = async () => {
       {
         fps: 10,
         qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.7778,
+        aspectRatio: 1.0,
         disableFlip: false,
       },
       onScanSuccess,
@@ -569,18 +553,21 @@ onUnmounted(async () => {
 }
 
 /* تأكد من أن الفيديو يملأ المساحة بالكامل */
+:deep(#qr-reader-container) {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: black;
+}
+
 :deep(#qr-reader-container video) {
+  position: absolute !important;
+  inset: 0;
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important; /* هذا سيجعل الكاميرا تملأ المربع بالكامل */
+  object-fit: contain !important;
 }
-
-/* تنسيق الحاوية */
-:deep(#qr-reader-container) {
-  border: none !important;
-  background: black !important;
-}
-
 /* أنيميشن الخط الأزرق */
 .scanner-line {
   position: absolute;
