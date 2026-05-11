@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-transparent p-4"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
       @click.self="closeModal"
     >
       <div
@@ -63,20 +63,37 @@
           </button>
         </div>
 
-        <!-- Camera Area -->
-        <div class="relative overflow-hidden bg-transparent min-height: 320px;">
-          <!-- QR Reader container — html5-qrcode mounts here.
-               Positioned absolute so the library's injected DOM
-               never pushes the overlay out of place. -->
+        <!-- ─── Camera Area ─────────────────────────────────────────────────
+             IMPORTANT: #qr-reader-container must be a direct child of this
+             relative wrapper. No flex/grid siblings! The overlay divs are
+             absolute-positioned on top via z-index. overflow-hidden must NOT
+             be on this wrapper (it clips the library's injected video).        -->
+        <div class="relative bg-black" style="min-height: 300px">
+          <!-- html5-qrcode mounts its video stream directly into this element -->
+          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
 
-          <!-- Scanning overlay frame (shown while scanning) — sits above the video via z-index -->
+          <!-- Scanning overlay: corner brackets + animated line -->
           <div
-            class="relative w-full h-full bg-black overflow-hidden flex items-center justify-center"
+            v-if="scanState === 'scanning'"
+            class="absolute inset-0 pointer-events-none flex items-center justify-center"
+            style="z-index: 10"
           >
-            <div id="qr-reader-container" class="w-full h-full"></div>
-
-            <div v-if="scanState === 'scanning'" class="absolute inset-0 z-10 pointer-events-none">
-              <div class="scanner-line"></div>
+            <div class="relative w-52 h-52">
+              <!-- Corner brackets -->
+              <div
+                class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"
+              ></div>
+              <div
+                class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"
+              ></div>
+              <div
+                class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"
+              ></div>
+              <div
+                class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"
+              ></div>
+              <!-- Animated scan line -->
+              <div class="absolute left-2 right-2 h-0.5 bg-blue-400 opacity-80 scan-line"></div>
             </div>
           </div>
 
@@ -84,7 +101,7 @@
           <div
             v-if="scanState === 'loading'"
             class="absolute inset-0 flex flex-col items-center justify-center bg-black/90"
-            style="z-index: 10"
+            style="z-index: 20; min-height: 300px"
           >
             <div
               class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"
@@ -96,7 +113,7 @@
           <div
             v-if="scanState === 'error'"
             class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-6"
-            style="z-index: 10"
+            style="z-index: 20; min-height: 300px"
           >
             <div class="w-14 h-14 rounded-full bg-red-900/60 flex items-center justify-center mb-3">
               <svg
@@ -122,9 +139,9 @@
           </div>
         </div>
 
-        <!-- Result Card — shown after scan -->
+        <!-- Result Card — shown after a successful scan -->
         <div v-if="scanResult" class="p-4">
-          <!-- ── Status banner ── -->
+          <!-- Status banner -->
           <div
             class="rounded-xl overflow-hidden border-2 mb-4"
             :class="{
@@ -204,7 +221,7 @@
               </span>
             </div>
 
-            <!-- ── Student info body ── -->
+            <!-- Student info body -->
             <div
               class="p-4"
               :class="{
@@ -214,9 +231,8 @@
                 'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <!-- Photo + Nom/Prénom -->
+              <!-- Photo + Name -->
               <div class="flex items-center gap-4 mb-4">
-                <!-- Photo -->
                 <img
                   v-if="scanResult.photo_url"
                   :src="scanResult.photo_url"
@@ -243,7 +259,6 @@
                   {{ (scanResult.last_name || scanResult.name || '?')[0].toUpperCase() }}
                 </div>
 
-                <!-- Nom + Prénom -->
                 <div>
                   <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
                     Nom &amp; Prénom
@@ -365,13 +380,12 @@ let isCurrentlyScanning = false // guard flag
 
 // ── Scanner lifecycle ───────────────────────────────────────────────
 const startScanner = async () => {
-  // Wait for DOM
   await nextTick()
   scanResult.value = null
   scanState.value = 'loading'
   errorMessage.value = ''
 
-  // Make sure old instance is cleaned up
+  // Clean up any previous instance first
   await safeStop()
 
   const container = document.getElementById('qr-reader-container')
@@ -382,13 +396,16 @@ const startScanner = async () => {
   }
 
   try {
-    // Get camera list
+    // Request camera permission explicitly before enumerating devices
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    stream.getTracks().forEach((t) => t.stop()) // only needed for permission grant
+
     const cameras = await Html5Qrcode.getCameras()
     if (!cameras || cameras.length === 0) {
       throw new Error('Aucune caméra détectée sur cet appareil.')
     }
 
-    // Prefer back camera on mobile, otherwise use last one (usually back)
+    // Prefer back/environment camera on mobile
     const backCamera = cameras.find(
       (c) =>
         c.label.toLowerCase().includes('back') ||
@@ -398,18 +415,17 @@ const startScanner = async () => {
     const selectedCamera = backCamera || cameras[cameras.length - 1]
 
     html5QrCode = new Html5Qrcode('qr-reader-container')
-    console.log('html5QrCode created')
-    console.log('html5QrCode created')
+
     await html5QrCode.start(
       selectedCamera.id,
       {
         fps: 10,
         qrbox: { width: 220, height: 220 },
-        aspectRatio: 1.0,
+        aspectRatio: 1.0, // square — matches the container's min-height:300px layout
         disableFlip: false,
       },
       onScanSuccess,
-      () => {}, // ignore per-frame errors (not real errors)
+      () => {}, // ignore per-frame decode errors (not real errors)
     )
 
     isCurrentlyScanning = true
@@ -435,32 +451,22 @@ const safeStop = async () => {
     try {
       await html5QrCode.stop()
     } catch {
-      /* leave as-is */
+      /* ignore stop errors */
     }
-
     isCurrentlyScanning = false
   }
-
-  const video = document.querySelector('#qr-reader-container video')
-
-  if (video && video.srcObject) {
-    video.srcObject.getTracks().forEach((track) => track.stop())
-  }
-
   if (html5QrCode) {
     try {
       html5QrCode.clear()
     } catch {
-      /* leave as-is */
+      /* ignore */
     }
-
     html5QrCode = null
   }
 }
 
 // ── QR scan success handler ─────────────────────────────────────────
 const onScanSuccess = async (decodedText) => {
-  // Pause scanning while we process
   if (!isCurrentlyScanning) return
 
   try {
@@ -471,12 +477,11 @@ const onScanSuccess = async (decodedText) => {
 
   scanState.value = 'loading'
 
-  // Parse QR data — format: "BELMAHI_STUDENT:ID"  or just the ID
+  // Parse QR data: "BELMAHI_STUDENT:ID", plain ID, or JSON {"id": 123}
   let studentId = decodedText.trim()
   if (studentId.startsWith('BELMAHI_STUDENT:')) {
     studentId = studentId.split(':')[1]
   }
-  // Also handle JSON format: {"id": 123, ...}
   if (studentId.startsWith('{')) {
     try {
       const parsed = JSON.parse(studentId)
@@ -496,7 +501,7 @@ const onScanSuccess = async (decodedText) => {
     scanResult.value = null
     scanState.value = 'error'
     errorMessage.value = err.message || 'Étudiant non trouvé'
-    // Resume scanning on error
+    // Resume scanning so the user can try again without reopening the modal
     try {
       await html5QrCode?.resume()
       scanState.value = 'scanning'
@@ -520,14 +525,12 @@ const closeModal = async () => {
   emit('update:modelValue', false)
 }
 
-// Watch for modal open
+// Watch for modal open — use setTimeout so the Teleported DOM is fully painted
 watch(
   () => props.modelValue,
   async (open) => {
     if (open) {
-      // Small delay to let DOM mount
-      await nextTick()
-      await startScanner()
+      setTimeout(() => startScanner(), 150)
     } else {
       await safeStop()
       scanResult.value = null
@@ -543,52 +546,39 @@ onUnmounted(async () => {
 </script>
 
 <style scoped>
-/* إخفاء الأزرار والنصوص المزعجة للمكتبة فقط دون التأثير على الفيديو */
-:deep(#qr-reader-container__dashboard),
-:deep(#qr-reader-container__header_message),
-:deep(#qr-reader-container__status_span),
-:deep(#qr-reader-container select),
-:deep(#qr-reader-container button) {
-  display: none !important;
+/* Animated scan line */
+.scan-line {
+  top: 30%;
+  animation: scanMove 2s ease-in-out infinite;
 }
 
-/* تأكد من أن الفيديو يملأ المساحة بالكامل */
-:deep(#qr-reader-container) {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  background: black;
+@keyframes scanMove {
+  0% {
+    top: 10%;
+    opacity: 1;
+  }
+  50% {
+    top: 85%;
+    opacity: 1;
+  }
+  100% {
+    top: 10%;
+    opacity: 1;
+  }
 }
 
+/* Make the html5-qrcode video fill the container */
 :deep(#qr-reader-container video) {
-  position: absolute !important;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-}
-/* أنيميشن الخط الأزرق */
-.scanner-line {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: #3b82f6; /* لون أزرق */
-  box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5);
-  animation: scanMove 2s infinite linear;
-}
-#qr-reader-container video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
 }
-@keyframes scanMove {
-  0% {
-    top: 0%;
-  }
-  100% {
-    top: 100%;
-  }
+
+/* Hide only the noisy UI chrome the library injects — NOT buttons/video */
+:deep(#qr-reader-container img[alt='Info icon']),
+:deep(#qr-reader-container select),
+:deep(#qr-reader-container #qr-reader__camera_selection),
+:deep(#qr-reader-container #qr-reader__header_message) {
+  display: none !important;
 }
 </style>
