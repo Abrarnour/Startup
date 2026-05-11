@@ -400,7 +400,13 @@ const startScanner = async () => {
 
   try {
     // Request camera permission first
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+      },
+      audio: false,
+    })
+
     stream.getTracks().forEach((t) => t.stop()) // just checking permission
 
     // Get camera list
@@ -419,7 +425,8 @@ const startScanner = async () => {
     const selectedCamera = backCamera || cameras[cameras.length - 1]
 
     html5QrCode = new Html5Qrcode('qr-reader-container')
-
+    console.log('html5QrCode created')
+    console.log('html5QrCode created')
     await html5QrCode.start(
       selectedCamera.id,
       {
@@ -546,7 +553,8 @@ watch(
   async (open) => {
     if (open) {
       // Small delay to let DOM mount
-      setTimeout(() => startScanner(), 150)
+      await nextTick()
+      await startScanner()
     } else {
       await safeStop()
       scanResult.value = null
@@ -605,23 +613,10 @@ onUnmounted(async () => {
   overflow: hidden !important;
 }
 
-/* هذا هو الإصلاح الحاسم */
-:deep(video) {
-  position: absolute !important;
-  inset: 0 !important;
+:deep(#qr-reader-container video) {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  z-index: 1 !important;
-  background: transparent !important;
-}
-
-/* إخفاء canvas الأسود */
-:deep(canvas) {
-  opacity: 0 !important;
-  pointer-events: none !important;
+  border-radius: 0 !important;
 }
 </style>
