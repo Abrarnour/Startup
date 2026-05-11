@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-transparent p-4"
       @click.self="closeModal"
     >
       <div
@@ -64,7 +64,7 @@
         </div>
 
         <!-- Camera Area -->
-        <div class="relative overflow-hidden" style="height: 300px; background: #000">
+        <div class="relative overflow-hidden bg-transparent" style="height: 300px">
           <!-- QR Reader container — html5-qrcode mounts here.
                Positioned absolute so the library's injected DOM
                never pushes the overlay out of place. -->
@@ -553,94 +553,66 @@ onUnmounted(async () => {
 </script>
 
 <style scoped>
-/* ── Scan-line animation ──────────────────────────────────────────── */
-.scan-line {
-  top: 10%;
-  animation: scanMove 2s ease-in-out infinite;
-}
 @keyframes scanMove {
   0%,
   100% {
     top: 15%;
     opacity: 0.8;
   }
+
   50% {
     top: 85%;
     opacity: 1;
   }
 }
 
-/* ── 1. Kill every piece of the library's own UI chrome ─────────────
-   html5-qrcode injects: a header message div, a dashboard section
-   with file-upload buttons, camera-select dropdowns, and status text.
-   None of that should be visible — hide it all. */
+/* إخفاء واجهة html5-qrcode بالكامل */
 :deep(#qr-reader-container__dashboard),
-:deep(#qr-reader-container__dashboard_section),
-:deep(#qr-reader-container__dashboard_section_swaplink),
-:deep(#qr-reader-container__dashboard_section_csr),
 :deep(#qr-reader-container__header_message),
 :deep(#qr-reader-container__status_span),
 :deep(#qr-reader-container select),
-:deep(#qr-reader-container__filescan_input),
-:deep(img[alt='Info icon']) {
+:deep(#qr-reader-container__filescan_input) {
   display: none !important;
 }
 
-/* ── 2. Make the scan_region fill our fixed-height container ─────────
-   The library sets its own width/height on this div; override them so
-   it covers the entire 300 px slot we gave the parent. */
-:deep(#qr-reader-container__scan_region) {
+/* الحاوية الأساسية */
+:deep(#qr-reader-container) {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   overflow: hidden !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
   background: transparent !important;
-}
-
-/* ── 3. Stretch the video to fill the scan_region ────────────────────
-   The library positions the <video> with inline styles; override them
-   so the feed covers the full container (cover = crops edges cleanly). */
-:deep(#qr-reader-container__scan_region video) {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-  z-index: 1 !important; /* below our overlay (z-index: 10) */
   border: none !important;
-  border-radius: 0 !important;
 }
 
-/* ── 4. The detection canvas sits on top of the video ────────────────
-   Keep it invisible (opacity 0) so it doesn't block the live feed,
-   but leave pointer events off so QR detection still works. */
-:deep(#qr-reader-container__scan_region canvas) {
+/* منطقة الكاميرا */
+:deep(#qr-reader-container__scan_region) {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  opacity: 0 !important;
-  z-index: 2 !important;
-  pointer-events: none !important;
+  background: transparent !important;
+  overflow: hidden !important;
 }
 
-/* ── 5. The root container itself ────────────────────────────────────
-   Needs relative positioning so child absolutes are anchored here.
-   No background, no border — the video IS the background. */
-:deep(#qr-reader-container) {
-  position: relative !important;
+/* هذا هو الإصلاح الحاسم */
+:deep(video) {
+  position: absolute !important;
+  inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
   background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
+}
+
+/* إخفاء canvas الأسود */
+:deep(canvas) {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 </style>
