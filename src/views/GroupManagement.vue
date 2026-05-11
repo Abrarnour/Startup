@@ -2820,13 +2820,6 @@ onMounted(() => {
     </Teleport>
     <QRScannerModal
       v-model="showScannerModal"
-      :group-id="selectedGroup?.id"
-      :group-name="selectedGroup?.group_name"
-      :dark-mode="darkMode"
-    />
-    <!-- QR Scanner Modal (already present, ensure groupName prop is passed) -->
-    <QRScannerModal
-      v-model="showScannerModal"
       :groupId="selectedGroup?.id"
       :groupName="selectedGroup?.group_name"
       :darkMode="darkMode"

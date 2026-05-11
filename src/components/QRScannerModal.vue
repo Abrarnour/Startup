@@ -63,11 +63,10 @@
           </button>
         </div>
 
-        <!-- ─── Camera Area ─────────────────────────────────────────────────
-             IMPORTANT: #qr-reader-container must be a direct child of this
-             relative wrapper. No flex/grid siblings! The overlay divs are
-             absolute-positioned on top via z-index. overflow-hidden must NOT
-             be on this wrapper (it clips the library's injected video).        -->
+        <!-- ─── Camera Area ──────────────────────────────────────────────────
+             overflow-hidden is REQUIRED here: html5-qrcode injects
+             <video style="z-index:999999; width:448px"> which bleeds outside
+             the modal without it. The :deep CSS below resets that z-index.   -->
         <div class="relative bg-black overflow-hidden" style="min-height: 300px">
           <!-- html5-qrcode mounts its video stream directly into this element -->
           <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
