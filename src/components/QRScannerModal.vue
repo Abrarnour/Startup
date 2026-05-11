@@ -67,7 +67,7 @@
              overflow-hidden is REQUIRED here: html5-qrcode injects
              <video style="z-index:999999; width:448px"> which bleeds outside
              the modal without it. The :deep CSS below resets that z-index.   -->
-        <div class="relative bg-black overflow-hidden" style="min-height: 300px">
+        <div v-if="!scanResult" class="relative bg-black overflow-hidden" style="min-height: 300px">
           <!-- html5-qrcode mounts its video stream directly into this element -->
           <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
 
