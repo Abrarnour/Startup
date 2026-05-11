@@ -9,10 +9,9 @@
         :class="darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'"
         class="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
       >
-        <!-- Header -->
         <div
-          class="flex items-center justify-between px-5 py-4 border-b"
-          :class="darkMode ? 'border-gray-700' : 'border-gray-200'"
+          class="flex items-center justify-between px-5 py-4 border-b relative z-10"
+          :class="darkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'"
         >
           <div class="flex items-center gap-3">
             <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
@@ -63,57 +62,63 @@
           </button>
         </div>
 
-        <!-- Camera Area -->
-        <div class="relative">
-          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
+        <div
+          class="relative overflow-hidden border-b"
+          :class="darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'"
+        >
+          <div
+            id="qr-reader-container"
+            class="w-full flex items-center justify-center h-[320px]"
+          ></div>
 
-          <!-- Scanning overlay frame -->
           <div
             v-if="scanState === 'scanning'"
             class="absolute inset-0 pointer-events-none flex items-center justify-center"
           >
-            <div class="relative w-52 h-52">
+            <div class="relative w-56 h-56">
               <div
-                class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"
+                class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-lg"
               ></div>
               <div
-                class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg"
+                class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-lg"
               ></div>
               <div
-                class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg"
+                class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-lg"
               ></div>
               <div
-                class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"
+                class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-lg"
               ></div>
-              <div class="absolute left-2 right-2 h-0.5 bg-blue-400 opacity-80 scan-line"></div>
+              <div
+                class="absolute left-2 right-2 h-0.5 bg-blue-500 opacity-80 scan-line shadow-[0_0_8px_rgba(59,130,246,0.8)]"
+              ></div>
             </div>
           </div>
 
-          <!-- Loading state -->
           <div
             v-if="scanState === 'loading'"
-            class="absolute inset-0 flex flex-col items-center justify-center bg-black/90"
-            style="min-height: 300px"
+            class="absolute inset-0 flex flex-col items-center justify-center"
+            :class="darkMode ? 'bg-gray-800' : 'bg-gray-50'"
           >
             <div
               class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"
             ></div>
-            <p class="text-white text-sm">Activation caméra...</p>
+            <p class="text-sm font-medium" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">
+              Activation caméra...
+            </p>
           </div>
 
-          <!-- Error state -->
           <div
             v-if="scanState === 'error'"
-            class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-6"
-            style="min-height: 300px"
+            class="absolute inset-0 flex flex-col items-center justify-center p-6"
+            :class="darkMode ? 'bg-gray-800' : 'bg-gray-50'"
           >
-            <div class="w-14 h-14 rounded-full bg-red-900/60 flex items-center justify-center mb-3">
+            <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
               <svg
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#f87171"
+                stroke="#ef4444"
                 stroke-width="2"
               >
                 <circle cx="12" cy="12" r="10" />
@@ -121,7 +126,7 @@
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
             </div>
-            <p class="text-red-400 text-sm text-center mb-4">{{ errorMessage }}</p>
+            <p class="text-red-500 font-medium text-sm text-center mb-4">{{ errorMessage }}</p>
             <button
               @click="startScanner"
               class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
@@ -131,117 +136,49 @@
           </div>
         </div>
 
-        <!-- ── Result Card ── -->
-        <div v-if="scanResult" class="p-4">
-          <!-- ── Status banner ── -->
+        <div v-if="scanResult" class="p-4" :class="darkMode ? 'bg-gray-900' : 'bg-white'">
           <div
             class="rounded-xl overflow-hidden border-2 mb-4"
             :class="{
               'border-green-500': scanResult.access === 'GRANTED',
               'border-red-500': scanResult.access === 'NOT_PAID',
               'border-yellow-500': scanResult.access === 'INACTIVE',
-              'border-gray-400': scanResult.access === 'NOT_ENROLLED',
+              'border-gray-300': scanResult.access === 'NOT_ENROLLED',
             }"
           >
-            <!-- Banner header row -->
             <div
-              class="px-4 py-3 flex items-center justify-between gap-3"
+              class="px-4 py-3 flex items-center gap-3"
               :class="{
                 'bg-green-500': scanResult.access === 'GRANTED',
                 'bg-red-600': scanResult.access === 'NOT_PAID',
                 'bg-yellow-500': scanResult.access === 'INACTIVE',
-                'bg-gray-600': scanResult.access === 'NOT_ENROLLED',
+                'bg-gray-500': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <div class="flex items-center gap-3">
-                <!-- GRANTED icon -->
-                <svg
-                  v-if="scanResult.access === 'GRANTED'"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="3"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <!-- NOT_PAID icon -->
-                <span
-                  v-else-if="scanResult.access === 'NOT_PAID'"
-                  class="text-white font-black text-2xl leading-none"
-                  >✕</span
-                >
-                <!-- INACTIVE icon -->
-                <svg
-                  v-else-if="scanResult.access === 'INACTIVE'"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                  />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <!-- NOT_ENROLLED icon -->
-                <svg
-                  v-else
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                </svg>
-
-                <span class="text-white font-bold text-sm tracking-wide">
-                  <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
-                  <template v-else-if="scanResult.access === 'NOT_PAID'"
-                    >PAIEMENT NON EFFECTUÉ</template
-                  >
-                  <template v-else-if="scanResult.access === 'INACTIVE'"
-                    >INSCRIPTION INACTIVE</template
-                  >
-                  <template v-else>NON INSCRIT DANS CE GROUPE</template>
-                </span>
-              </div>
-
-              <!-- ── SESSION NUMBER BADGE (GRANTED only) ── -->
-              <div
-                v-if="scanResult.access === 'GRANTED' && scanResult.session_number"
-                class="flex-shrink-0 bg-white/20 border border-white/40 rounded-xl px-3 py-1 text-center"
-              >
-                <p
-                  class="text-white/80 text-[10px] font-semibold uppercase tracking-widest leading-none mb-0.5"
-                >
-                  Séance
-                </p>
-                <p class="text-white font-black text-2xl leading-none">
-                  #{{ scanResult.session_number }}
-                </p>
-              </div>
-            </div>
-
-            <!-- ── Already scanned today warning ── -->
-            <div
-              v-if="scanResult.access === 'GRANTED' && scanResult.already_scanned_today"
-              class="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200"
-            >
               <svg
-                width="16"
-                height="16"
+                v-if="scanResult.access === 'GRANTED'"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#d97706"
-                stroke-width="2.5"
+                stroke="white"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span
+                v-else-if="scanResult.access === 'NOT_PAID'"
+                class="text-white font-black text-2xl leading-none"
+                >✕</span
+              >
+              <svg
+                v-else-if="scanResult.access === 'INACTIVE'"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
               >
                 <path
                   d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
@@ -249,22 +186,41 @@
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <p class="text-amber-700 text-xs font-semibold">
-                Déjà scanné aujourd'hui — compteur non incrémenté
-              </p>
+              <svg
+                v-else
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+
+              <span class="text-white font-bold text-sm tracking-wide">
+                <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
+                <template v-else-if="scanResult.access === 'NOT_PAID'"
+                  >PAIEMENT NON EFFECTUÉ</template
+                >
+                <template v-else-if="scanResult.access === 'INACTIVE'"
+                  >INSCRIPTION INACTIVE</template
+                >
+                <template v-else>NON INSCRIT DANS CE GROUPE</template>
+              </span>
             </div>
 
-            <!-- ── Student info body ── -->
             <div
               class="p-4"
               :class="{
-                'bg-green-50': scanResult.access === 'GRANTED',
-                'bg-red-50': scanResult.access === 'NOT_PAID',
-                'bg-yellow-50': scanResult.access === 'INACTIVE',
-                'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
+                'bg-green-50': scanResult.access === 'GRANTED' && !darkMode,
+                'bg-red-50': scanResult.access === 'NOT_PAID' && !darkMode,
+                'bg-yellow-50': scanResult.access === 'INACTIVE' && !darkMode,
+                'bg-gray-50': scanResult.access === 'NOT_ENROLLED' && !darkMode,
+                'bg-gray-800': darkMode,
               }"
             >
-              <!-- Photo + Name -->
               <div class="flex items-center gap-4 mb-4">
                 <img
                   v-if="scanResult.photo_url"
@@ -274,7 +230,7 @@
                     'border-green-400': scanResult.access === 'GRANTED',
                     'border-red-400': scanResult.access === 'NOT_PAID',
                     'border-yellow-400': scanResult.access === 'INACTIVE',
-                    'border-gray-400': scanResult.access === 'NOT_ENROLLED',
+                    'border-gray-300': scanResult.access === 'NOT_ENROLLED',
                   }"
                 />
                 <div
@@ -282,10 +238,10 @@
                   class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black border-2"
                   :class="{
                     'bg-green-100 text-green-600 border-green-300': scanResult.access === 'GRANTED',
-                    'bg-red-100   text-red-600   border-red-300': scanResult.access === 'NOT_PAID',
+                    'bg-red-100 text-red-600 border-red-300': scanResult.access === 'NOT_PAID',
                     'bg-yellow-100 text-yellow-600 border-yellow-300':
                       scanResult.access === 'INACTIVE',
-                    'bg-gray-200  text-gray-500  border-gray-300':
+                    'bg-gray-200 text-gray-500 border-gray-300':
                       scanResult.access === 'NOT_ENROLLED',
                   }"
                 >
@@ -293,48 +249,83 @@
                 </div>
 
                 <div>
-                  <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                  <p
+                    class="text-xs uppercase tracking-wider mb-1"
+                    :class="darkMode ? 'text-gray-400' : 'text-gray-500'"
+                  >
                     Nom &amp; Prénom
                   </p>
-                  <p class="font-black text-xl text-gray-900 leading-tight">
+                  <p
+                    class="font-black text-xl leading-tight"
+                    :class="darkMode ? 'text-white' : 'text-gray-900'"
+                  >
                     {{ scanResult.last_name }}
                   </p>
-                  <p class="font-semibold text-base text-gray-700 leading-tight">
+                  <p
+                    class="font-semibold text-base leading-tight"
+                    :class="darkMode ? 'text-gray-300' : 'text-gray-700'"
+                  >
                     {{ scanResult.name }}
                   </p>
                 </div>
               </div>
 
-              <!-- Sexe / Âge / Groupe -->
               <div class="grid grid-cols-3 gap-2 mb-3">
-                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
-                  <p class="text-gray-400 text-xs mb-1">Sexe</p>
-                  <p class="font-bold text-gray-800 text-sm">
+                <div
+                  class="rounded-xl px-2 py-2 text-center"
+                  :class="darkMode ? 'bg-gray-700' : 'bg-white/80'"
+                >
+                  <p class="text-xs mb-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                    Sexe
+                  </p>
+                  <p
+                    class="font-bold text-sm"
+                    :class="darkMode ? 'text-gray-200' : 'text-gray-800'"
+                  >
                     {{ scanResult.gender === 'F' ? '👩 Fille' : '👦 Garçon' }}
                   </p>
                 </div>
-                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
-                  <p class="text-gray-400 text-xs mb-1">Âge</p>
-                  <p class="font-bold text-gray-800 text-sm">{{ scanResult.age ?? '—' }} ans</p>
+                <div
+                  class="rounded-xl px-2 py-2 text-center"
+                  :class="darkMode ? 'bg-gray-700' : 'bg-white/80'"
+                >
+                  <p class="text-xs mb-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                    Âge
+                  </p>
+                  <p
+                    class="font-bold text-sm"
+                    :class="darkMode ? 'text-gray-200' : 'text-gray-800'"
+                  >
+                    {{ scanResult.age ?? '—' }} ans
+                  </p>
                 </div>
-                <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
-                  <p class="text-gray-400 text-xs mb-1">Groupe</p>
-                  <p class="font-bold text-gray-800 text-xs truncate">
+                <div
+                  class="rounded-xl px-2 py-2 text-center"
+                  :class="darkMode ? 'bg-gray-700' : 'bg-white/80'"
+                >
+                  <p class="text-xs mb-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                    Groupe
+                  </p>
+                  <p
+                    class="font-bold text-xs truncate"
+                    :class="darkMode ? 'text-gray-200' : 'text-gray-800'"
+                  >
                     {{ scanResult.group_name || '—' }}
                   </p>
                 </div>
               </div>
 
-              <!-- Inscription / Paiement / Sessions this cycle -->
-              <div class="grid grid-cols-3 gap-2">
-                <div class="rounded-xl bg-white/80 px-3 py-2">
-                  <p class="text-gray-400 text-xs mb-1">Inscription</p>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl px-3 py-2" :class="darkMode ? 'bg-gray-700' : 'bg-white/80'">
+                  <p class="text-xs mb-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                    Inscription
+                  </p>
                   <p
                     class="font-bold text-sm"
                     :class="
                       scanResult.enrollment_status === 'active'
-                        ? 'text-green-600'
-                        : 'text-yellow-600'
+                        ? 'text-green-500'
+                        : 'text-yellow-500'
                     "
                   >
                     {{
@@ -344,32 +335,23 @@
                     }}
                   </p>
                 </div>
-                <div class="rounded-xl bg-white/80 px-3 py-2">
-                  <p class="text-gray-400 text-xs mb-1">Paiement</p>
+                <div class="rounded-xl px-3 py-2" :class="darkMode ? 'bg-gray-700' : 'bg-white/80'">
+                  <p class="text-xs mb-1" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
+                    Paiement
+                  </p>
                   <p
                     class="font-bold text-sm"
                     :class="
-                      scanResult.payment_status === 'paid' ? 'text-green-600' : 'text-red-600'
+                      scanResult.payment_status === 'paid' ? 'text-green-500' : 'text-red-500'
                     "
                   >
                     {{ scanResult.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
-                  </p>
-                </div>
-                <!-- Sessions this cycle (only meaningful when enrolled) -->
-                <div v-if="scanResult.enrollment_status" class="rounded-xl bg-white/80 px-3 py-2">
-                  <p class="text-gray-400 text-xs mb-1">Ce cycle</p>
-                  <p class="font-bold text-sm text-blue-700">
-                    {{ scanResult.sessions_attended ?? '—' }}
-                    <span class="text-gray-400 font-normal text-xs"
-                      >séance{{ (scanResult.sessions_attended ?? 0) > 1 ? 's' : '' }}</span
-                    >
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Scan again button -->
           <button
             @click="resetScan"
             class="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
@@ -389,10 +371,13 @@
           </button>
         </div>
 
-        <!-- Hint text while scanning -->
-        <div v-if="scanState === 'scanning' && !scanResult" class="px-5 py-3 text-center">
-          <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-            Pointez la caméra vers le QR Code de la carte étudiant
+        <div
+          v-if="scanState === 'scanning' && !scanResult"
+          class="px-5 py-3 text-center"
+          :class="darkMode ? 'bg-gray-900' : 'bg-white'"
+        >
+          <p class="text-sm font-medium" :class="darkMode ? 'text-gray-400' : 'text-gray-600'">
+            Pointez la caméra vers le QR Code
           </p>
         </div>
       </div>
@@ -598,12 +583,23 @@ onUnmounted(async () => {
   }
 }
 
-/* Force html5-qrcode to fill width but let it calculate its own height to prevent collapse */
-:deep(#qr-reader-container video) {
-  width: 100% !important;
-  object-fit: cover;
+/* Make sure the library wrapper has no border */
+:deep(#qr-reader-container) {
+  border: none !important;
+  line-height: 0;
 }
 
+/* Force the actual camera feed to fill the 320px height of its parent exactly */
+:deep(#qr-reader-container video) {
+  width: 100% !important;
+  height: 320px !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide extra UI elements injected by html5-qrcode */
 :deep(#qr-reader-container img[alt='Info icon']),
 :deep(#qr-reader-container select),
 :deep(#qr-reader-container #qr-reader__camera_selection) {
