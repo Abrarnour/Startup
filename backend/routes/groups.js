@@ -1169,6 +1169,13 @@ router.post(
       res.json(data)
     } catch (error) {
       console.error('Scan Error:', error)
+      if (error.code === '42703' || error.code === '42P01') {
+        return res.status(503).json({
+          error: 'Migration DB manquante',
+          detail:
+            "Exécutez railway_migration.sql sur votre base Railway avant d'utiliser le système de tickets.",
+        })
+      }
       res.status(500).json({ error: 'Erreur serveur lors du scan' })
     }
   },
@@ -1225,6 +1232,12 @@ router.patch(
       res.json({ success: true, enrollment: result.rows[0] })
     } catch (err) {
       console.error('Mark-paid error:', err)
+      if (err.code === '42703' || err.code === '42P01') {
+        return res.status(503).json({
+          error: 'Migration DB manquante',
+          detail: 'Exécutez railway_migration.sql sur votre base Railway.',
+        })
+      }
       res.status(500).json({ error: err.message })
     }
   },
@@ -1245,7 +1258,7 @@ router.get('/:groupId/absent-today', authMiddleware, adminOrTeacherMiddleware, a
            u.last_name,
            u.photo_url,
            gs.payment_status,
-           gs.sessions_attended,
+           COALESCE(gs.sessions_attended, 0) AS sessions_attended,
            gs.status AS enrollment_status
          FROM group_students gs
          JOIN users u ON gs.student_id = u.id
@@ -1254,7 +1267,7 @@ router.get('/:groupId/absent-today', authMiddleware, adminOrTeacherMiddleware, a
            AND u.id NOT IN (
              SELECT student_id
              FROM   attendance_log
-             WHERE  group_id        = $1
+             WHERE  group_id         = $1
                AND  scanned_at::date = $2::date
            )
          ORDER BY u.last_name, u.name`,
@@ -1264,6 +1277,15 @@ router.get('/:groupId/absent-today', authMiddleware, adminOrTeacherMiddleware, a
     res.json(result.rows)
   } catch (err) {
     console.error('Absent-today error:', err)
+    // 42703 = undefined_column  |  42P01 = undefined_table
+    // Both mean the migration hasn't been applied yet on this Railway DB.
+    if (err.code === '42703' || err.code === '42P01') {
+      return res.status(503).json({
+        error: 'Migration DB requise — exécutez railway_migration.sql',
+        detail: err.message,
+        fix: 'Railway → Postgres → Data (Query tab) → collez railway_migration.sql → Run',
+      })
+    }
     res.status(500).json({ error: err.message })
   }
 })
