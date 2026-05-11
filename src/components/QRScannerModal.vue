@@ -75,10 +75,13 @@
 
           <!-- Scanning overlay frame (shown while scanning) — sits above the video via z-index -->
           <div
-            v-if="scanState === 'scanning'"
-            class="absolute inset-0 pointer-events-none flex items-center justify-center"
-            style="z-index: 10"
+            class="relative w-full aspect-square bg-black overflow-hidden flex items-center justify-center"
           >
+            <div id="qr-reader-container" class="w-full h-full"></div>
+
+            <div v-if="scanState === 'scanning'" class="absolute inset-0 z-10 pointer-events-none">
+              <div class="scanner-line"></div>
+            </div>
             <div class="relative w-52 h-52">
               <div
                 class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg"
@@ -584,53 +587,45 @@ onUnmounted(async () => {
 </script>
 
 <style scoped>
-@keyframes scanMove {
-  0%,
-  100% {
-    top: 15%;
-    opacity: 0.8;
-  }
-
-  50% {
-    top: 85%;
-    opacity: 1;
-  }
-}
-
-/* إخفاء واجهة html5-qrcode بالكامل */
+/* إخفاء الأزرار والنصوص المزعجة للمكتبة فقط دون التأثير على الفيديو */
 :deep(#qr-reader-container__dashboard),
 :deep(#qr-reader-container__header_message),
 :deep(#qr-reader-container__status_span),
 :deep(#qr-reader-container select),
-:deep(#qr-reader-container__filescan_input) {
+:deep(#qr-reader-container button) {
   display: none !important;
 }
 
-/* الحاوية الأساسية */
-:deep(#qr-reader-container) {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  overflow: hidden !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-/* منطقة الكاميرا */
-:deep(#qr-reader-container__scan_region) {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  overflow: hidden !important;
-}
-
+/* تأكد من أن الفيديو يملأ المساحة بالكامل */
 :deep(#qr-reader-container video) {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
-  border-radius: 0 !important;
+  object-fit: cover !important; /* هذا سيجعل الكاميرا تملأ المربع بالكامل */
+}
+
+/* تنسيق الحاوية */
+:deep(#qr-reader-container) {
+  border: none !important;
+  background: black !important;
+}
+
+/* أنيميشن الخط الأزرق */
+.scanner-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #3b82f6; /* لون أزرق */
+  box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5);
+  animation: scanMove 2s infinite linear;
+}
+
+@keyframes scanMove {
+  0% {
+    top: 0%;
+  }
+  100% {
+    top: 100%;
+  }
 }
 </style>
