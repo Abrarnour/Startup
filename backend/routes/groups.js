@@ -1348,7 +1348,9 @@ router.post(
     } catch (err) {
       console.error('Pay-and-scan error:', err)
       if (err.code === '42703' || err.code === '42P01') {
-        return res.status(503).json({ error: 'Migration DB manquante', detail: 'Exécutez railway_migration.sql.' })
+        return res
+          .status(503)
+          .json({ error: 'Migration DB manquante', detail: 'Exécutez railway_migration.sql.' })
       }
       res.status(500).json({ error: err.message })
     }
