@@ -65,9 +65,10 @@
 
         <!-- Camera Area -->
         <div class="relative">
-          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 320px"></div>
+          <!-- QR Reader container — html5-qrcode mounts here -->
+          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
 
-          <!-- Scanning overlay frame -->
+          <!-- Scanning overlay frame (shown while scanning) -->
           <div
             v-if="scanState === 'scanning'"
             class="absolute inset-0 pointer-events-none flex items-center justify-center"
@@ -85,6 +86,7 @@
               <div
                 class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg"
               ></div>
+              <!-- Scanning line animation -->
               <div class="absolute left-2 right-2 h-0.5 bg-blue-400 opacity-80 scan-line"></div>
             </div>
           </div>
@@ -131,7 +133,7 @@
           </div>
         </div>
 
-        <!-- ── Result Card ── -->
+        <!-- Result Card — shown after scan -->
         <div v-if="scanResult" class="p-4">
           <!-- ── Status banner ── -->
           <div
@@ -143,9 +145,9 @@
               'border-gray-400': scanResult.access === 'NOT_ENROLLED',
             }"
           >
-            <!-- Banner header row -->
+            <!-- Banner header -->
             <div
-              class="px-4 py-3 flex items-center justify-between gap-3"
+              class="px-4 py-3 flex items-center gap-3"
               :class="{
                 'bg-green-500': scanResult.access === 'GRANTED',
                 'bg-red-600': scanResult.access === 'NOT_PAID',
@@ -153,95 +155,33 @@
                 'bg-gray-600': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <div class="flex items-center gap-3">
-                <!-- GRANTED icon -->
-                <svg
-                  v-if="scanResult.access === 'GRANTED'"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="3"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <!-- NOT_PAID icon -->
-                <span
-                  v-else-if="scanResult.access === 'NOT_PAID'"
-                  class="text-white font-black text-2xl leading-none"
-                  >✕</span
-                >
-                <!-- INACTIVE icon -->
-                <svg
-                  v-else-if="scanResult.access === 'INACTIVE'"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-                  />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <!-- NOT_ENROLLED icon -->
-                <svg
-                  v-else
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                </svg>
-
-                <span class="text-white font-bold text-sm tracking-wide">
-                  <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
-                  <template v-else-if="scanResult.access === 'NOT_PAID'"
-                    >PAIEMENT NON EFFECTUÉ</template
-                  >
-                  <template v-else-if="scanResult.access === 'INACTIVE'"
-                    >INSCRIPTION INACTIVE</template
-                  >
-                  <template v-else>NON INSCRIT DANS CE GROUPE</template>
-                </span>
-              </div>
-
-              <!-- ── SESSION NUMBER BADGE (GRANTED only) ── -->
-              <div
-                v-if="scanResult.access === 'GRANTED' && scanResult.session_number"
-                class="flex-shrink-0 bg-white/20 border border-white/40 rounded-xl px-3 py-1 text-center"
-              >
-                <p
-                  class="text-white/80 text-[10px] font-semibold uppercase tracking-widest leading-none mb-0.5"
-                >
-                  Séance
-                </p>
-                <p class="text-white font-black text-2xl leading-none">
-                  #{{ scanResult.session_number }}
-                </p>
-              </div>
-            </div>
-
-            <!-- ── Already scanned today warning ── -->
-            <div
-              v-if="scanResult.access === 'GRANTED' && scanResult.already_scanned_today"
-              class="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200"
-            >
+              <!-- GRANTED icon -->
               <svg
-                width="16"
-                height="16"
+                v-if="scanResult.access === 'GRANTED'"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#d97706"
-                stroke-width="2.5"
+                stroke="white"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <!-- NOT_PAID icon -->
+              <span
+                v-else-if="scanResult.access === 'NOT_PAID'"
+                class="text-white font-black text-2xl leading-none"
+                >✕</span
+              >
+              <!-- INACTIVE icon -->
+              <svg
+                v-else-if="scanResult.access === 'INACTIVE'"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
               >
                 <path
                   d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
@@ -249,9 +189,30 @@
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              <p class="text-amber-700 text-xs font-semibold">
-                Déjà scanné aujourd'hui — compteur non incrémenté
-              </p>
+              <!-- NOT_ENROLLED icon -->
+              <svg
+                v-else
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+
+              <span class="text-white font-bold text-sm tracking-wide">
+                <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
+                <template v-else-if="scanResult.access === 'NOT_PAID'"
+                  >PAIEMENT NON EFFECTUÉ</template
+                >
+                <template v-else-if="scanResult.access === 'INACTIVE'"
+                  >INSCRIPTION INACTIVE</template
+                >
+                <template v-else>NON INSCRIT DANS CE GROUPE</template>
+              </span>
             </div>
 
             <!-- ── Student info body ── -->
@@ -264,8 +225,9 @@
                 'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
               }"
             >
-              <!-- Photo + Name -->
+              <!-- Photo + Nom/Prénom -->
               <div class="flex items-center gap-4 mb-4">
+                <!-- Photo -->
                 <img
                   v-if="scanResult.photo_url"
                   :src="scanResult.photo_url"
@@ -282,16 +244,17 @@
                   class="w-20 h-20 rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl font-black border-2"
                   :class="{
                     'bg-green-100 text-green-600 border-green-300': scanResult.access === 'GRANTED',
-                    'bg-red-100   text-red-600   border-red-300': scanResult.access === 'NOT_PAID',
+                    'bg-red-100 text-red-600 border-red-300': scanResult.access === 'NOT_PAID',
                     'bg-yellow-100 text-yellow-600 border-yellow-300':
                       scanResult.access === 'INACTIVE',
-                    'bg-gray-200  text-gray-500  border-gray-300':
+                    'bg-gray-200 text-gray-500 border-gray-300':
                       scanResult.access === 'NOT_ENROLLED',
                   }"
                 >
                   {{ (scanResult.last_name || scanResult.name || '?')[0].toUpperCase() }}
                 </div>
 
+                <!-- Nom + Prénom -->
                 <div>
                   <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">
                     Nom &amp; Prénom
@@ -325,8 +288,8 @@
                 </div>
               </div>
 
-              <!-- Inscription / Paiement / Sessions this cycle -->
-              <div class="grid grid-cols-3 gap-2">
+              <!-- Inscription / Paiement -->
+              <div class="grid grid-cols-2 gap-2">
                 <div class="rounded-xl bg-white/80 px-3 py-2">
                   <p class="text-gray-400 text-xs mb-1">Inscription</p>
                   <p
@@ -353,16 +316,6 @@
                     "
                   >
                     {{ scanResult.payment_status === 'paid' ? '✓ Payé' : '✕ Non payé' }}
-                  </p>
-                </div>
-                <!-- Sessions this cycle (only meaningful when enrolled) -->
-                <div v-if="scanResult.enrollment_status" class="rounded-xl bg-white/80 px-3 py-2">
-                  <p class="text-gray-400 text-xs mb-1">Ce cycle</p>
-                  <p class="font-bold text-sm text-blue-700">
-                    {{ scanResult.sessions_attended ?? '—' }}
-                    <span class="text-gray-400 font-normal text-xs"
-                      >séance{{ (scanResult.sessions_attended ?? 0) > 1 ? 's' : '' }}</span
-                    >
                   </p>
                 </div>
               </div>
@@ -582,6 +535,7 @@ onUnmounted(async () => {
   top: 30%;
   animation: scanMove 2s ease-in-out infinite;
 }
+
 @keyframes scanMove {
   0% {
     top: 10%;
@@ -597,37 +551,18 @@ onUnmounted(async () => {
   }
 }
 
-/* Force ALL library-injected children to have transparent backgrounds
-   so only the video stream is visible, not the library's black divs */
-:deep(#qr-reader-container *) {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Video: fill the container and sit behind our overlay corners */
+/* Force html5-qrcode to fill container and hide its default UI noise */
 :deep(#qr-reader-container video) {
   width: 100% !important;
-  height: 320px !important;
-  object-fit: cover !important;
-  display: block !important;
-  z-index: 1 !important;
-  position: relative !important;
+  height: 100% !important;
+  object-fit: cover;
 }
-
-/* Our blue corner overlay sits above the video */
-.absolute.inset-0.pointer-events-none {
-  z-index: 2;
-}
-
-/* Hide all library UI chrome */
 :deep(#qr-reader-container img[alt='Info icon']),
 :deep(#qr-reader-container select),
-:deep(#qr-reader-container #qr-reader__camera_selection),
-:deep(#qr-reader-container #qr-reader__header_message),
-:deep(#qr-reader-container #qr-reader__status_span),
-:deep(#qr-reader-container #qr-reader__dashboard) {
+:deep(#qr-reader-container #qr-reader__camera_selection) {
+  display: none !important;
+}
+:deep(#qr-reader-container #qr-reader__header_message) {
   display: none !important;
 }
 </style>
