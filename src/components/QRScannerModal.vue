@@ -371,16 +371,18 @@ const emit = defineEmits(['update:modelValue'])
 const scanState = ref('idle') // idle | loading | scanning | error
 const errorMessage = ref('')
 const scanResult = ref(null)
-let html5QrCode = null
-let isCurrentlyScanning = false
+let html5QrCode = null // html5-qrcode instance
+let isCurrentlyScanning = false // guard flag
 
 // ── Scanner lifecycle ───────────────────────────────────────────────
 const startScanner = async () => {
+  // Wait for DOM
   await nextTick()
   scanResult.value = null
   scanState.value = 'loading'
   errorMessage.value = ''
 
+  // Make sure old instance is cleaned up
   await safeStop()
 
   const container = document.getElementById('qr-reader-container')
@@ -391,14 +393,17 @@ const startScanner = async () => {
   }
 
   try {
+    // Request camera permission first
     const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-    stream.getTracks().forEach((t) => t.stop())
+    stream.getTracks().forEach((t) => t.stop()) // just checking permission
 
+    // Get camera list
     const cameras = await Html5Qrcode.getCameras()
     if (!cameras || cameras.length === 0) {
       throw new Error('Aucune caméra détectée sur cet appareil.')
     }
 
+    // Prefer back camera on mobile, otherwise use last one (usually back)
     const backCamera = cameras.find(
       (c) =>
         c.label.toLowerCase().includes('back') ||
@@ -411,9 +416,14 @@ const startScanner = async () => {
 
     await html5QrCode.start(
       selectedCamera.id,
-      { fps: 10, qrbox: { width: 220, height: 220 }, disableFlip: false },
+      {
+        fps: 10,
+        qrbox: { width: 220, height: 220 },
+        aspectRatio: 1.0,
+        disableFlip: false,
+      },
       onScanSuccess,
-      () => {},
+      () => {}, // ignore per-frame errors (not real errors)
     )
 
     isCurrentlyScanning = true
@@ -439,7 +449,7 @@ const safeStop = async () => {
     try {
       await html5QrCode.stop()
     } catch {
-      /* ignore */
+      // ignore stop errors
     }
     isCurrentlyScanning = false
   }
@@ -447,7 +457,7 @@ const safeStop = async () => {
     try {
       html5QrCode.clear()
     } catch {
-      /* ignore */
+      // ignore
     }
     html5QrCode = null
   }
@@ -455,6 +465,7 @@ const safeStop = async () => {
 
 // ── QR scan success handler ─────────────────────────────────────────
 const onScanSuccess = async (decodedText) => {
+  // Pause scanning while we process
   if (!isCurrentlyScanning) return
 
   try {
@@ -462,13 +473,15 @@ const onScanSuccess = async (decodedText) => {
   } catch {
     /* ignore */
   }
+
   scanState.value = 'loading'
 
-  // Parse QR format: "BELMAHI_STUDENT:ID"  |  plain ID  |  JSON {"id":123}
+  // Parse QR data — format: "BELMAHI_STUDENT:ID"  or just the ID
   let studentId = decodedText.trim()
   if (studentId.startsWith('BELMAHI_STUDENT:')) {
     studentId = studentId.split(':')[1]
   }
+  // Also handle JSON format: {"id": 123, ...}
   if (studentId.startsWith('{')) {
     try {
       const parsed = JSON.parse(studentId)
@@ -479,7 +492,6 @@ const onScanSuccess = async (decodedText) => {
   }
 
   try {
-    // NOTE: api.scanStudentInGroup now uses POST (side-effect: increments counter)
     const result = await api.scanStudentInGroup(props.groupId, studentId)
     scanResult.value = result
     scanState.value = 'idle'
@@ -489,6 +501,7 @@ const onScanSuccess = async (decodedText) => {
     scanResult.value = null
     scanState.value = 'error'
     errorMessage.value = err.message || 'Étudiant non trouvé'
+    // Resume scanning on error
     try {
       await html5QrCode?.resume()
       scanState.value = 'scanning'
@@ -512,10 +525,12 @@ const closeModal = async () => {
   emit('update:modelValue', false)
 }
 
+// Watch for modal open
 watch(
   () => props.modelValue,
   async (open) => {
     if (open) {
+      // Small delay to let DOM mount
       setTimeout(() => startScanner(), 150)
     } else {
       await safeStop()
@@ -525,6 +540,7 @@ watch(
   },
 )
 
+// Cleanup on component destroy
 onUnmounted(async () => {
   await safeStop()
 })
