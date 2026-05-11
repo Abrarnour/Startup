@@ -455,16 +455,25 @@ const safeStop = async () => {
     try {
       await html5QrCode.stop()
     } catch {
-      // ignore stop errors
+      /* leave as-is */
     }
+
     isCurrentlyScanning = false
   }
+
+  const video = document.querySelector('#qr-reader-container video')
+
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach((track) => track.stop())
+  }
+
   if (html5QrCode) {
     try {
       html5QrCode.clear()
     } catch {
-      // ignore
+      /* leave as-is */
     }
+
     html5QrCode = null
   }
 }
