@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/ backdrop-blur-sm p-4"
       @click.self="closeModal"
     >
       <div
@@ -64,8 +64,8 @@
         </div>
 
         <!-- Camera Area -->
-        <div class="relative overflow-hidden" style="height: 320px">
-          <div id="qr-reader-container" class="absolute inset-0 bg-black"></div>
+        <div class="relative">
+          <div id="qr-reader-container" class="w-full bg-black" style="min-height: 300px"></div>
 
           <!-- Scanning overlay frame -->
           <div
@@ -458,7 +458,7 @@ const startScanner = async () => {
 
     await html5QrCode.start(
       selectedCamera.id,
-      { fps: 10, disableFlip: false },
+      { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0, disableFlip: false },
       onScanSuccess,
       () => {},
     )
@@ -582,6 +582,7 @@ onUnmounted(async () => {
   top: 30%;
   animation: scanMove 2s ease-in-out infinite;
 }
+
 @keyframes scanMove {
   0% {
     top: 10%;
@@ -597,44 +598,19 @@ onUnmounted(async () => {
   }
 }
 
-/* Force the library's internal wrapper to fill our container */
-:deep(#qr-reader-container > div),
-:deep(#qr-reader-container #qr-reader) {
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: black !important;
-}
-
-/* Scan region must also fill 100% */
-:deep(#qr-reader-container #qr-reader__scan_region) {
-  width: 100% !important;
-  height: 100% !important;
-  min-height: unset !important;
-  border: none !important;
-}
-
-/* Video: absolute fill, contained by our overflow:hidden parent */
+/* Force html5-qrcode to fill width but let it calculate its own height to prevent collapse */
 :deep(#qr-reader-container video) {
-  position: absolute !important;
-  inset: 0 !important;
   width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-  z-index: 0 !important;
+  object-fit: cover;
 }
 
-/* Hide ALL library UI chrome */
-:deep(#qr-reader-container #qr-reader__dashboard),
-:deep(#qr-reader-container #qr-reader__header_message),
-:deep(#qr-reader-container #qr-reader__status_span),
-:deep(#qr-reader-container #qr-reader__camera_permission_button),
 :deep(#qr-reader-container img[alt='Info icon']),
 :deep(#qr-reader-container select),
-:deep(#qr-reader-container button) {
+:deep(#qr-reader-container #qr-reader__camera_selection) {
+  display: none !important;
+}
+
+:deep(#qr-reader-container #qr-reader__header_message) {
   display: none !important;
 }
 </style>
