@@ -146,7 +146,8 @@
             :class="{
               'border-green-500': scanResult.access === 'GRANTED',
               'border-red-500': scanResult.access === 'NOT_PAID',
-              'border-yellow-500': scanResult.access === 'INACTIVE',
+              'border-yellow-500':
+                scanResult.access === 'INACTIVE' || scanResult.access === 'WRONG_DAY',
               'border-gray-400': scanResult.access === 'NOT_ENROLLED',
             }"
           >
@@ -156,7 +157,8 @@
               :class="{
                 'bg-green-500': scanResult.access === 'GRANTED',
                 'bg-red-600': scanResult.access === 'NOT_PAID',
-                'bg-yellow-500': scanResult.access === 'INACTIVE',
+                'bg-yellow-500':
+                  scanResult.access === 'INACTIVE' || scanResult.access === 'WRONG_DAY',
                 'bg-gray-600': scanResult.access === 'NOT_ENROLLED',
               }"
             >
@@ -216,6 +218,9 @@
                 <template v-else-if="scanResult.access === 'INACTIVE'"
                   >INSCRIPTION INACTIVE</template
                 >
+                <template v-else-if="scanResult.access === 'WRONG_DAY'"
+                  >يوم خاطئ — لا حصة اليوم</template
+                >
                 <template v-else>NON INSCRIT DANS CE GROUPE</template>
               </span>
             </div>
@@ -226,7 +231,8 @@
               :class="{
                 'bg-green-50': scanResult.access === 'GRANTED',
                 'bg-red-50': scanResult.access === 'NOT_PAID',
-                'bg-yellow-50': scanResult.access === 'INACTIVE',
+                'bg-yellow-50':
+                  scanResult.access === 'INACTIVE' || scanResult.access === 'WRONG_DAY',
                 'bg-gray-50': scanResult.access === 'NOT_ENROLLED',
               }"
             >
@@ -325,6 +331,58 @@
             </div>
           </div>
 
+          <!-- Session counter (GRANTED) -->
+          <div
+            v-if="scanResult.access === 'GRANTED'"
+            class="mb-3 rounded-xl px-4 py-3 text-center"
+            :class="
+              scanResult.cycle_completed
+                ? 'bg-orange-50 border border-orange-300'
+                : 'bg-green-50 border border-green-200'
+            "
+          >
+            <p class="text-xs text-gray-500 mb-1">الجلسات في هذه الدورة</p>
+            <p
+              class="text-2xl font-black"
+              :class="scanResult.cycle_completed ? 'text-orange-600' : 'text-green-700'"
+            >
+              {{ scanResult.sessions_attended }}
+              <span v-if="scanResult.total_sessions" class="text-base font-semibold text-gray-400">
+                / {{ scanResult.total_sessions }}</span
+              >
+            </p>
+            <p v-if="scanResult.already_scanned_today" class="text-xs text-blue-600 mt-1">
+              ⚡ مسجّل اليوم مسبقاً
+            </p>
+            <p v-if="scanResult.cycle_completed" class="text-xs text-orange-700 font-bold mt-1">
+              🔔 انتهت الدورة — يجب التجديد
+            </p>
+          </div>
+
+          <!-- NOT_PAID: pay + count as session 1 -->
+          <div v-if="scanResult.access === 'NOT_PAID'" class="mb-3">
+            <p class="text-center text-xs text-gray-500 mb-2">الطالب مسجّل لكن لم يدفع بعد</p>
+            <button
+              @click="handlePayAndScan"
+              :disabled="payLoading"
+              class="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              <span v-if="payLoading">جاري التسجيل...</span>
+              <span v-else>✓ دفع + احتساب الجلسة 1</span>
+            </button>
+          </div>
+
+          <!-- WRONG_DAY: info only -->
+          <div
+            v-if="scanResult.access === 'WRONG_DAY'"
+            class="mb-3 rounded-xl bg-yellow-50 border border-yellow-300 px-4 py-3 text-center"
+          >
+            <p class="text-sm font-bold text-yellow-800">⚠️ ليس يوم الحصة</p>
+            <p class="text-xs text-yellow-700 mt-1">
+              يوم الحصة المجدولة: <strong>{{ scanResult.scheduled_day }}</strong>
+            </p>
+          </div>
+
           <!-- Scan again button -->
           <button
             @click="resetScan"
@@ -374,6 +432,7 @@ const emit = defineEmits(['update:modelValue'])
 const scanState = ref('idle') // idle | loading | scanning | error
 const errorMessage = ref('')
 const scanResult = ref(null)
+const payLoading = ref(false)
 let html5QrCode = null // html5-qrcode instance
 let isCurrentlyScanning = false // guard flag
 
