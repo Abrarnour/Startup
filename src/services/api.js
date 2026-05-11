@@ -1459,6 +1459,20 @@ export const markStudentPaid = async (groupId, studentId) => {
   return await response.json()
 }
 
+// ─── [NEW] markStudentPaidAndScan ───────────────────────────────────────────
+// Admin: pay + count today as session #1 of new cycle (shown in NOT_PAID scan card).
+export const markStudentPaidAndScan = async (groupId, studentId) => {
+  const response = await fetch(`${API_URL}/groups/${groupId}/students/${studentId}/pay-and-scan`, {
+    method: 'POST',
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Erreur paiement + scan')
+  }
+  return await response.json()
+}
+
 // ─── [NEW] getAbsentStudentsToday ────────────────────────────────────────────
 // Returns all active students in a group who have NOT been scanned today.
 export const getAbsentStudentsToday = async (groupId) => {

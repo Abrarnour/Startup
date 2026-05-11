@@ -1105,7 +1105,9 @@ router.post(
            gs.payment_status,
            gs.sessions_attended,
            gs.cycle_start_date,
-           g.group_name
+           g.group_name,
+           g.day_of_week,
+           g.total_sessions
          FROM users u
          LEFT JOIN group_students gs
                ON u.id = gs.student_id AND gs.group_id = $1
@@ -1121,6 +1123,20 @@ router.post(
       if (data.birthday) {
         const ageDiff = Date.now() - new Date(data.birthday).getTime()
         data.age = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970)
+      }
+
+      // ─── Day-of-week security check ──────────────────────────────────────────
+      if (data.day_of_week) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+        const todayDay = days[new Date().getDay()]
+        if (todayDay !== data.day_of_week) {
+          return res.json({
+            ...data,
+            access: 'WRONG_DAY',
+            scheduled_day: data.day_of_week,
+            today_day: todayDay,
+          })
+        }
       }
 
       if (!data.enrollment_status) data.access = 'NOT_ENROLLED'
@@ -1158,6 +1174,37 @@ router.post(
           )
 
           data.already_scanned_today = false
+
+          // ─── Auto-flip to pending when cycle is complete ──────────────────
+          if (data.total_sessions && data.sessions_attended >= data.total_sessions) {
+            await pool.query(
+              `UPDATE group_students SET payment_status = 'pending'
+               WHERE group_id = $1 AND student_id = $2`,
+              [groupId, studentId],
+            )
+            data.cycle_completed = true
+            data.payment_status = 'pending'
+            const ts = Date.now()
+            const courseInfo = await pool.query(
+              `SELECT c.title FROM groups g JOIN courses c ON c.id = g.course_id WHERE g.id = $1`,
+              [groupId],
+            )
+            if (courseInfo.rows.length > 0) {
+              await sendNotif(
+                pool,
+                Number(studentId),
+                `cycle_done_${groupId}_${studentId}_${ts}`,
+                `\u{1F514} انتهت دورتك في مادة "${courseInfo.rows[0].title}" (${data.sessions_attended}/${data.total_sessions} جلسات). يرجى تجديد الاشتراك.`,
+                'payment',
+              )
+              await notifyAllAdmins(
+                pool,
+                `cycle_done_admin_${groupId}_${studentId}_${ts}`,
+                `\u{1F514} الطالب ${data.name} ${data.last_name} أتم دورته في "${courseInfo.rows[0].title}" — يحتاج تجديد.`,
+                'payment',
+              )
+            }
+          }
         } else {
           // Already scanned today — return current count, do NOT increment
           data.already_scanned_today = true
@@ -1237,6 +1284,71 @@ router.patch(
           error: 'Migration DB manquante',
           detail: 'Exécutez railway_migration.sql sur votre base Railway.',
         })
+      }
+      res.status(500).json({ error: err.message })
+    }
+  },
+)
+
+// ─── POST /:groupId/students/:studentId/pay-and-scan ─────────────────────
+// Admin: mark student as paid + count today as session #1 of the new cycle.
+router.post(
+  '/:groupId/students/:studentId/pay-and-scan',
+  authMiddleware,
+  adminMiddleware,
+  async (req, res) => {
+    const { groupId, studentId } = req.params
+    const ts = Date.now()
+
+    try {
+      const result = await pool.query(
+        `UPDATE group_students
+         SET
+           payment_status    = 'paid',
+           sessions_attended = 1,
+           cycle_start_date  = NOW(),
+           last_payment_date = CURRENT_DATE
+         WHERE group_id = $1 AND student_id = $2
+         RETURNING *`,
+        [groupId, studentId],
+      )
+
+      if (result.rows.length === 0)
+        return res.status(404).json({ error: 'Inscription non trouvée' })
+
+      await pool.query(
+        `INSERT INTO attendance_log (group_id, student_id, session_number, scanned_by)
+         VALUES ($1, $2, 1, $3)
+         ON CONFLICT (group_id, student_id, (scanned_at::date)) DO NOTHING`,
+        [groupId, studentId, req.user.id],
+      )
+
+      const studentInfo = await pool.query(
+        `SELECT u.name, u.last_name, c.title, g.total_sessions
+         FROM users u
+         JOIN group_students gs ON gs.student_id = u.id
+         JOIN groups g          ON g.id = gs.group_id
+         JOIN courses c         ON c.id = g.course_id
+         WHERE gs.group_id = $1 AND gs.student_id = $2`,
+        [groupId, studentId],
+      )
+      if (studentInfo.rows.length > 0) {
+        const si = studentInfo.rows[0]
+        const cycleStr = si.total_sessions ? `/${si.total_sessions}` : ''
+        await sendNotif(
+          pool,
+          Number(studentId),
+          `pay_scan_${groupId}_${studentId}_${ts}`,
+          `✅ تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة — الجلسة 1${cycleStr} سُجّلت اليوم.`,
+          'payment',
+        )
+      }
+
+      res.json({ success: true, enrollment: result.rows[0], session_number: 1 })
+    } catch (err) {
+      console.error('Pay-and-scan error:', err)
+      if (err.code === '42703' || err.code === '42P01') {
+        return res.status(503).json({ error: 'Migration DB manquante', detail: 'Exécutez railway_migration.sql.' })
       }
       res.status(500).json({ error: err.message })
     }
