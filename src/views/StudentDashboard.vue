@@ -116,7 +116,7 @@ onMounted(() => {
         <!-- ONE profile button -->
         <button
           @click="openProfile"
-          class="flex-shrink-0 w-15 h-15 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          class="flex-shrink-0 w-10 h-10 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           title="Mon profil"
         >
           <svg
@@ -132,6 +132,7 @@ onMounted(() => {
             <circle cx="12" cy="7" r="4" />
           </svg>
         </button>
+        <br />
         PROFILE
       </div>
     </div>
