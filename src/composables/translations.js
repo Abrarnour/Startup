@@ -1,6 +1,38 @@
 // src/composables/translations.js
 export const translations = {
   fr: {
+    // fr: section — add these:
+    student_label: 'Étudiant',
+    loading_list: 'Chargement de la liste...',
+    manage_courses: 'Gérer les Matières',
+    delete_student: 'Supprimer',
+    cleanup_pending_14d: 'Purger les attentes (>14j)',
+    cleanup_inactive: 'Nettoyer (>60j)',
+    info_cleanup_pending:
+      'Annule les inscriptions en attente depuis plus du nombre de jours défini.',
+    info_cleanup_inactive:
+      'Supprime définitivement les élèves inactifs depuis plus du nombre de jours défini.',
+    cleanup_pending_14:
+      'Définissez le nombre de jours — les inscriptions en attente plus anciennes seront annulées.',
+    cleanup_inactiv:
+      'Définissez le nombre de jours — les élèves inactifs depuis plus longtemps seront supprimés.',
+    days_count: 'Nombre de jours',
+    enter_number: 'Entrez un nombre',
+    warning_days_low: '⚠️ Attention : nombre de jours trop faible !',
+    confirm_btn: 'Confirmer',
+    processing: 'En cours...',
+    deleting: 'Suppression...',
+    courses_of_student: 'Matières de : {name}',
+    no_enrolled_courses_ar: 'Aucune matière inscrite',
+    status_label: 'Statut :',
+    enrolled_closed_ar: 'Fermé',
+    paid_active_ar: 'Actif · Payé',
+    unpaid_active_trust: 'Actif · Non payé',
+    confirm_payment: 'Confirmer le paiement',
+    active_unpaid: 'Activer sans paiement',
+    lock_registered: 'Verrouiller',
+    cancel_enrollment: "Annuler l'inscription",
+    confirm_unenroll_student: 'Êtes-vous sûr de vouloir désinscrire cet élève ?',
     // ── FOOTER ──
     about: 'À Propos',
     contact_us: 'Nous Contacter',
@@ -269,9 +301,7 @@ export const translations = {
     confirm_delete_teacher_msg_alt_1: 'Êtes-vous sûr de vouloir supprimer',
     confirm_delete_teacher_msg_alt_2:
       '? Cette action supprimera également tous ses Matiére associés.',
-    deleting: 'Suppression...',
-    cleanup_inactive: 'Nettoyer (60j inactifs)',
-    student_label: 'Étudiant',
+
     confirm_cleanup_msg:
       'Êtes-vous sûr de vouloir supprimer tous les étudiants inactifs depuis plus de 60 jours ? Cette action est irréversible.',
     cleanup_success_1: '',
@@ -525,6 +555,7 @@ export const translations = {
     write_remark_here: 'Écrivez votre remarque ici...',
     important_fem: 'Importante',
     private_admin_only: 'Privée (admin seulement)',
+
     history: 'Historique',
     no_remarks_student: 'Aucune remarque pour cet étudiant',
     important: 'Important',
@@ -560,11 +591,6 @@ export const translations = {
     thu: 'Jeu',
     fri: 'Ven',
     sat: 'Sam',
-
-    cleanup_pending_14:
-      'Définissez le nombre de jours – les inscriptions en attente depuis plus de {days} jours seront annulées',
-    cleanup_inactiv:
-      'Définissez le nombre de jours – les élèves inactifs depuis plus de {days} jours seront supprimés',
 
     sunday_full: 'Dimanche',
     monday_full: 'Lundi',
@@ -785,24 +811,11 @@ export const translations = {
     top_courses: 'Matières les plus populaires',
 
     // ── STUDENT LIST MODAL (ADMIN) ──
-    cleanup_pending_14d: 'Purger les attentes (>14j)',
-    manage_courses: 'Gérer les Matiéres ',
-    delete_student: "Supprimer l'étudiant",
-    courses_of_student: 'Matiére de : {name}',
-    no_enrolled_courses_ar: 'Aucun Matiére enregistré.',
-    status_label: 'Statut :',
-    enrolled_closed_ar: 'Inscrit (Fermé)',
-    paid_active_ar: 'Payé (Actif)',
-    unpaid_active_trust: 'Non payé (Actif sur confiance)',
-    confirm_payment: 'Confirmer le paiement ',
-    active_unpaid: 'Actif (Non payé) ',
-    lock_registered: 'Verrouiller ',
-    cancel_enrollment: "Annuler l'inscription ",
+
     error_updating: 'Erreur lors de la mise à jour',
     error_deleting: 'Erreur lors de la suppression',
     error_cleaning: 'Erreur lors du nettoyage',
-    confirm_unenroll_student:
-      "Êtes-vous sûr d'annuler l'inscription de cet étudiant à ce Matiére ?",
+
     confirm_cleanup_pending:
       'Êtes-vous sûr de supprimer les inscriptions en attente depuis plus de 14 jours ?',
     cleanup_pending_success: '{n} inscription(s) retirée(s) avec succès.',
@@ -841,10 +854,6 @@ export const translations = {
     file_limits: 'PDF, DOC, PPT, MP4, Images (Max 1 GB)',
 
     // Student list modal info tooltips
-    info_cleanup_pending:
-      "Supprime définitivement toutes les inscriptions dont le statut est 'en attente' depuis plus de 14 jours. Ces étudiants n'ont pas confirmé leur place. Cette action est irréversible.",
-    info_cleanup_inactive:
-      "Supprime définitivement les comptes étudiants inactifs depuis plus de 60 jours (aucune connexion, aucun Matiére actif). Cette action est irréversible et libère de l'espace.",
 
     // Teacher dashboard
     upload_material_inside: 'Téléverser un document',
@@ -860,13 +869,6 @@ export const translations = {
     snav_about: 'À propos',
     snav_reviews: 'Avis',
     snav_register: "S'inscrire",
-
-    loading_list: 'Chargement de la liste...',
-    executing: 'Jاري التنفيذ...',
-    confirm_btn: 'Confirmer',
-    days_count: 'Nombre de jours',
-    enter_number: 'Entrez un nombre',
-    warning_days_low: '⚠️ Attention : Le nombre de jours est très bas.',
 
     scan_student_qr: 'Scan QR Étudiant',
     point_camera_hint: 'Pointez la caméra vers le QR Code de la carte étudiant',
@@ -922,17 +924,42 @@ export const translations = {
   // ════════════════════════════════════════
 
   ar: {
+    student_label: 'الطالب',
+    loading_list: 'جاري تحميل القائمة...',
+    manage_courses: 'إدارة المواد',
+    delete_student: 'حذف الطالب',
+    cleanup_pending_14d: 'إلغاء المعلقين (>14 يوم)',
+    cleanup_inactive: 'تنظيف غير النشطين (>60 يوم)',
+    info_cleanup_pending: 'يلغي التسجيلات المعلقة الأقدم من العدد المحدد من الأيام.',
+    info_cleanup_inactive: 'يحذف نهائيًا الطلاب غير النشطين الذين تجاوزوا المدة المحددة.',
+    cleanup_pending_14: 'حدد عدد الأيام — سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة.',
+    cleanup_inactiv: 'حدد عدد الأيام — سيتم حذف الطلاب غير النشطين الذين تجاوزوا هذه المدة.',
+    days_count: 'عدد الأيام',
+    enter_number: 'أدخل عددًا',
+    warning_days_low: '⚠️ تحذير: عدد الأيام منخفض جدًا!',
+    confirm_btn: 'تأكيد',
+    processing: 'جاري التنفيذ...',
+    deleting: 'جاري الحذف...',
+    courses_of_student: 'مواد الطالب: {name}',
+    no_enrolled_courses_ar: 'لا توجد مواد مسجلة',
+    status_label: 'الحالة:',
+    enrolled_closed_ar: 'مغلق',
+    paid_active_ar: 'نشط · مدفوع',
+    unpaid_active_trust: 'نشط · غير مدفوع',
+    confirm_payment: 'تأكيد الدفع',
+    active_unpaid: 'تفعيل بدون دفع',
+    lock_registered: 'تعليق التسجيل',
+    cancel_enrollment: 'إلغاء التسجيل',
+    confirm_unenroll_student: 'هل أنت متأكد من إلغاء تسجيل هذا الطالب؟',
+
     cancel_pending_desc: 'سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة.',
     delete_inactive_desc: 'سيتم حذف الطلاب غير النشطين الذين تجاوزوا هذه المدة.',
-    days_count: 'عدد الأيام',
+
     set_limit: 'حدد',
     days: 'أيام',
     confirm: 'تأكيد',
-    loading_list: 'جاري تحميل القائمة...',
+
     executing: 'جاري التنفيذ...',
-    confirm_btn: 'تأكيد',
-    enter_number: 'أدخل العدد',
-    warning_days_low: '⚠️ تحذير: عدد الأيام صغير جداً، تأكد قبل المتابعة',
 
     scan_student_qr: 'مسح رمز الطالب',
     point_camera_hint: 'وجه الكاميرا نحو رمز QR الخاص ببطاقة الطالب',
@@ -957,7 +984,7 @@ export const translations = {
     select_all: 'تحديد الكل',
     absents_today: 'الغائبون اليوم',
     all_present: 'الكل حاضر !',
-    deleting: 'جاري الحذف...',
+
     cancel: 'إلغاء',
 
     student_history_title: 'سجل الطالب',
@@ -1008,10 +1035,6 @@ export const translations = {
     file_limits: 'PDF, DOC, PPT, MP4, صور (الحد الأقصى 1 GB)',
 
     // Student list modal info tooltips
-    info_cleanup_pending:
-      "يحذف نهائياً جميع التسجيلات التي تكون في حالة 'انتظار' منذ أكثر من 14 يوماً. هؤلاء الطلاب لم يؤكدوا مكانهم. هذا الإجراء لا يمكن التراجع عنه.",
-    info_cleanup_inactive:
-      'يحذف نهائياً حسابات الطلاب الغير نشطين منذ أكثر من 60 يوماً (لا دخول، لا مواد نشطة). هذا الإجراء لا يمكن التراجع عنه.',
 
     // Teacher dashboard
     upload_material_inside: 'رفع مستند',
@@ -1065,23 +1088,11 @@ export const translations = {
     top_courses: 'أفضل المواد تسجيلاً',
 
     // ── STUDENT LIST MODAL (ADMIN) ──
-    cleanup_pending_14d: 'إلغاء المعلقين (>14 يوم)',
-    manage_courses: 'إدارة الدورات',
-    delete_student: 'حذف الطالب',
-    courses_of_student: 'دورات: {name}',
-    no_enrolled_courses_ar: 'لا توجد دورات مسجلة.',
-    status_label: 'الحالة:',
-    enrolled_closed_ar: 'مسجل (مغلق)',
-    paid_active_ar: 'مدفوع (مفعل)',
-    unpaid_active_trust: 'غير مدفوع (مفعل بالثقة)',
-    confirm_payment: 'تأكيد الدفع ',
-    active_unpaid: 'مفعل (لم يدفع) ',
-    lock_registered: 'قفل (مسجل) ',
-    cancel_enrollment: 'إلغاء التسجيل ',
+
     error_updating: 'خطأ في التحديث',
     error_deleting: 'خطأ في الحذف',
     error_cleaning: 'خطأ في التنظيف',
-    confirm_unenroll_student: 'هل أنت متأكد من إلغاء تسجيل الطالب من هذه الدورة؟',
+
     confirm_cleanup_pending:
       'هل أنت متأكد من حذف جميع التسجيلات المعلقة منذ أكثر من 14 يوماً ولم تدفع؟',
     cleanup_pending_success: 'تم إزالة {n} تسجيل(ات) بنجاح.',
@@ -1278,8 +1289,6 @@ export const translations = {
     role: 'الدور',
     actions: 'الإجراءات',
     close: 'إغلاق',
-    cleanup_pending_14: 'حدد عدد الأيام – سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة',
-    cleanup_inactiv: 'حدد عدد الأيام – سيتم حذف الطلاب الغير نشطين الذين تجاوزوا هذه المدة',
 
     // ── TEACHER DASHBOARD ──
     my_courses: 'دروسي',
@@ -1452,8 +1461,6 @@ export const translations = {
     confirm_delete_teacher_msg_alt_1: 'هل أنت متأكد أنك تريد حذف',
     confirm_delete_teacher_msg_alt_2: '؟ سيؤدي هذا الإجراء أيضًا إلى حذف جميع دوراته المرتبطة.',
 
-    cleanup_inactive: 'تنظيف (60 يوم غير نشط)',
-    student_label: 'الطالب',
     confirm_cleanup_msg:
       'هل أنت متأكد أنك تريد حذف جميع الطلاب غير النشطين لأكثر من 60 يومًا؟ هذا الإجراء لا يمكن التراجع عنه.',
     cleanup_success_1: 'تم حذف ',

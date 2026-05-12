@@ -298,7 +298,7 @@
                       : 'bg-gray-100 text-gray-700 border-gray-200 hover:border-red-300',
                 ]"
               >
-                {{ preset }} يوم
+                {{ preset }} {{ t('day') }}
               </button>
             </div>
           </div>
@@ -319,13 +319,13 @@
                   ? 'focus:border-orange-500'
                   : 'focus:border-red-500',
               ]"
-              placeholder="{{ t('enter_number') }}"
+              :placeholder="t('enter_number')"
             />
             <span
               class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
               :class="darkMode ? 'text-gray-400' : 'text-gray-400'"
             >
-              يوم
+              {{ t('day') }}
             </span>
           </div>
 
@@ -376,9 +376,9 @@
                 />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
-              جاري التنفيذ...
+              {{ t('processing') }}
             </span>
-            <span v-else> {{ t('confirm_btn') }} ({{ cleanupDialog.days }} يوم) </span>
+            <span v-else>{{ t('confirm_btn') }} ({{ cleanupDialog.days }} {{ t('day') }})</span>
           </button>
         </div>
       </div>
@@ -460,7 +460,7 @@
             }}
           </h3>
           <button @click="managingStudent = null" class="p-2 bg-gray-200 rounded-full text-black">
-            X
+            <X :size="18" />
           </button>
         </div>
 
@@ -540,7 +540,6 @@ const { t } = useLanguage()
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
-  t: { type: Function, default: (k) => k },
 })
 
 const emit = defineEmits(['close', 'student-deleted'])
@@ -575,25 +574,27 @@ async function executeCleanup() {
 
   try {
     if (cleanupDialog.type === 'inactive') {
-      // Red button — delete inactive students
       const result = await adminCleanupInactiveStudents(cleanupDialog.days)
-      alert(`✅ تم حذف ${result.count} طالب(ة) غير نشط/ة (الأقدم من ${cleanupDialog.days} يوم).`)
+      alert(
+        `✅ ${t('cleanup_success_inactive').replace('{count}', result.count).replace('{days}', cleanupDialog.days)}`,
+      )
       await loadStudents()
     } else {
-      // Orange button — cancel pending enrollments
       const token = localStorage.getItem('token')
       const res = await fetch(
         `https://belmahi-school-production.up.railway.app/api/groups/cleanup/pending-enrollments?days=${cleanupDialog.days}`,
         { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
       )
-      if (!res.ok) throw new Error((await res.json()).error || 'خطأ في الخادم')
+      if (!res.ok) throw new Error((await res.json()).error || t('server_error'))
       const data = await res.json()
-      alert(`✅ تم إزالة ${data.deleted} تسجيل(ات) معلق(ة) (الأقدم من ${cleanupDialog.days} يوم).`)
+      alert(
+        `✅ ${t('cleanup_success_pending').replace('{count}', data.deleted).replace('{days}', cleanupDialog.days)}`,
+      )
     }
 
     cleanupDialog.open = false
   } catch (e) {
-    alert('❌ حدث خطأ: ' + e.message)
+    alert('❌ ' + e.message)
   } finally {
     cleanupDialog.loading = false
   }
@@ -686,7 +687,7 @@ const updateEnrollment = async (enr, newStatus, newPayment) => {
     )
     await fetchEnrollments(managingStudent.value.id)
   } catch (e) {
-    alert('خطأ في التحديث')
+    alert(t('error_update'))
   }
 }
 
@@ -700,7 +701,7 @@ const deleteEnrollment = async (enr) => {
     )
     await fetchEnrollments(managingStudent.value.id)
   } catch (e) {
-    alert('خطأ في الحذف')
+    alert(t('error_delete'))
   }
 }
 </script>
