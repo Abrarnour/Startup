@@ -1,31 +1,28 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next' // ✅ FIX 1: Lock was missing
+import { BookOpen, Calendar, Users, Clock, Lock } from 'lucide-vue-next'
 import MaterialsListModal from '../components/MaterialsListModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
-
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
 import AppLoader from '../components/AppLoader.vue'
+
 const showMaterialsModal = ref(false)
 const selectedCourseId = ref(null)
-const showQrCard = ref(false)
+const showProfileModal = ref(false)
+const studentProfile = ref({})
 
-const printCard = () => {
-  const card = document.getElementById('student-id-card')
-  const w = window.open('', '_blank')
-  w.document.write('<html><body>' + card.innerHTML + '</body></html>')
-  w.document.close()
-  w.print()
-}
+const { t } = useLanguage()
+
+const props = defineProps({
+  darkMode: { type: Boolean, default: false },
+  user: { type: Object, default: null },
+})
+
 const openMaterialsModal = (courseId) => {
-  console.log('Fetching materials for:', courseId)
   selectedCourseId.value = courseId
   showMaterialsModal.value = true
 }
-// StudentDashboard.vue <script setup>
-const showProfileModal = ref(false)
-const studentProfile = ref({}) // Use an empty object, not null, to prevent render crashes
 
 const openProfile = async () => {
   try {
@@ -35,26 +32,17 @@ const openProfile = async () => {
     console.error('Profile load failed:', err)
     studentProfile.value = props.user || {}
   } finally {
-    // ALWAYS open the modal, even if the API fails, so you know the button works
     showProfileModal.value = true
   }
 }
-const { t } = useLanguage()
-const props = defineProps({
-  darkMode: { type: Boolean, default: false },
-  user: { type: Object, default: null },
-})
 
-// État
 const loading = ref(true)
 const error = ref(null)
 const enrolledCourses = ref([])
 
-// Charger les cours de l'étudiant
 const loadCourses = async () => {
   loading.value = true
   error.value = null
-
   try {
     const response = await fetch(
       'https://belmahi-school-production.up.railway.app/api/students/my-courses',
@@ -65,34 +53,15 @@ const loadCourses = async () => {
         },
       },
     )
-
-    if (!response.ok) {
-      throw new Error('Erreur lors du chargement des cours')
-    }
-
-    const data = await response.json()
-    enrolledCourses.value = data
-
-    console.log('Courses loaded:', data)
+    if (!response.ok) throw new Error('Erreur lors du chargement des cours')
+    enrolledCourses.value = await response.json()
   } catch (err) {
-    console.error('Erreur chargement cours:', err)
     error.value = err.message || 'Erreur lors du chargement des cours'
   } finally {
     loading.value = false
   }
 }
 
-// Labels des niveaux
-const getLevelLabel = (level) => {
-  const labels = {
-    primaire: t('level_primary_full'),
-    moyen: t('level_middle_full'),
-    secondaire: t('level_secondary_full'),
-  }
-  return labels[level] || level
-}
-
-// Format teacher name
 const formatTeacherName = (course) => {
   if (!course.teacher_name) return t('not_assigned')
   const prefix = course.teacher_gender === 'M' ? t('mister_short') : t('madam_short')
@@ -126,28 +95,39 @@ onMounted(() => {
   </div>
 
   <div v-else>
+    <!-- ── Welcome Header ── -->
     <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
       <div class="flex items-center gap-4">
-        <div class="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl">
+        <div class="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex-shrink-0">
           <BookOpen :size="32" class="text-white" />
         </div>
-        <div class="flex-1">
-          <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-1">
+        <div class="flex-1 min-w-0">
+          <h1
+            :class="darkMode ? 'text-white' : 'text-gray-900'"
+            class="text-3xl font-bold mb-1 truncate"
+          >
             {{ t('welcome_comma') }} {{ user?.name }} {{ user?.last_name }}
           </h1>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
             {{ t('your_enrolled_courses') }}
           </p>
         </div>
+
+        <!-- ONE profile button -->
         <button
-          @click="showQrCard = true"
-          class="p-3 bg-white/20 hover:bg-white/40 dark:bg-gray-700 rounded-full shadow-lg transition-transform transform hover:scale-105 border border-gray-200 dark:border-gray-600"
-          title="بطاقة الطالب"
+          @click="openProfile"
+          class="flex-shrink-0 p-3 rounded-full shadow-lg transition-transform transform hover:scale-105 border"
+          :class="
+            darkMode
+              ? 'bg-gray-700 border-gray-600 hover:bg-gray-600'
+              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+          "
+          title="Mon profil"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="28"
-            height="28"
+            width="26"
+            height="26"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -159,27 +139,9 @@ onMounted(() => {
           </svg>
         </button>
       </div>
-
-      <button
-        @click="openProfile"
-        class="p-3 bg-white/20 hover:bg-white/40 dark:bg-gray-700 rounded-full shadow-lg transition-transform transform hover:scale-105 border border-gray-200 dark:border-gray-600"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="28"
-          height="28"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          class="text-blue-600 dark:text-blue-400"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </button>
     </div>
 
+    <!-- ── Empty state ── -->
     <div
       v-if="enrolledCourses.length === 0"
       :class="darkMode ? 'bg-gray-800' : 'bg-white'"
@@ -199,7 +161,7 @@ onMounted(() => {
     </div>
 
     <div v-else>
-      <!-- ─── STATS BOX ──────────────────────────────────────────── -->
+      <!-- ── Stats ── -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div
           :class="darkMode ? 'bg-gray-800' : 'bg-white'"
@@ -251,7 +213,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- ─── BOX 1: PAID / ACTIVE COURSES ───────────────────────── -->
+      <!-- ── Active Courses ── -->
       <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
         <h2
           :class="darkMode ? 'text-white' : 'text-gray-900'"
@@ -318,7 +280,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- ─── BOX 2: PENDING / INACTIVE COURSES ──────────────────── -->
+      <!-- ── Pending Courses ── -->
       <div
         v-if="enrolledCourses.filter((c) => c.enrollment_status !== 'active').length > 0"
         :class="darkMode ? 'bg-gray-800' : 'bg-white'"
@@ -338,7 +300,7 @@ onMounted(() => {
             :class="darkMode ? 'bg-gray-700' : 'bg-gray-50'"
             class="rounded-xl p-5 opacity-80 border-2 border-orange-200"
           >
-            <h3 :class="darkMode ? 'text-white' : 'text-gray-901'" class="text-lg font-bold mb-2">
+            <h3 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-lg font-bold mb-2">
               {{ course.title }}
             </h3>
             <p :class="darkMode ? 'text-gray-300' : 'text-gray-600'" class="text-sm mb-3">
@@ -355,8 +317,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ✅ FIX 2: Removed "&&  user" condition — modal must mount even if user prop arrives late -->
-    <!-- ✅ FIX 3: user-role uses optional chaining safely -->
+    <!-- Modals -->
     <MaterialsListModal
       v-if="showMaterialsModal"
       :is-open="showMaterialsModal"
@@ -365,6 +326,7 @@ onMounted(() => {
       :user-role="user?.role"
       @close="showMaterialsModal = false"
     />
+
     <StudentProfileModal
       v-model="showProfileModal"
       :dark-mode="darkMode"
@@ -376,55 +338,6 @@ onMounted(() => {
         }
       "
     />
-    <!-- ── STUDENT ID CARD MODAL ─────────────────────────────────── -->
-    <div
-      v-if="showQrCard"
-      @click="showQrCard = false"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-    >
-      <div @click.stop class="bg-white rounded-2xl shadow-2xl p-6 w-72 flex flex-col items-center">
-        <!-- Print/close row -->
-        <div class="w-full flex justify-between items-center mb-4">
-          <button
-            @click="printCard"
-            class="text-xs px-3 py-1.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
-          >
-            🖨 طباعة
-          </button>
-          <button @click="showQrCard = false" class="text-gray-400 hover:text-gray-700 text-xl">
-            ✕
-          </button>
-        </div>
-
-        <!-- Card — printable section -->
-        <div
-          id="student-id-card"
-          class="w-full flex flex-col items-center border border-gray-200 rounded-xl p-5"
-        >
-          <!-- Gender symbol -->
-          <div
-            class="text-5xl mb-2"
-            :style="{ color: user?.gender === 'F' ? '#e91e8c' : '#1565c0' }"
-          >
-            {{ user?.gender === 'F' ? '♀' : '♂' }}
-          </div>
-
-          <p class="text-sm text-gray-500 uppercase tracking-widest mb-1">بطاقة طالب</p>
-          <h2 class="text-xl font-bold text-gray-900 text-center mb-0.5">
-            {{ user?.name }} {{ user?.last_name }}
-          </h2>
-          <p class="text-xs text-gray-400 mb-3">ID: {{ user?.id }}</p>
-
-          <!-- QR Code -->
-          <img
-            :src="`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=student:${user?.id}:${user?.name}%20${user?.last_name}`"
-            alt="QR Code"
-            class="w-36 h-36"
-          />
-          <p class="text-xs text-gray-400 mt-2">مدرسة بلماحي</p>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
