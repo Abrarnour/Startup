@@ -35,7 +35,7 @@
             </div>
             <div>
               <h3 class="font-bold text-base" :class="darkMode ? 'text-white' : 'text-gray-900'">
-                Scan QR Étudiant
+                {{ t('scan_student_qr') }}
               </h3>
               <p class="text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
                 {{ groupName || 'Groupe sélectionné' }}
@@ -133,7 +133,7 @@
               @click="startScanner"
               class="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
             >
-              Réessayer
+              {{ t('retry') }}
             </button>
           </div>
         </div>
@@ -211,17 +211,19 @@
               </svg>
 
               <span class="text-white font-bold text-sm tracking-wide">
-                <template v-if="scanResult.access === 'GRANTED'">ACCÈS AUTORISÉ</template>
-                <template v-else-if="scanResult.access === 'NOT_PAID'"
-                  >PAIEMENT NON EFFECTUÉ</template
-                >
+                <template v-if="scanResult.access === 'GRANTED'">{{
+                  t('access_granted')
+                }}</template>
+                <template v-else-if="scanResult.access === 'NOT_PAID'">{{
+                  t('payment_not_made')
+                }}</template>
                 <template v-else-if="scanResult.access === 'INACTIVE'"
                   >INSCRIPTION INACTIVE</template
                 >
                 <template v-else-if="scanResult.access === 'WRONG_DAY'"
                   >يوم خاطئ — لا حصة اليوم</template
                 >
-                <template v-else>NON INSCRIT DANS CE GROUPE</template>
+                <template v-else>{{ t('not_enrolled_group') }}</template>
               </span>
             </div>
 
@@ -277,10 +279,10 @@
                 </div>
               </div>
 
-              <!-- Sexe / Âge / Groupe -->
+              <!-- {{ t('name_fullname') }} / Âge / Groupe -->
               <div class="grid grid-cols-3 gap-2 mb-3">
                 <div class="rounded-xl bg-white/80 px-2 py-2 text-center">
-                  <p class="text-gray-400 text-xs mb-1">Sexe</p>
+                  <p class="text-gray-400 text-xs mb-1">{{ t('name_fullname') }}</p>
                   <p class="font-bold text-gray-800 text-sm">
                     {{ scanResult.gender === 'F' ? '👩 Fille' : '👦 Garçon' }}
                   </p>
@@ -352,7 +354,7 @@
               >
             </p>
             <p v-if="scanResult.already_scanned_today" class="text-xs text-blue-600 mt-1">
-              ⚡ مسجّل اليوم مسبقاً
+              {{ t('already_scanned_today') }}
             </p>
             <p v-if="scanResult.cycle_completed" class="text-xs text-orange-700 font-bold mt-1">
               🔔 انتهت الدورة — يجب التجديد
@@ -412,7 +414,7 @@
             v-if="scanResult.access === 'WRONG_DAY'"
             class="mb-3 rounded-xl bg-yellow-50 border border-yellow-300 px-4 py-3 text-center"
           >
-            <p class="text-sm font-bold text-yellow-800">⚠️ ليس يوم الحصة</p>
+            <p class="text-sm font-bold text-yellow-800">{{ t('not_session_day') }}</p>
             <p class="text-xs text-yellow-700 mt-1">
               يوم الحصة المجدولة: <strong>{{ scanResult.scheduled_day }}</strong>
             </p>
@@ -441,7 +443,7 @@
         <!-- Hint text while scanning -->
         <div v-if="scanState === 'scanning' && !scanResult" class="px-5 py-3 text-center">
           <p class="text-sm" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-            Pointez la caméra vers le QR Code de la carte étudiant
+            {{ t('point_camera_hint') }}
           </p>
         </div>
       </div>

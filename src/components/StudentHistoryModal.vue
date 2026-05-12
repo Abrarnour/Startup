@@ -6,13 +6,13 @@
  */
 import { ref, watch, computed } from 'vue'
 import { searchStudents, getStudentHistory } from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js'
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
 })
 const emit = defineEmits(['close'])
-
+const { t } = useLanguage()
 // ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 const searchResults = ref([])

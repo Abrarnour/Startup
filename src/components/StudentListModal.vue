@@ -154,7 +154,7 @@
       <div class="flex-1 overflow-y-auto p-4">
         <div v-if="loading" class="flex flex-col items-center py-12">
           <AppLoader size="80px" color="#9333ea" />
-          <p class="mt-4 text-gray-500">Chargement de la liste...</p>
+          <p class="mt-4 text-gray-500">{{ t('loading_list') }}</p>
         </div>
 
         <div v-else-if="filteredStudents.length === 0" class="text-center py-12">
@@ -281,7 +281,9 @@
 
         <!-- Days input -->
         <div class="mb-5">
-          <label class="block text-sm font-semibold mb-2 text-center"> عدد الأيام </label>
+          <label class="block text-sm font-semibold mb-2 text-center">
+            {{ t('days_count') }}
+          </label>
           <div class="flex items-center gap-3">
             <!-- Quick presets -->
             <div class="flex gap-2 flex-wrap justify-center w-full">
@@ -321,7 +323,7 @@
                   ? 'focus:border-orange-500'
                   : 'focus:border-red-500',
               ]"
-              placeholder="أدخل العدد"
+              placeholder="{{ t('enter_number') }}"
             />
             <span
               class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium"
@@ -336,7 +338,7 @@
             v-if="cleanupDialog.days && cleanupDialog.days < 7"
             class="mt-2 text-xs text-center text-amber-500 font-semibold"
           >
-            ⚠️ تحذير: عدد الأيام صغير جداً، تأكد قبل المتابعة
+            {{ t('warning_days_low') }}
           </p>
         </div>
 
@@ -380,7 +382,7 @@
               </svg>
               جاري التنفيذ...
             </span>
-            <span v-else> تأكيد ({{ cleanupDialog.days }} يوم) </span>
+            <span v-else> {{ t('confirm_btn') }} ({{ cleanupDialog.days }} يوم) </span>
           </button>
         </div>
       </div>

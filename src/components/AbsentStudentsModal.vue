@@ -34,7 +34,7 @@
             </div>
             <div>
               <h3 class="font-bold text-base" :class="darkMode ? 'text-white' : 'text-gray-900'">
-                Absents aujourd'hui
+                {{ t('absents_today') }}
               </h3>
               <p class="text-xs" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
                 {{ groupName }} — {{ today }}
@@ -68,7 +68,7 @@
             class="w-10 h-10 border-4 border-orange-400 border-t-transparent rounded-full animate-spin mb-3"
           ></div>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-sm">
-            Chargement des absents...
+            {{ t('loading_list') }}
           </p>
         </div>
 
@@ -101,7 +101,7 @@
             </svg>
           </div>
           <p class="font-bold text-lg" :class="darkMode ? 'text-white' : 'text-gray-800'">
-            Tous présents !
+            {{ t('all_present') }}
           </p>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-sm mt-1">
             Aucun absent enregistré pour cette séance.
@@ -124,7 +124,7 @@
                 class="w-4 h-4 rounded accent-orange-500"
               />
               <span class="text-sm" :class="darkMode ? 'text-gray-300' : 'text-gray-600'">
-                Tout sélectionner
+                T{{ t('select_all') }}
                 <span v-if="selectedIds.size > 0" class="font-semibold text-orange-600">
                   ({{ selectedIds.size }} / {{ absentStudents.length }})
                 </span>
@@ -156,7 +156,7 @@
                 <path d="M14 11v6" />
                 <path d="M9 6V4h6v2" />
               </svg>
-              <span v-if="deleting">Suppression...</span>
+              <span v-if="deleting">{{ t('deleting') }}</span>
               <span v-else>Supprimer ({{ selectedIds.size }})</span>
             </button>
           </div>
@@ -260,7 +260,7 @@
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 "
               >
-                Annuler
+                {{ t('cancel') }}
               </button>
             </div>
           </div>
