@@ -343,10 +343,6 @@ const loadMaterialsCounts = async () => {
               :darkMode="darkMode"
               :user="user"
               @view-details="viewDetails"
-              v-for="course in filteredCourses"
-              :key="course.id"
-              class="h-full flex flex-col"
-              @click="selectedCourse = course"
             />
 
             <div class="mt-3">
