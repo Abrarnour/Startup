@@ -13,22 +13,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['close'])
 const { t } = useLanguage()
-
-// ── All students list (shown in empty state) ──────────────────────────────────
-const allStudents = ref([])
-const loadingStudents = ref(false)
-
-const loadAllStudents = async () => {
-  loadingStudents.value = true
-  try {
-    allStudents.value = await searchStudents('')
-  } catch {
-    allStudents.value = []
-  } finally {
-    loadingStudents.value = false
-  }
-}
-
 // ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 const searchResults = ref([])
@@ -51,18 +35,6 @@ watch(searchQuery, (v) => {
       searching.value = false
     }
   }, 350)
-})
-
-// Filtered list shown in the panel (respects search query without dropdown)
-const filteredAllStudents = computed(() => {
-  if (!searchQuery.value.trim()) return allStudents.value
-  const q = searchQuery.value.toLowerCase()
-  return allStudents.value.filter(
-    (s) =>
-      s.name?.toLowerCase().includes(q) ||
-      s.last_name?.toLowerCase().includes(q) ||
-      s.email?.toLowerCase().includes(q),
-  )
 })
 
 // ── Student & data ────────────────────────────────────────────────────────────
@@ -177,13 +149,11 @@ const dayMap = {
   sunday: 'Dimanche',
 }
 
-// ── Reset on close / load on open ────────────────────────────────────────────
+// ── Reset on close ────────────────────────────────────────────────────────────
 watch(
   () => props.show,
   (v) => {
-    if (v) {
-      loadAllStudents()
-    } else {
+    if (!v) {
       searchQuery.value = ''
       searchResults.value = []
       selectedStudent.value = null
@@ -244,8 +214,8 @@ watch(
               />
               <div v-if="searching" class="shm-spinner" />
             </div>
-            <!-- Autocomplete dropdown (only shown when a student is already selected) -->
-            <div v-if="searchResults.length && selectedStudent" class="shm-dropdown">
+            <!-- Autocomplete dropdown -->
+            <div v-if="searchResults.length" class="shm-dropdown">
               <button
                 v-for="s in searchResults"
                 :key="s.id"
@@ -261,63 +231,27 @@ watch(
             </div>
           </div>
 
-          <!-- ══ STUDENT LIST (shown when none selected) ════════════════════ -->
-          <div v-if="!selectedStudent && !loading" class="shm-list-panel">
-            <!-- Loading skeleton -->
-            <div v-if="loadingStudents" class="shm-list-loading">
-              <div v-for="n in 6" :key="n" class="shm-skeleton-row">
-                <div class="shm-skeleton-avatar" />
-                <div class="shm-skeleton-lines">
-                  <div class="shm-skeleton-line shm-sk-wide" />
-                  <div class="shm-skeleton-line shm-sk-narrow" />
-                </div>
-              </div>
-            </div>
-
-            <!-- Empty search result -->
-            <div v-else-if="filteredAllStudents.length === 0 && searchQuery" class="shm-no-match">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                width="32"
-                height="32"
-                opacity=".3"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <span>Aucun étudiant trouvé</span>
-            </div>
-
-            <!-- Student grid -->
-            <div v-else class="shm-student-grid">
-              <button
-                v-for="s in filteredAllStudents"
-                :key="s.id"
-                class="shm-student-card"
-                @click="selectStudent(s)"
-              >
-                <div class="shm-sc-avatar">
-                  <img v-if="s.photo_url" :src="s.photo_url" class="shm-sc-img" />
-                  <span v-else>{{ s.name?.[0] }}{{ s.last_name?.[0] }}</span>
-                </div>
-                <div class="shm-sc-info">
-                  <span class="shm-sc-name">{{ s.last_name }} {{ s.name }}</span>
-                  <span class="shm-sc-email">{{ s.email }}</span>
-                </div>
-                <svg
-                  class="shm-sc-arrow"
-                  viewBox="0 0 24 24"
-                  fill="none"
+          <!-- ══ EMPTY ═══════════════════════════════════════════════════════ -->
+          <div v-if="!selectedStudent && !loading" class="shm-empty">
+            <div class="shm-empty-art">
+              <svg viewBox="0 0 80 80" fill="none">
+                <circle
+                  cx="40"
+                  cy="30"
+                  r="16"
                   stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </button>
+                  stroke-width="3"
+                  opacity=".25"
+                />
+                <path
+                  d="M16 66c0-13.3 10.7-24 24-24s24 10.7 24 24"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  opacity=".25"
+                />
+              </svg>
             </div>
+            <p class="shm-empty-label">Recherchez un étudiant pour afficher son historique</p>
           </div>
 
           <!-- ══ LOADING ════════════════════════════════════════════════════ -->
@@ -866,149 +800,26 @@ watch(
   color: var(--text3);
 }
 
-/* ── Student list panel ──────────────────────────────────────────────────── */
-.shm-list-panel {
+/* ── Empty / Loading / Error ─────────────────────────────────────────────── */
+.shm-empty {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px 20px;
-}
-.shm-student-grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-.shm-student-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-  background: var(--bg);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 0.13s,
-    border-color 0.13s,
-    transform 0.1s;
-  width: 100%;
-}
-.shm-student-card:hover {
-  background: var(--bg2);
-  border-color: var(--accent);
-  transform: translateX(2px);
-}
-.shm-sc-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.82rem;
-  flex-shrink: 0;
-  overflow: hidden;
+  gap: 14px;
+  padding: 40px;
 }
-.shm-sc-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.shm-sc-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.shm-sc-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shm-sc-email {
-  font-size: 0.74rem;
-  color: var(--text3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.shm-sc-arrow {
-  width: 16px;
-  height: 16px;
+.shm-empty-art svg {
+  width: 72px;
+  height: 72px;
   stroke: var(--text3);
-  flex-shrink: 0;
-  transition: stroke 0.13s;
 }
-.shm-student-card:hover .shm-sc-arrow {
-  stroke: var(--accent);
-}
-.shm-no-match {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 48px 0;
+.shm-empty-label {
   color: var(--text3);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  text-align: center;
 }
-/* Skeleton loader */
-.shm-list-loading {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.shm-skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1.5px solid var(--border);
-}
-.shm-skeleton-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--bg3);
-  flex-shrink: 0;
-  animation: shm-pulse 1.4s ease-in-out infinite;
-}
-.shm-skeleton-lines {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.shm-skeleton-line {
-  height: 10px;
-  border-radius: 5px;
-  background: var(--bg3);
-  animation: shm-pulse 1.4s ease-in-out infinite;
-}
-.shm-sk-wide {
-  width: 55%;
-}
-.shm-sk-narrow {
-  width: 35%;
-}
-@keyframes shm-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
-}
-
-/* ── Loading / Error ─────────────────────────────────────────────────────── */
 .shm-loading {
   flex: 1;
   display: flex;
