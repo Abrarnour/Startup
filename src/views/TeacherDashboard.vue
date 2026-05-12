@@ -337,12 +337,16 @@ const loadMaterialsCounts = async () => {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div v-for="course in levelCourses" :key="course.id" class="relative">
+          <div v-for="course in levelCourses" :key="course.id" class="relative flex flex-col">
             <CourseCard
               :course="course"
               :darkMode="darkMode"
               :user="user"
               @view-details="viewDetails"
+              v-for="course in filteredCourses"
+              :key="course.id"
+              class="h-full flex flex-col"
+              @click="selectedCourse = course"
             />
 
             <div class="mt-3">
