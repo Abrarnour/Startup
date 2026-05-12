@@ -384,7 +384,7 @@ onMounted(() => {
             <p
               class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1 relative z-10"
             >
-              👆 Cliquer pour consulter
+              👆 {{ t('click_to_manage') }}
             </p>
           </div>
         </div>
