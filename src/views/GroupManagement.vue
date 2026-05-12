@@ -1200,17 +1200,8 @@ onMounted(() => {
                       #{{ student.sessions_attended }}
                     </span>
 
-                    <!-- Mark-paid toggle (admin only, only shown when not yet paid) -->
-                    <button
-                      v-if="isAdmin && student.payment_status !== 'paid'"
-                      @click="markStudentPaid(student)"
-                      class="text-xs px-2 py-0.5 rounded-lg font-semibold transition-colors bg-green-600 text-white hover:bg-green-700"
-                      title="Marquer comme payé et réinitialiser le compteur de séances"
-                    >
-                      Marquer payé
-                    </button>
+                    <!-- Payment status badge only -->
                     <span
-                      v-else
                       :class="getPaymentStatusClass(student.payment_status)"
                       class="px-3 py-1 rounded-full text-xs font-bold inline-block"
                     >

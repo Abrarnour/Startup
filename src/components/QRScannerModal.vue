@@ -372,6 +372,41 @@
             </button>
           </div>
 
+          <!-- NOT_ENROLLED: enroll then optionally mark paid -->
+          <div v-if="scanResult.access === 'NOT_ENROLLED'" class="mb-3 space-y-2">
+            <p class="text-center text-xs text-gray-500 mb-2">الطالب غير مسجّل في هذا المجموعة</p>
+            <!-- Step 1: Enroll -->
+            <button
+              v-if="!enrollDone"
+              @click="handleEnroll"
+              :disabled="enrollLoading"
+              class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              <span v-if="enrollLoading">جاري التسجيل...</span>
+              <span v-else>➕ تسجيل في المجموعة</span>
+            </button>
+            <!-- Step 2: After enroll — show mark-paid option -->
+            <div v-if="enrollDone" class="space-y-2">
+              <p class="text-center text-xs text-green-700 font-bold">
+                ✓ تم التسجيل — اختر حالة الدفع
+              </p>
+              <button
+                @click="handlePayAndScan"
+                :disabled="payLoading"
+                class="w-full py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                <span v-if="payLoading">جاري...</span>
+                <span v-else>✓ دافع + جلسة 1</span>
+              </button>
+              <button
+                @click="resetScan"
+                class="w-full py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors text-sm"
+              >
+                غير دافع حالياً — إغلاق
+              </button>
+            </div>
+          </div>
+
           <!-- WRONG_DAY: info only -->
           <div
             v-if="scanResult.access === 'WRONG_DAY'"
@@ -433,6 +468,8 @@ const scanState = ref('idle') // idle | loading | scanning | error
 const errorMessage = ref('')
 const scanResult = ref(null)
 const payLoading = ref(false)
+const enrollLoading = ref(false)
+const enrollDone = ref(false)
 let html5QrCode = null // html5-qrcode instance
 let isCurrentlyScanning = false // guard flag
 
@@ -572,6 +609,7 @@ const onScanSuccess = async (decodedText) => {
 // ── Reset to scan again ─────────────────────────────────────────────
 const resetScan = async () => {
   scanResult.value = null
+  enrollDone.value = false
   await startScanner()
 }
 
@@ -579,6 +617,7 @@ const resetScan = async () => {
 const closeModal = async () => {
   await safeStop()
   scanResult.value = null
+  enrollDone.value = false
   scanState.value = 'idle'
   emit('update:modelValue', false)
 }
