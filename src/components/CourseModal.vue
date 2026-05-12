@@ -247,7 +247,7 @@ onMounted(() => {
       >
         <div
           :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-          class="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          class="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-hidden"
           @click.stop
         >
           <!-- Header -->
