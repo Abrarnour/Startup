@@ -423,7 +423,6 @@ onMounted(() => {
                           <AlertCircle :size="15" class="text-red-500 flex-shrink-0 mt-0.5" />
                           <p class="text-xs text-red-700">
                             {{ t('monthly_cycle_ended') }}
-                            <strong>{{ t('courses_are_free_now') }}</strong>
                           </p>
                         </div>
                       </div>
