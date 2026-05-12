@@ -181,7 +181,7 @@ watch(
                 </svg>
               </div>
               <div>
-                <h2 class="shm-title">سجل الطالب</h2>
+                <h2 class="shm-title">Registre des étudiants</h2>
                 <p class="shm-subtitle">Historique complet · Séances · Absences</p>
               </div>
             </div>
