@@ -836,7 +836,75 @@ export const translations = {
     browser_no_video: 'Votre navigateur ne supporte pas la lecture vidéo.',
 
     detailed_stats: 'Statistiques détaillées',
+    // ── ABSENT STUDENTS MODAL ──
+    absents_today: "Absents aujourd'hui",
+    all_present: 'Tous présents ! ',
+    select_all: 'Tout sélectionner',
 
+    // ── COURSE MODAL ──
+    create_course: 'Créer une matière',
+    edit_course: 'Modifier la matière',
+
+    // ── STUDENT HISTORY MODAL ──
+    history_modal_title: 'Registre des étudiants',
+    history_modal_subtitle: 'Historique complet · Séances · Absences',
+    search_student_placeholder: 'Rechercher un étudiant…',
+    search_student_empty: 'Recherchez un étudiant pour afficher son historique',
+    loading_history: "Chargement de l'historique…",
+    error_loading: 'Erreur de chargement',
+    kpi_sessions: 'Séances',
+    kpi_absences: 'Absences',
+    kpi_presence: 'Présence',
+    kpi_courses: 'Cours',
+    attendance_rate_label: 'Taux de présence global',
+    filter_from: 'De',
+    filter_to: 'À',
+    filter_course: 'Matière',
+    filter_all: 'Toutes',
+    filter_clear: 'Effacer',
+    tab_overview: 'Aperçu',
+    tab_sessions: 'Séances',
+    tab_absences: 'Absences',
+    tab_payments: 'Paiements',
+    tab_timeline: 'Timeline',
+    sessions_progress: '{attended} / {total} séances',
+    enrolled_since: 'Inscrit',
+    paid_label: '✓ Payé',
+    unpaid_label: '✗ Non payé',
+    no_enrollments: 'Aucune inscription',
+    no_sessions_period: 'Aucune séance dans cette période',
+    col_date_time: 'Date & Heure',
+    col_course: 'Matière',
+    col_group: 'Groupe',
+    col_room: 'Salle',
+    col_session_num: 'N° Séance',
+    col_scanned_by: 'Scanné par',
+    no_absences_period: '✓ Aucune absence dans cette période',
+    col_planned_date: 'Date prévue',
+    col_hour: 'Heure',
+    no_payments: 'Aucun paiement enregistré',
+    total_paid_label: 'Total payé :',
+    col_date: 'Date',
+    col_amount: 'Montant',
+    col_method: 'Méthode',
+    col_notes: 'Notes',
+    no_events_period: 'Aucun événement dans cette période',
+    year_level: 'Année',
+    branch_label: 'Filière',
+    course_type: 'Type de cours',
+    classroom: 'Salle',
+
+    level_primaire: 'Primaire',
+
+    saving: 'Enregistrement...',
+
+    // ── STUDENT LIST MODAL ──
+
+    cleanup_success_inactive: '{count} élève(s) inactif(s) supprimé(s) (>{days} jours)',
+    cleanup_success_pending: '{count} inscription(s) annulée(s) (en attente >{days} jours)',
+    error_update: 'Erreur lors de la mise à jour',
+    error_delete: 'Erreur lors de la suppression',
+    server_error: 'Erreur serveur',
     // Wilaya
     select_wilaya: 'Sélectionner une wilaya...',
 
@@ -889,9 +957,6 @@ export const translations = {
     scheduled_day: 'Jour de séance prévu :',
 
     no_absents_recorded: 'Aucun absent enregistré pour cette séance.',
-    select_all: 'Tout sélectionner',
-    absents_today: 'Absents aujourd’hui',
-    all_present: 'Tous présents !',
 
     student_history_title: 'Historique de l’étudiant',
     full_history_tabs: 'Historique · Séances · Absences · Paiements',
@@ -906,9 +971,9 @@ export const translations = {
     planned_date: 'Date prévue',
     scanned_by: 'Scanné par',
     clear_btn: 'Effacer',
-    loading_history: 'Chargement de l’historique...',
+
     no_absence_period: '✓ Aucune absence dans cette période',
-    search_student_placeholder: 'Rechercher un étudiant...',
+
     amount: 'Montant',
 
     attendance: 'Présence',
@@ -924,6 +989,32 @@ export const translations = {
   // ════════════════════════════════════════
 
   ar: {
+    // ── ABSENT STUDENTS MODAL ──
+    absents_today: 'الغائبون اليوم',
+    all_present: 'الكل حاضر! 🎉',
+    select_all: 'تحديد الكل',
+
+    // ── COURSE MODAL ──
+    create_course: 'إنشاء مادة',
+    edit_course: 'تعديل المادة',
+    course_title: 'عنوان المادة',
+    education_level: 'المستوى الدراسي',
+    year_level: 'السنة',
+    branch_label: 'الفرع',
+    course_type: 'نوع الدرس',
+    classroom: 'القاعة',
+    price_da: 'السعر (د.ج)',
+    level_primaire: 'ابتدائي',
+    save_btn: 'حفظ',
+    saving: 'جاري الحفظ...',
+
+    // ── STUDENT LIST MODAL ──
+    student_count_suffix: 'طالب',
+    cleanup_success_inactive: 'تم حذف {count} طالب غير نشط (>{days} يوم)',
+    cleanup_success_pending: 'تم إلغاء {count} تسجيل في الانتظار (>{days} يوم)',
+    error_update: 'خطأ أثناء التحديث',
+    error_delete: 'خطأ أثناء الحذف',
+    server_error: 'خطأ في الخادم',
     student_label: 'الطالب',
     loading_list: 'جاري تحميل القائمة...',
     manage_courses: 'إدارة المواد',
@@ -981,9 +1072,6 @@ export const translations = {
     scheduled_day: 'يوم الحصة المجدولة:',
 
     no_absents_recorded: 'لا يوجد غائبون مسجلون لهذه الحصة.',
-    select_all: 'تحديد الكل',
-    absents_today: 'الغائبون اليوم',
-    all_present: 'الكل حاضر !',
 
     cancel: 'إلغاء',
 
@@ -1198,10 +1286,7 @@ export const translations = {
     mode_existing_child: 'ابن موجود مسبقاً',
     gender_m: 'ذكر',
     gender_f: 'أنثى',
-    course_title: 'عنوان الدرس',
-    education_level: 'المستوى التعليمي',
-    price_da: 'السعر (د.ج)',
-    save_btn: 'حفظ',
+
     // ── FOOTER ──
     about: 'حول المدرسة',
     contact_us: 'اتصل بنا',
@@ -1452,7 +1537,7 @@ export const translations = {
     cta_btn: 'ابدأ الآن',
 
     teacher_count_suffix: 'أستاذ(ة)',
-    student_count_suffix: 'طالب(ة)',
+
     madam: 'أستاذة',
     mister: 'أستاذ',
     delete_teacher_title: 'حذف الأستاذ',
@@ -1828,5 +1913,49 @@ export const translations = {
     write_note_here: 'اكتب ملاحظتك هنا...',
 
     no_note_for_student: 'لا توجد ملاحظات لهذا الطالب',
+    // ── STUDENT HISTORY MODAL ──
+    history_modal_title: 'سجل الطلاب',
+    history_modal_subtitle: 'السجل الكامل · الحصص · الغيابات',
+
+    search_student_empty: 'ابحث عن طالب لعرض سجله',
+
+    error_loading: 'خطأ أثناء التحميل',
+    kpi_sessions: 'حصص',
+    kpi_absences: 'غيابات',
+    kpi_presence: 'الحضور',
+    kpi_courses: 'مواد',
+    attendance_rate_label: 'معدل الحضور الإجمالي',
+    filter_from: 'من',
+    filter_to: 'إلى',
+    filter_course: 'المادة',
+    filter_all: 'الكل',
+    filter_clear: 'مسح',
+    tab_overview: 'نظرة عامة',
+    tab_sessions: 'الحصص',
+    tab_absences: 'الغيابات',
+    tab_payments: 'المدفوعات',
+    tab_timeline: 'الجدول الزمني',
+    sessions_progress: '{attended} / {total} حصة',
+    enrolled_since: 'مسجل منذ',
+    paid_label: '✓ مدفوع',
+    unpaid_label: '✗ غير مدفوع',
+    no_enrollments: 'لا توجد تسجيلات',
+    no_sessions_period: 'لا توجد حصص في هذه الفترة',
+    col_date_time: 'التاريخ والوقت',
+    col_course: 'المادة',
+    col_group: 'المجموعة',
+    col_room: 'القاعة',
+    col_session_num: 'رقم الحصة',
+    col_scanned_by: 'مسح بواسطة',
+    no_absences_period: '✓ لا توجد غيابات في هذه الفترة',
+    col_planned_date: 'التاريخ المحدد',
+    col_hour: 'الوقت',
+    no_payments: 'لا توجد مدفوعات مسجلة',
+    total_paid_label: 'المجموع المدفوع:',
+    col_date: 'التاريخ',
+    col_amount: 'المبلغ',
+    col_method: 'طريقة الدفع',
+    col_notes: 'ملاحظات',
+    no_events_period: 'لا توجد أحداث في هذه الفترة',
   },
 }

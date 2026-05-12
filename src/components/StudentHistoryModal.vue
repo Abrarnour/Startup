@@ -181,8 +181,8 @@ watch(
                 </svg>
               </div>
               <div>
-                <h2 class="shm-title">Registre des étudiants</h2>
-                <p class="shm-subtitle">Historique complet · Séances · Absences</p>
+                <h2 class="shm-title">{{ t('history_modal_title') }}</h2>
+                <p class="shm-subtitle">{{ t('history_modal_subtitle') }}</p>
               </div>
             </div>
             <button class="shm-close" @click="emit('close')">
@@ -209,7 +209,7 @@ watch(
                 v-model="searchQuery"
                 class="shm-search-input"
                 type="text"
-                placeholder="Rechercher un étudiant…"
+                :placeholder="t('search_student_placeholder')"
                 autocomplete="off"
               />
               <div v-if="searching" class="shm-spinner" />
@@ -251,13 +251,13 @@ watch(
                 />
               </svg>
             </div>
-            <p class="shm-empty-label">Recherchez un étudiant pour afficher son historique</p>
+            <p class="shm-empty-label">{{ t('search_student_empty') }}</p>
           </div>
 
           <!-- ══ LOADING ════════════════════════════════════════════════════ -->
           <div v-if="loading" class="shm-loading">
             <div class="shm-dots"><span /><span /><span /></div>
-            <p>Chargement de l'historique…</p>
+            <p>{{ t('loading_history') }}</p>
           </div>
 
           <!-- ══ ERROR ══════════════════════════════════════════════════════ -->
@@ -293,11 +293,11 @@ watch(
               <div class="shm-kpis">
                 <div class="shm-kpi shm-kpi-green">
                   <span class="shm-kpi-val">{{ totalPresent }}</span>
-                  <span class="shm-kpi-lbl">Séances</span>
+                  <span class="shm-kpi-lbl">{{ t('kpi_sessions') }}</span>
                 </div>
                 <div class="shm-kpi shm-kpi-red">
                   <span class="shm-kpi-val">{{ totalAbsent }}</span>
-                  <span class="shm-kpi-lbl">Absences</span>
+                  <span class="shm-kpi-lbl">{{ t('kpi_absences') }}</span>
                 </div>
                 <div
                   class="shm-kpi"
@@ -310,11 +310,11 @@ watch(
                   "
                 >
                   <span class="shm-kpi-val">{{ attendanceRate }}%</span>
-                  <span class="shm-kpi-lbl">Présence</span>
+                  <span class="shm-kpi-lbl">{{ t('kpi_presence') }}</span>
                 </div>
                 <div class="shm-kpi shm-kpi-blue">
                   <span class="shm-kpi-val">{{ historyData.enrollments?.length ?? 0 }}</span>
-                  <span class="shm-kpi-lbl">Cours</span>
+                  <span class="shm-kpi-lbl">{{ t('kpi_courses') }}</span>
                 </div>
               </div>
             </div>
@@ -334,23 +334,26 @@ watch(
                   "
                 />
               </div>
-              <span class="shm-rate-label">Taux de présence global {{ attendanceRate }}%</span>
+              <span class="shm-rate-label"
+                >{{ t('attendance_rate_label') }} {{ attendanceRate }}%</span
+              >
             </div>
 
             <!-- FILTER ROW -->
             <div class="shm-filters">
               <div class="shm-filter-group">
-                <label>De</label>
+                <label>{{ t('filter_from') }}</label
+                >>
                 <input type="date" v-model="dateFrom" class="shm-filter-input" />
               </div>
               <div class="shm-filter-group">
-                <label>À</label>
+                <label>{{ t('filter_to') }}</label>
                 <input type="date" v-model="dateTo" class="shm-filter-input" />
               </div>
               <div class="shm-filter-group shm-filter-grow">
-                <label>Matière</label>
+                <label>{{ t('filter_course') }}</label>
                 <select v-model="courseFilter" class="shm-filter-input">
-                  <option value="">Toutes</option>
+                  <option value="">{{ t('filter_all') }}</option>
                   <option v-for="c in allCourses" :key="c" :value="c">{{ c }}</option>
                 </select>
               </div>
@@ -362,7 +365,7 @@ watch(
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
-                Effacer
+                {{ t('filter_clear') }}
               </button>
             </div>
 
@@ -370,11 +373,21 @@ watch(
             <nav class="shm-tabs">
               <button
                 v-for="tab in [
-                  { id: 'overview', label: 'Aperçu', icon: '⊞', count: null },
+                  { id: 'overview', label: t('tab_overview'), icon: '⊞', count: null },
                   { id: 'sessions', label: 'Séances', icon: '✓', count: filteredSessions.length },
-                  { id: 'absences', label: 'Absences', icon: '✗', count: filteredAbsences.length },
-                  { id: 'payments', label: 'Paiements', icon: '$', count: filteredPayments.length },
-                  { id: 'timeline', label: 'Timeline', icon: '⏱', count: null },
+                  {
+                    id: 'absences',
+                    label: t('tab_absences'),
+                    icon: '✗',
+                    count: filteredAbsences.length,
+                  },
+                  {
+                    id: 'payments',
+                    label: t('tab_payments'),
+                    icon: '$',
+                    count: filteredPayments.length,
+                  },
+                  { id: 'timeline', label: t('tab_timeline'), icon: '⏱', count: null },
                 ]"
                 :key="tab.id"
                 class="shm-tab"
@@ -428,24 +441,25 @@ watch(
                       />
                     </div>
                     <span class="shm-mini-bar-label">
-                      {{ enr.sessions_attended }} / {{ enr.group_total_sessions ?? '?' }} séances
+                      {{ enr.sessions_attended }} / {{ enr.group_total_sessions ?? '?' }}
+                      {{ t('kpi_sessions') }}
                     </span>
                   </div>
                   <div class="shm-cc-meta">
                     <span
                       :class="enr.payment_status === 'paid' ? 'shm-pill-green' : 'shm-pill-red'"
                     >
-                      {{ enr.payment_status === 'paid' ? '✓ Payé' : '✗ Non payé' }}
+                      {{ enr.payment_status === 'paid' ? t('paid_label') : t('unpaid_label') }}
                     </span>
                     <span class="shm-cc-since"
-                      >Inscrit {{ fmtDate(enr.enrollment_date, false) }}</span
+                      >{{ t('enrolled_since') }} {{ fmtDate(enr.enrollment_date, false) }}</span
                     >
                   </div>
                 </div>
 
                 <!-- No enrollments -->
                 <div v-if="!historyData.enrollments?.length" class="shm-no-data">
-                  Aucune inscription
+                  {{ t('no_enrollments') }}
                 </div>
               </div>
             </div>
@@ -453,17 +467,17 @@ watch(
             <!-- ── TAB: SESSIONS ──────────────────────────────────────────── -->
             <div v-if="activeTab === 'sessions'" class="shm-panel">
               <div v-if="!filteredSessions.length" class="shm-no-data">
-                Aucune séance dans cette période
+                {{ t('no_sessions_period') }}
               </div>
               <table v-else class="shm-table">
                 <thead>
                   <tr>
-                    <th>Date &amp; Heure</th>
-                    <th>Matière</th>
-                    <th>Groupe</th>
-                    <th>Salle</th>
-                    <th class="shm-th-center">N° Séance</th>
-                    <th>Scanné par</th>
+                    <th>{{ t('col_date_time') }}</th>
+                    <th>{{ t('col_course') }}</th>
+                    <th>{{ t('col_group') }}</th>
+                    <th>{{ t('col_room') }}</th>
+                    <th class="shm-th-center">{{ t('col_session_num') }}</th>
+                    <th>{{ t('col_scanned_by') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -488,15 +502,15 @@ watch(
             <!-- ── TAB: ABSENCES ──────────────────────────────────────────── -->
             <div v-if="activeTab === 'absences'" class="shm-panel">
               <div v-if="!filteredAbsences.length" class="shm-no-data shm-no-data-good">
-                ✓ Aucune absence dans cette période
+                {{ t('no_absences_period') }}
               </div>
               <table v-else class="shm-table">
                 <thead>
                   <tr>
-                    <th>Date prévue</th>
-                    <th>Matière</th>
-                    <th>Groupe</th>
-                    <th>Heure</th>
+                    <th>{{ t('col_planned_date') }}</th>
+                    <th>{{ t('col_course') }}</th>
+                    <th>{{ t('col_group') }}</th>
+                    <th>{{ t('col_hour') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -515,19 +529,20 @@ watch(
             <!-- ── TAB: PAYMENTS ──────────────────────────────────────────── -->
             <div v-if="activeTab === 'payments'" class="shm-panel">
               <div v-if="!filteredPayments.length" class="shm-no-data">
-                Aucun paiement enregistré
+                {{ t('no_payments') }}
               </div>
               <div v-else>
                 <div class="shm-pay-summary">
-                  Total payé : <strong>{{ totalPaid.toLocaleString('fr-DZ') }} DZD</strong>
+                  {{ t('total_paid_label') }}
+                  <strong>{{ totalPaid.toLocaleString('fr-DZ') }} DZD</strong>
                 </div>
                 <table class="shm-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th class="shm-th-right">Montant</th>
-                      <th>Méthode</th>
-                      <th>Notes</th>
+                      <th>{{ t('col_date') }}</th>
+                      <th class="shm-th-right">{{ t('col_amount') }}</th>
+                      <th>{{ t('col_method') }}</th>
+                      <th>{{ t('col_notes') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -549,7 +564,7 @@ watch(
             <!-- ── TAB: TIMELINE ──────────────────────────────────────────── -->
             <div v-if="activeTab === 'timeline'" class="shm-panel">
               <div v-if="!filteredTimeline.length" class="shm-no-data">
-                Aucun événement dans cette période
+                {{ t('no_events_period') }}
               </div>
               <div class="shm-timeline">
                 <div v-for="(e, i) in filteredTimeline" :key="i" class="shm-tl-item">
