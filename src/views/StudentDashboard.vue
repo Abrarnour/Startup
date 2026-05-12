@@ -116,12 +116,7 @@ onMounted(() => {
         <!-- ONE profile button -->
         <button
           @click="openProfile"
-          class="flex-shrink-0 p-3 rounded-full shadow-lg transition-transform transform hover:scale-105 border"
-          :class="
-            darkMode
-              ? 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-          "
+          class="flex-shrink-0 w-12 h-12 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           title="Mon profil"
         >
           <svg
@@ -130,9 +125,8 @@ onMounted(() => {
             height="26"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="currentColor"
+            stroke="white"
             stroke-width="2"
-            class="text-blue-600 dark:text-blue-400"
           >
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />

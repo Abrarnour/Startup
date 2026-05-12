@@ -12,11 +12,11 @@
         <!-- Close button -->
         <button
           @click="$emit('update:modelValue', false)"
-          class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+          class="absolute top-3 left-3 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
           :class="
             darkMode
               ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              : 'bg-white/80 hover:bg-white text-gray-500'
+              : 'bg-white/30 hover:bg-white/60 text-white'
           "
         >
           <svg
