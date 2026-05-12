@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   Users,
   UserPlus,
@@ -91,7 +91,13 @@ const checkAuth = () => {
   }
   return true
 }
+const route = useRoute()
+const levelFilter = ref('')
 
+const filteredCourses = computed(() => {
+  if (!levelFilter.value) return courses.value
+  return courses.value.filter((c) => c.education_level === levelFilter.value)
+})
 // ── Loaders ──────────────────────────────────────────────────────
 const loadChildren = async () => {
   try {
@@ -205,6 +211,8 @@ onMounted(() => {
   if (checkAuth()) {
     loadChildren()
     loadPublicCourses()
+    if (route.query.tab === 'courses') activeTab.value = 'courses'
+    if (route.query.level) levelFilter.value = route.query.level
   }
 })
 </script>
@@ -547,10 +555,33 @@ onMounted(() => {
       </div>
 
       <div v-if="activeTab === 'courses'">
+        <!-- Filter buttons -->
+        <div class="flex gap-2 mb-6">
+          <button
+            v-for="lvl in [
+              { key: '', label: t('all_levels') || 'Tous' },
+              { key: 'primaire', label: t('level_primary') },
+              { key: 'moyen', label: t('level_middle') },
+              { key: 'secondaire', label: t('level_secondary') },
+            ]"
+            :key="lvl.key"
+            @click="levelFilter = lvl.key"
+            :class="
+              levelFilter === lvl.key
+                ? 'bg-blue-600 text-white'
+                : props.darkMode
+                  ? 'bg-gray-700 text-gray-200'
+                  : 'bg-gray-100 text-gray-700'
+            "
+            class="px-4 py-2 rounded-full text-sm font-semibold transition-all"
+          >
+            {{ lvl.label }}
+          </button>
+        </div>
         <div v-if="loading" class="text-center py-16">
           <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto"></div>
         </div>
-        <div v-else-if="courses.length === 0" class="text-center py-16">
+        <div v-else-if="filteredCourses.length === 0" class="text-center py-16">
           <BookOpen :size="64" class="mx-auto mb-4 text-gray-400" />
           <p class="text-xl" :class="props.darkMode ? 'text-gray-400' : 'text-gray-600'">
             {{ t('no_courses_available') }}
@@ -558,7 +589,7 @@ onMounted(() => {
         </div>
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
-            v-for="course in courses"
+            v-for="course in filteredCourses"
             :key="course.id"
             :class="props.darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
             class="rounded-xl shadow-lg border-2 overflow-hidden hover:shadow-2xl transition-all"

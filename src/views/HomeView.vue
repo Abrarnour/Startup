@@ -12,7 +12,7 @@ const props = defineProps({
 })
 const navigateToLevel = (key) => {
   if (!props.user) router.push({ path: '/public-courses', query: { level: key } })
-  else router.push('/courses')
+  else router.push({ path: '/parent-dashboard', query: { tab: 'courses', level: key } })
 }
 
 const sections = computed(() => [
