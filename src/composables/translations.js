@@ -906,14 +906,26 @@ export const translations = {
 
     attendance: 'Présence',
     reset: 'Réinitialiser',
+    cancel_pending_desc:
+      'Les inscriptions en attente plus anciennes que cette période seront annulées.',
+    delete_inactive_desc: 'Les étudiants inactifs ayant dépassé cette période seront supprimés.',
+
+    set_limit: 'Définir',
+    days: 'Jours',
   },
 
   // ════════════════════════════════════════
+
   ar: {
+    cancel_pending_desc: 'سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة.',
+    delete_inactive_desc: 'سيتم حذف الطلاب غير النشطين الذين تجاوزوا هذه المدة.',
+    days_count: 'عدد الأيام',
+    set_limit: 'حدد',
+    days: 'أيام',
+    confirm: 'تأكيد',
     loading_list: 'جاري تحميل القائمة...',
     executing: 'جاري التنفيذ...',
     confirm_btn: 'تأكيد',
-    days_count: 'عدد الأيام',
     enter_number: 'أدخل العدد',
     warning_days_low: '⚠️ تحذير: عدد الأيام صغير جداً، تأكد قبل المتابعة',
 
@@ -1254,7 +1266,6 @@ export const translations = {
     confirm_delete: 'تأكيد الحذف',
     confirm_delete_msg: 'هل أنت متأكد من حذف هذا المستخدم؟ هذه العملية لا يمكن التراجع عنها.',
 
-    confirm: 'تأكيد',
     teacher_list: 'قائمة الأساتذة',
     student_list: 'قائمة الطلاب',
     no_teachers: 'لا يوجد أساتذة',

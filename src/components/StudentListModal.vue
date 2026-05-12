@@ -274,8 +274,8 @@
         <p class="text-sm text-center mb-5" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
           {{
             cleanupDialog.type === 'pending'
-              ? 'حدد عدد الأيام — سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة'
-              : 'حدد عدد الأيام — سيتم حذف الطلاب الغير نشطين الذين تجاوزوا هذه المدة'
+              ? t('days_count_label') + ' — ' + t('cancel_pending_text')
+              : t('days_count_label') + ' — ' + t('delete_inactive_text')
           }}
         </p>
 
