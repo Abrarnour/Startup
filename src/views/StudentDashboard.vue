@@ -9,7 +9,15 @@ import { useLanguage } from '../composables/useLanguage.js'
 import AppLoader from '../components/AppLoader.vue'
 const showMaterialsModal = ref(false)
 const selectedCourseId = ref(null)
+const showQrCard = ref(false)
 
+const printCard = () => {
+  const card = document.getElementById('student-id-card')
+  const w = window.open('', '_blank')
+  w.document.write('<html><body>' + card.innerHTML + '</body></html>')
+  w.document.close()
+  w.print()
+}
 const openMaterialsModal = (courseId) => {
   console.log('Fetching materials for:', courseId)
   selectedCourseId.value = courseId
@@ -119,18 +127,37 @@ onMounted(() => {
 
   <div v-else>
     <div :class="darkMode ? 'bg-gray-800' : 'bg-white'" class="rounded-2xl shadow-xl p-6 mb-8">
-      <div class="flex items-start gap-4">
+      <div class="flex items-center gap-4">
         <div class="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl">
           <BookOpen :size="32" class="text-white" />
         </div>
         <div class="flex-1">
-          <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-2">
+          <h1 :class="darkMode ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold mb-1">
             {{ t('welcome_comma') }} {{ user?.name }} {{ user?.last_name }}
           </h1>
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-600'" class="text-lg">
             {{ t('your_enrolled_courses') }}
           </p>
         </div>
+        <button
+          @click="showQrCard = true"
+          class="p-3 bg-white/20 hover:bg-white/40 dark:bg-gray-700 rounded-full shadow-lg transition-transform transform hover:scale-105 border border-gray-200 dark:border-gray-600"
+          title="بطاقة الطالب"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            class="text-blue-600 dark:text-blue-400"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
       </div>
 
       <button
@@ -349,6 +376,55 @@ onMounted(() => {
         }
       "
     />
+    <!-- ── STUDENT ID CARD MODAL ─────────────────────────────────── -->
+    <div
+      v-if="showQrCard"
+      @click="showQrCard = false"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+    >
+      <div @click.stop class="bg-white rounded-2xl shadow-2xl p-6 w-72 flex flex-col items-center">
+        <!-- Print/close row -->
+        <div class="w-full flex justify-between items-center mb-4">
+          <button
+            @click="printCard"
+            class="text-xs px-3 py-1.5 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+          >
+            🖨 طباعة
+          </button>
+          <button @click="showQrCard = false" class="text-gray-400 hover:text-gray-700 text-xl">
+            ✕
+          </button>
+        </div>
+
+        <!-- Card — printable section -->
+        <div
+          id="student-id-card"
+          class="w-full flex flex-col items-center border border-gray-200 rounded-xl p-5"
+        >
+          <!-- Gender symbol -->
+          <div
+            class="text-5xl mb-2"
+            :style="{ color: user?.gender === 'F' ? '#e91e8c' : '#1565c0' }"
+          >
+            {{ user?.gender === 'F' ? '♀' : '♂' }}
+          </div>
+
+          <p class="text-sm text-gray-500 uppercase tracking-widest mb-1">بطاقة طالب</p>
+          <h2 class="text-xl font-bold text-gray-900 text-center mb-0.5">
+            {{ user?.name }} {{ user?.last_name }}
+          </h2>
+          <p class="text-xs text-gray-400 mb-3">ID: {{ user?.id }}</p>
+
+          <!-- QR Code -->
+          <img
+            :src="`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=student:${user?.id}:${user?.name}%20${user?.last_name}`"
+            alt="QR Code"
+            class="w-36 h-36"
+          />
+          <p class="text-xs text-gray-400 mt-2">مدرسة بلماحي</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
