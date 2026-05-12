@@ -343,6 +343,7 @@ const loadMaterialsCounts = async () => {
               :darkMode="darkMode"
               :user="user"
               @view-details="viewDetails"
+              class="flex-1"
             />
 
             <div class="mt-3">
