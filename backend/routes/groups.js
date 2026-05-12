@@ -1168,8 +1168,12 @@ router.post(
 
           await pool.query(
             `INSERT INTO attendance_log (group_id, student_id, session_number, scanned_by)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (group_id, student_id, (scanned_at::date)) DO NOTHING`,
+             SELECT $1, $2, $3, $4
+             WHERE NOT EXISTS (
+               SELECT 1 FROM attendance_log
+               WHERE group_id = $1 AND student_id = $2
+                 AND scanned_at::date = CURRENT_DATE
+             )`,
             [groupId, studentId, data.sessions_attended, req.user.id],
           )
 
@@ -1318,8 +1322,12 @@ router.post(
 
       await pool.query(
         `INSERT INTO attendance_log (group_id, student_id, session_number, scanned_by)
-         VALUES ($1, $2, 1, $3)
-         ON CONFLICT (group_id, student_id, (scanned_at::date)) DO NOTHING`,
+         SELECT $1, $2, 1, $3
+         WHERE NOT EXISTS (
+           SELECT 1 FROM attendance_log
+           WHERE group_id = $1 AND student_id = $2
+             AND scanned_at::date = CURRENT_DATE
+         )`,
         [groupId, studentId, req.user.id],
       )
 

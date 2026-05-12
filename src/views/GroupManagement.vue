@@ -1177,20 +1177,6 @@ onMounted(() => {
                     {{ student.parent_phone || 'Non renseigné' }}
                   </td>
                   <td class="px-4 py-3">
-                    <button
-                      v-if="isAdmin || isTeacher"
-                      @click="togglePayment(student)"
-                      :class="getPaymentStatusClass(student.payment_status)"
-                      class="px-3 py-1 rounded-full text-xs font-bold hover:opacity-75 transition-opacity cursor-pointer"
-                      :title="
-                        student.payment_status === 'paid'
-                          ? t('click_to_mark_unpaid')
-                          : t('click_to_mark_paid')
-                      "
-                    >
-                      {{ formatPaymentStatus(student.payment_status) }}
-                    </button>
-
                     <!-- Sessions attended this cycle -->
                     <span
                       v-if="student.sessions_attended !== undefined"
