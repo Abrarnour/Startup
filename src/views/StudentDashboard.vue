@@ -117,13 +117,13 @@ onMounted(() => {
         <div class="flex flex-col items-center">
           <button
             @click="openProfile"
-            class="flex-shrink-0 w-16 h-16 rounded-3xl shadow-xl transition-transform transform hover:scale-110 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            class="flex-shrink-0 w-19 h-19 rounded-3xl shadow-xl transition-transform transform hover:scale-110 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             title="My Profile"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="34"
-              height="34"
+              width="38"
+              height="38"
               viewBox="0 0 24 24"
               fill="none"
               stroke="white"
