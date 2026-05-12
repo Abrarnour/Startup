@@ -278,7 +278,7 @@ router.get('/search-students', authMiddleware, async (req, res) => {
 })
 
 // ── GET /api/stats/student-history/:studentId ──────────────────────────────
-// Admin-only: full timeline for one student (account, enrollments, payments)
+// Admin-only: full history — enrollments, payments, attendance scans, absences
 router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
@@ -287,13 +287,14 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
 
     // 1. Basic student info
     const student = await pool.query(
-      `SELECT id, name, last_name, email, phone, gender, city, birthday, created_at
+      `SELECT id, name, last_name, email, phone, gender, city, birthday, created_at, photo_url
        FROM users WHERE id = $1 AND role = 'student'`,
       [studentId],
     )
     if (student.rows.length === 0) return res.status(404).json({ error: 'Étudiant introuvable' })
+    const profile = student.rows[0]
 
-    // 2. All enrollments with course / group / teacher / payment details
+    // 2. All enrollments with course / group / teacher / payment / session details
     const enrollments = await pool.query(
       `SELECT
          gs.id                AS enrollment_id,
@@ -305,8 +306,15 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
          gs.payment_due,
          gs.payment_deadline,
          gs.last_payment_date,
+         gs.sessions_attended,
+         g.id                 AS group_id,
          g.group_name,
          g.start_date         AS group_start_date,
+         g.day_of_week,
+         g.session_start_time,
+         g.session_end_time,
+         g.total_sessions     AS group_total_sessions,
+         g.salle,
          c.id                 AS course_id,
          c.title              AS course_title,
          c.education_level,
@@ -323,7 +331,7 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
       [studentId],
     )
 
-    // 3. Payment records (rows that have last_payment_date set)
+    // 3. Payment records
     const payments = await pool.query(
       `SELECT
          gs.id,
@@ -342,20 +350,77 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
       [studentId],
     )
 
-    // 4. Build unified timeline
+    // 4. Attendance log — every QR scan ever recorded
+    const attQ = await pool.query(
+      `SELECT
+         al.id,
+         al.scanned_at,
+         al.session_number,
+         al.group_id,
+         g.group_name,
+         g.day_of_week,
+         g.session_start_time,
+         g.salle,
+         c.title  AS course_title,
+         (u.name || ' ' || u.last_name) AS scanned_by_name
+       FROM attendance_log al
+       JOIN groups  g ON g.id = al.group_id
+       JOIN courses c ON c.id = g.course_id
+       LEFT JOIN users u ON u.id = al.scanned_by
+       WHERE al.student_id = $1
+       ORDER BY al.scanned_at DESC`,
+      [studentId],
+    )
+
+    // 5. Absences — scheduled session dates (last 90 days) with no scan
+    const absQ = await pool.query(
+      `WITH active_enroll AS (
+         SELECT gs.group_id, gs.enrollment_date,
+                g.day_of_week, g.session_start_time,
+                g.group_name, c.title AS course_title
+         FROM group_students gs
+         JOIN groups  g ON g.id = gs.group_id
+         JOIN courses c ON c.id = g.course_id
+         WHERE gs.student_id = $1 AND gs.status = 'active'
+       ),
+       scheduled AS (
+         SELECT
+           ae.group_id, ae.group_name, ae.course_title, ae.session_start_time,
+           d::date AS session_date
+         FROM active_enroll ae
+         CROSS JOIN LATERAL
+           generate_series(
+             GREATEST(ae.enrollment_date::date, CURRENT_DATE - INTERVAL '90 days'),
+             CURRENT_DATE - INTERVAL '1 day',
+             '1 day'::interval
+           ) AS d
+         WHERE TO_CHAR(d, 'day') ILIKE ae.day_of_week || '%'
+       )
+       SELECT s.group_id, s.group_name, s.course_title,
+              s.session_start_time, s.session_date
+       FROM scheduled s
+       WHERE NOT EXISTS (
+         SELECT 1 FROM attendance_log al
+         WHERE al.group_id   = s.group_id
+           AND al.student_id = $1
+           AND al.scanned_at::date = s.session_date
+       )
+       ORDER BY s.session_date DESC`,
+      [studentId],
+    )
+
+    // 6. Build unified timeline (account + enrollments + payments + scans)
     const timeline = []
 
-    // Account creation
     timeline.push({
       type: 'account_created',
-      date: student.rows[0].created_at,
+      date: profile.created_at,
       label: 'Compte créé',
-      detail: `Inscription de ${student.rows[0].name} ${student.rows[0].last_name}`,
+      detail: `Inscription de ${profile.name} ${profile.last_name}`,
       icon: '👤',
     })
 
     for (const e of enrollments.rows) {
-      // Enrollment event
       timeline.push({
         type: 'enrollment',
         date: e.enrollment_date,
@@ -375,8 +440,6 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
           price: e.price,
         },
       })
-
-      // Payment event (only if payment was recorded)
       if (e.last_payment_date) {
         timeline.push({
           type: 'payment',
@@ -394,14 +457,29 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
       }
     }
 
-    // Sort newest first
+    for (const a of attQ.rows) {
+      timeline.push({
+        type: 'attendance',
+        date: a.scanned_at,
+        label: `Présent — ${a.course_title}`,
+        detail: `${a.group_name} · Séance #${a.session_number}`,
+        icon: '✅',
+        group_id: a.group_id,
+        session_number: a.session_number,
+      })
+    }
+
     timeline.sort((a, b) => new Date(b.date) - new Date(a.date))
 
     res.json({
-      student: student.rows[0],
+      profile,
+      // keep legacy key so old modal still works if not yet updated
+      student: profile,
       timeline,
       enrollments: enrollments.rows,
       payments: payments.rows,
+      attendance: attQ.rows,
+      absences: absQ.rows,
     })
   } catch (err) {
     console.error('Erreur student-history:', err.message)

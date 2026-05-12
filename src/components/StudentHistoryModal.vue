@@ -1,14 +1,8 @@
 <script setup>
 /**
- * StudentHistoryModal.vue
- * Admin-only — full student history with search, timeline, and date filter.
- *
- * Props : show (Boolean), darkMode (Boolean)
- * Emits : close
- *
- * Requires in api.js:
- *   searchStudents(q)       → GET /api/stats/search-students?q=xxx
- *   getStudentHistory(id)   → GET /api/stats/student-history/:id
+ * StudentHistoryModal.vue  — Admin dashboard
+ * Tabs: Overview · Sessions · Absences · Payments · Timeline
+ * Requires backend patch: stats_history_patch.js
  */
 import { ref, watch, computed } from 'vue'
 import { searchStudents, getStudentHistory } from '../services/api.js'
@@ -19,7 +13,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['close'])
 
-// ── Search ─────────────────────────────────────────────────────────────────
+// ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 const searchResults = ref([])
 const searching = ref(false)
@@ -43,99 +37,119 @@ watch(searchQuery, (v) => {
   }, 350)
 })
 
-// ── Selected student & history ─────────────────────────────────────────────
+// ── Student & data ────────────────────────────────────────────────────────────
 const selectedStudent = ref(null)
 const historyData = ref(null)
-const loadingHistory = ref(false)
-const historyError = ref('')
+const loading = ref(false)
+const error = ref('')
+const activeTab = ref('overview')
 
-const selectStudent = async (student) => {
-  selectedStudent.value = student
-  searchQuery.value = `${student.name} ${student.last_name}`
+const selectStudent = async (s) => {
+  selectedStudent.value = s
+  searchQuery.value = `${s.name} ${s.last_name}`
   searchResults.value = []
-  historyError.value = ''
+  error.value = ''
   historyData.value = null
-  loadingHistory.value = true
+  loading.value = true
+  activeTab.value = 'overview'
+  resetFilters()
   try {
-    historyData.value = await getStudentHistory(student.id)
+    historyData.value = await getStudentHistory(s.id)
   } catch (e) {
-    historyError.value = e.message || 'Erreur de chargement'
+    error.value = e.message || 'Erreur de chargement'
   } finally {
-    loadingHistory.value = false
+    loading.value = false
   }
 }
 
-// ── Filter controls ────────────────────────────────────────────────────────
-const clearFromDate = ref('')
-const activeFilters = ref([]) // [] = all types shown
-const ALL_TYPES = ['account_created', 'enrollment', 'payment']
-const TYPE_LABEL = { account_created: 'Compte', enrollment: 'Inscription', payment: 'Paiement' }
-const TYPE_COLOR = { account_created: '#8b5cf6', enrollment: '#3b82f6', payment: '#10b981' }
-const TYPE_ICON = { account_created: '✦', enrollment: '≡', payment: '▣' }
+// ── Filters ───────────────────────────────────────────────────────────────────
+const dateFrom = ref('')
+const dateTo = ref('')
+const courseFilter = ref('')
 
-const toggleFilter = (t) => {
-  activeFilters.value = activeFilters.value.includes(t)
-    ? activeFilters.value.filter((x) => x !== t)
-    : [...activeFilters.value, t]
+const resetFilters = () => {
+  dateFrom.value = ''
+  dateTo.value = ''
+  courseFilter.value = ''
 }
 
-const clearFilters = () => {
-  clearFromDate.value = ''
-  activeFilters.value = []
+const inRange = (d) => {
+  if (!d) return false
+  const dt = new Date(d)
+  if (dateFrom.value && dt < new Date(dateFrom.value)) return false
+  if (dateTo.value && dt > new Date(dateTo.value + 'T23:59:59')) return false
+  return true
 }
+const matchCourse = (title) =>
+  !courseFilter.value || (title || '').toLowerCase().includes(courseFilter.value.toLowerCase())
 
-const filteredTimeline = computed(() => {
-  if (!historyData.value) return []
-  let tl = [...historyData.value.timeline]
-  if (clearFromDate.value) {
-    const cutoff = new Date(clearFromDate.value)
-    tl = tl.filter((e) => new Date(e.date) >= cutoff)
-  }
-  if (activeFilters.value.length) {
-    tl = tl.filter((e) => activeFilters.value.includes(e.type))
-  }
-  return tl
+// ── Computed filtered data ────────────────────────────────────────────────────
+const filteredSessions = computed(() => {
+  if (!historyData.value?.attendance) return []
+  return historyData.value.attendance.filter(
+    (a) => inRange(a.scanned_at) && matchCourse(a.course_title),
+  )
 })
 
-// ── Summary stats ──────────────────────────────────────────────────────────
+const filteredAbsences = computed(() => {
+  if (!historyData.value?.absences) return []
+  return historyData.value.absences.filter(
+    (a) => inRange(a.session_date) && matchCourse(a.course_title),
+  )
+})
+
+const filteredPayments = computed(() => {
+  if (!historyData.value?.payments) return []
+  return historyData.value.payments.filter((p) => inRange(p.payment_date))
+})
+
+const filteredTimeline = computed(() => {
+  if (!historyData.value?.timeline) return []
+  return historyData.value.timeline.filter((e) => inRange(e.date))
+})
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+const totalPresent = computed(() => historyData.value?.attendance?.length ?? 0)
+const totalAbsent = computed(() => historyData.value?.absences?.length ?? 0)
+const attendanceRate = computed(() => {
+  const total = totalPresent.value + totalAbsent.value
+  return total === 0 ? 100 : Math.round((totalPresent.value / total) * 100)
+})
 const totalPaid = computed(() =>
-  historyData.value
-    ? historyData.value.payments.reduce((s, p) => s + parseFloat(p.amount_paid || 0), 0)
-    : 0,
+  (historyData.value?.payments ?? []).reduce((s, p) => s + parseFloat(p.amount_paid || 0), 0),
 )
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-const fmtDate = (d) => {
+// unique courses for filter dropdown
+const allCourses = computed(() => {
+  if (!historyData.value) return []
+  const set = new Set()
+  ;(historyData.value.attendance ?? []).forEach((a) => set.add(a.course_title))
+  ;(historyData.value.absences ?? []).forEach((a) => set.add(a.course_title))
+  return [...set].sort()
+})
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmtDate = (d, time = true) => {
   if (!d) return '—'
-  return new Date(d).toLocaleDateString('fr-FR', {
+  return new Date(d).toLocaleDateString('fr-DZ', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    ...(time ? { hour: '2-digit', minute: '2-digit' } : {}),
   })
-}
-const fmtDateShort = (d) => {
-  if (!d) return '—'
-  return new Date(d).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-const statusColor = (s) => {
-  const map = {
-    active: '#10b981',
-    paid: '#10b981',
-    inactive: '#f59e0b',
-    pending: '#f59e0b',
-    dropped: '#ef4444',
-    completed: '#3b82f6',
-  }
-  return (s && map[s.toLowerCase()]) || '#94a3b8'
 }
 
-// ── Reset when modal closes ────────────────────────────────────────────────
+const dayMap = {
+  monday: 'Lundi',
+  tuesday: 'Mardi',
+  wednesday: 'Mercredi',
+  thursday: 'Jeudi',
+  friday: 'Vendredi',
+  saturday: 'Samedi',
+  sunday: 'Dimanche',
+}
+
+// ── Reset on close ────────────────────────────────────────────────────────────
 watch(
   () => props.show,
   (v) => {
@@ -144,9 +158,9 @@ watch(
       searchResults.value = []
       selectedStudent.value = null
       historyData.value = null
-      historyError.value = ''
-      clearFromDate.value = ''
-      activeFilters.value = []
+      error.value = ''
+      activeTab.value = 'overview'
+      resetFilters()
     }
   },
 )
@@ -154,43 +168,35 @@ watch(
 
 <template>
   <Teleport to="body">
-    <Transition name="hm-fade">
-      <div v-if="show" class="hm-overlay" @click.self="emit('close')">
-        <div class="hm-modal" :class="{ 'hm-dark': darkMode }">
-          <!-- ═══ HEADER ════════════════════════════════════════════════ -->
-          <div class="hm-header">
-            <div class="hm-title-row">
-              <div class="hm-header-icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
+    <Transition name="shm-fade">
+      <div v-if="show" class="shm-backdrop" @click.self="emit('close')">
+        <div class="shm-shell" :class="{ dark: darkMode }">
+          <!-- ══ HEADER ══════════════════════════════════════════════════════ -->
+          <header class="shm-header">
+            <div class="shm-header-left">
+              <div class="shm-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" />
+                  <path d="M12 8v4l3 3" />
                 </svg>
               </div>
               <div>
-                <h2 class="hm-title">Historique des étudiants</h2>
-                <p class="hm-subtitle">Consultez le parcours complet de chaque étudiant</p>
+                <h2 class="shm-title">سجل الطالب</h2>
+                <p class="shm-subtitle">Historique complet · Séances · Absences</p>
               </div>
             </div>
-            <button class="hm-close-btn" @click="emit('close')">
+            <button class="shm-close" @click="emit('close')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <path d="M18 6 6 18M6 6l12 12" />
               </svg>
             </button>
-          </div>
+          </header>
 
-          <!-- ═══ SEARCH ════════════════════════════════════════════════ -->
-          <div class="hm-search-section">
-            <div class="hm-search-box" :class="{ 'hm-search-focus': searchQuery }">
+          <!-- ══ SEARCH BAR ══════════════════════════════════════════════════ -->
+          <div class="shm-search-wrap">
+            <div class="shm-search-box">
               <svg
-                class="hm-search-ico"
+                class="shm-search-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -201,312 +207,371 @@ watch(
               </svg>
               <input
                 v-model="searchQuery"
-                class="hm-search-input"
-                placeholder="Rechercher par nom, prénom ou email…"
+                class="shm-search-input"
+                type="text"
+                placeholder="Rechercher un étudiant…"
                 autocomplete="off"
-                spellcheck="false"
               />
-              <div v-if="searching" class="hm-search-spinner"></div>
+              <div v-if="searching" class="shm-spinner" />
+            </div>
+            <!-- Autocomplete dropdown -->
+            <div v-if="searchResults.length" class="shm-dropdown">
               <button
-                v-if="searchQuery && !searching"
-                class="hm-search-clear"
-                @click="searchQuery = ''"
+                v-for="s in searchResults"
+                :key="s.id"
+                class="shm-dropdown-item"
+                @click="selectStudent(s)"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <div class="shm-avatar-sm">{{ s.name?.[0] }}{{ s.last_name?.[0] }}</div>
+                <div>
+                  <span class="shm-dr-name">{{ s.last_name }} {{ s.name }}</span>
+                  <span class="shm-dr-email">{{ s.email }}</span>
+                </div>
               </button>
             </div>
-
-            <!-- Results dropdown -->
-            <Transition name="hm-drop">
-              <div v-if="searchResults.length" class="hm-dropdown">
-                <div class="hm-dropdown-header">{{ searchResults.length }} résultat(s)</div>
-                <button
-                  v-for="s in searchResults"
-                  :key="s.id"
-                  class="hm-dropdown-item"
-                  @click="selectStudent(s)"
-                >
-                  <div
-                    class="hm-drop-avatar"
-                    :style="{ background: `hsl(${(s.id * 47) % 360}, 60%, 45%)` }"
-                  >
-                    {{ s.name[0] }}{{ s.last_name[0] }}
-                  </div>
-                  <div class="hm-drop-info">
-                    <span class="hm-drop-name">{{ s.name }} {{ s.last_name }}</span>
-                    <span class="hm-drop-email">{{ s.email }}</span>
-                  </div>
-                  <span class="hm-drop-since">Depuis {{ fmtDateShort(s.created_at) }}</span>
-                </button>
-              </div>
-            </Transition>
           </div>
 
-          <!-- ═══ EMPTY STATE ═══════════════════════════════════════════ -->
-          <div v-if="!selectedStudent && !loadingHistory && !historyError" class="hm-empty">
-            <div class="hm-empty-illustration">
-              <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- ══ EMPTY ═══════════════════════════════════════════════════════ -->
+          <div v-if="!selectedStudent && !loading" class="shm-empty">
+            <div class="shm-empty-art">
+              <svg viewBox="0 0 80 80" fill="none">
                 <circle
                   cx="40"
-                  cy="40"
-                  r="36"
+                  cy="30"
+                  r="16"
                   stroke="currentColor"
-                  stroke-width="2"
-                  stroke-dasharray="6 4"
-                  opacity="0.2"
+                  stroke-width="3"
+                  opacity=".25"
                 />
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="22"
+                <path
+                  d="M16 66c0-13.3 10.7-24 24-24s24 10.7 24 24"
                   stroke="currentColor"
-                  stroke-width="2"
-                  opacity="0.35"
+                  stroke-width="3"
+                  opacity=".25"
                 />
-                <polyline
-                  points="40 28 40 40 48 45"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  opacity="0.6"
-                />
-                <circle cx="40" cy="40" r="2" fill="currentColor" opacity="0.6" />
               </svg>
             </div>
-            <p class="hm-empty-title">Aucun étudiant sélectionné</p>
-            <p class="hm-empty-sub">
-              Tapez un nom ou email dans la barre de recherche ci-dessus pour afficher l'historique
-              complet d'un étudiant.
-            </p>
+            <p class="shm-empty-label">Recherchez un étudiant pour afficher son historique</p>
           </div>
 
-          <!-- ═══ LOADING ═══════════════════════════════════════════════ -->
-          <div v-if="loadingHistory" class="hm-loading">
-            <div class="hm-loading-dots"><span></span><span></span><span></span></div>
+          <!-- ══ LOADING ════════════════════════════════════════════════════ -->
+          <div v-if="loading" class="shm-loading">
+            <div class="shm-dots"><span /><span /><span /></div>
             <p>Chargement de l'historique…</p>
           </div>
 
-          <!-- ═══ ERROR ═════════════════════════════════════════════════ -->
-          <div v-if="historyError" class="hm-error-box">
+          <!-- ══ ERROR ══════════════════════════════════════════════════════ -->
+          <div v-if="error" class="shm-error">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <path d="M12 8v4M12 16h.01" />
             </svg>
-            {{ historyError }}
+            {{ error }}
           </div>
 
-          <!-- ═══ STUDENT BANNER ════════════════════════════════════════ -->
-          <div v-if="historyData && !loadingHistory" class="hm-student-banner">
-            <div class="hm-banner-left">
-              <div
-                class="hm-banner-avatar"
-                :style="{ background: `hsl(${(selectedStudent.id * 47) % 360}, 55%, 42%)` }"
-              >
-                {{ historyData.student.name[0] }}{{ historyData.student.last_name[0] }}
+          <!-- ══ STUDENT CARD + CONTENT ════════════════════════════════════ -->
+          <div v-if="historyData && !loading" class="shm-content">
+            <!-- Banner -->
+            <div class="shm-banner">
+              <div class="shm-avatar-lg">
+                <img v-if="historyData.profile.photo_url" :src="historyData.profile.photo_url" />
+                <span v-else
+                  >{{ historyData.profile.name?.[0] }}{{ historyData.profile.last_name?.[0] }}</span
+                >
               </div>
-              <div class="hm-banner-info">
-                <div class="hm-banner-name">
-                  {{ historyData.student.name }} {{ historyData.student.last_name }}
+              <div class="shm-banner-info">
+                <h3 class="shm-student-name">
+                  {{ historyData.profile.last_name }} {{ historyData.profile.name }}
+                </h3>
+                <p class="shm-student-meta">{{ historyData.profile.email }}</p>
+                <p class="shm-student-meta">
+                  {{ historyData.profile.city || '' }}
+                  {{ historyData.profile.phone ? '· ' + historyData.profile.phone : '' }}
+                </p>
+              </div>
+              <!-- Quick KPIs -->
+              <div class="shm-kpis">
+                <div class="shm-kpi shm-kpi-green">
+                  <span class="shm-kpi-val">{{ totalPresent }}</span>
+                  <span class="shm-kpi-lbl">Séances</span>
                 </div>
-                <div class="hm-banner-email">{{ historyData.student.email }}</div>
-                <div class="hm-banner-chips">
-                  <span v-if="historyData.student.phone" class="hm-chip"
-                    >✆ {{ historyData.student.phone }}</span
-                  >
-                  <span v-if="historyData.student.city" class="hm-chip"
-                    >◉ {{ historyData.student.city }}</span
-                  >
-                  <span v-if="historyData.student.birthday" class="hm-chip"
-                    >✿ {{ fmtDateShort(historyData.student.birthday) }}</span
-                  >
-                  <span class="hm-chip">
-                    {{
-                      historyData.student.gender === 'M'
-                        ? '♂ Masculin'
-                        : historyData.student.gender === 'F'
-                          ? '♀ Féminin'
-                          : ''
-                    }}
-                  </span>
+                <div class="shm-kpi shm-kpi-red">
+                  <span class="shm-kpi-val">{{ totalAbsent }}</span>
+                  <span class="shm-kpi-lbl">Absences</span>
+                </div>
+                <div
+                  class="shm-kpi"
+                  :class="
+                    attendanceRate >= 75
+                      ? 'shm-kpi-green'
+                      : attendanceRate >= 50
+                        ? 'shm-kpi-yellow'
+                        : 'shm-kpi-red'
+                  "
+                >
+                  <span class="shm-kpi-val">{{ attendanceRate }}%</span>
+                  <span class="shm-kpi-lbl">Présence</span>
+                </div>
+                <div class="shm-kpi shm-kpi-blue">
+                  <span class="shm-kpi-val">{{ historyData.enrollments?.length ?? 0 }}</span>
+                  <span class="shm-kpi-lbl">Cours</span>
                 </div>
               </div>
             </div>
-            <div class="hm-banner-kpis">
-              <div class="hm-kpi">
-                <span class="hm-kpi-val">{{ historyData.enrollments.length }}</span>
-                <span class="hm-kpi-lbl">Inscriptions</span>
-              </div>
-              <div class="hm-kpi-divider"></div>
-              <div class="hm-kpi">
-                <span class="hm-kpi-val">{{ historyData.payments.length }}</span>
-                <span class="hm-kpi-lbl">Paiements</span>
-              </div>
-              <div class="hm-kpi-divider"></div>
-              <div class="hm-kpi">
-                <span class="hm-kpi-val">{{ totalPaid.toFixed(0) }} DA</span>
-                <span class="hm-kpi-lbl">Total payé</span>
-              </div>
-              <div class="hm-kpi-divider"></div>
-              <div class="hm-kpi">
-                <span class="hm-kpi-val">{{ fmtDateShort(historyData.student.created_at) }}</span>
-                <span class="hm-kpi-lbl">Membre depuis</span>
-              </div>
-            </div>
-          </div>
 
-          <!-- ═══ FILTER BAR ════════════════════════════════════════════ -->
-          <div v-if="historyData && !loadingHistory" class="hm-filter-bar">
-            <div class="hm-filter-group">
-              <span class="hm-filter-label">Type :</span>
+            <!-- Attendance rate bar -->
+            <div class="shm-rate-bar-wrap">
+              <div class="shm-rate-bar-track">
+                <div
+                  class="shm-rate-bar-fill"
+                  :style="{ width: attendanceRate + '%' }"
+                  :class="
+                    attendanceRate >= 75
+                      ? 'shm-bar-green'
+                      : attendanceRate >= 50
+                        ? 'shm-bar-yellow'
+                        : 'shm-bar-red'
+                  "
+                />
+              </div>
+              <span class="shm-rate-label">Taux de présence global {{ attendanceRate }}%</span>
+            </div>
+
+            <!-- FILTER ROW -->
+            <div class="shm-filters">
+              <div class="shm-filter-group">
+                <label>De</label>
+                <input type="date" v-model="dateFrom" class="shm-filter-input" />
+              </div>
+              <div class="shm-filter-group">
+                <label>À</label>
+                <input type="date" v-model="dateTo" class="shm-filter-input" />
+              </div>
+              <div class="shm-filter-group shm-filter-grow">
+                <label>Matière</label>
+                <select v-model="courseFilter" class="shm-filter-input">
+                  <option value="">Toutes</option>
+                  <option v-for="c in allCourses" :key="c" :value="c">{{ c }}</option>
+                </select>
+              </div>
               <button
-                v-for="tp in ALL_TYPES"
-                :key="tp"
-                class="hm-filter-pill"
-                :class="{ 'hm-filter-pill--on': activeFilters.includes(tp) }"
-                :style="
-                  activeFilters.includes(tp)
-                    ? { background: TYPE_COLOR[tp], borderColor: TYPE_COLOR[tp], color: '#fff' }
-                    : {}
-                "
-                @click="toggleFilter(tp)"
+                v-if="dateFrom || dateTo || courseFilter"
+                @click="resetFilters"
+                class="shm-filter-clear"
               >
-                {{ TYPE_ICON[tp] }} {{ TYPE_LABEL[tp] }}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+                Effacer
               </button>
             </div>
 
-            <div class="hm-filter-group">
-              <span class="hm-filter-label">Depuis le :</span>
-              <input type="date" v-model="clearFromDate" class="hm-date-pick" />
-            </div>
+            <!-- TABS -->
+            <nav class="shm-tabs">
+              <button
+                v-for="tab in [
+                  { id: 'overview', label: 'Aperçu', icon: '⊞', count: null },
+                  { id: 'sessions', label: 'Séances', icon: '✓', count: filteredSessions.length },
+                  { id: 'absences', label: 'Absences', icon: '✗', count: filteredAbsences.length },
+                  { id: 'payments', label: 'Paiements', icon: '$', count: filteredPayments.length },
+                  { id: 'timeline', label: 'Timeline', icon: '⏱', count: null },
+                ]"
+                :key="tab.id"
+                class="shm-tab"
+                :class="{ active: activeTab === tab.id }"
+                @click="activeTab = tab.id"
+              >
+                <span class="shm-tab-icon">{{ tab.icon }}</span>
+                {{ tab.label }}
+                <span
+                  v-if="tab.count !== null"
+                  class="shm-tab-badge"
+                  :class="tab.id === 'absences' && tab.count > 0 ? 'shm-badge-red' : ''"
+                >
+                  {{ tab.count }}
+                </span>
+              </button>
+            </nav>
 
-            <button
-              v-if="clearFromDate || activeFilters.length"
-              class="hm-clear-filters"
-              @click="clearFilters"
-            >
-              ✕ Réinitialiser
-            </button>
-
-            <span class="hm-event-count" v-if="historyData">
-              {{ filteredTimeline.length }} événement(s)
-            </span>
-          </div>
-
-          <!-- ═══ TIMELINE ══════════════════════════════════════════════ -->
-          <div v-if="historyData && !loadingHistory" class="hm-timeline">
-            <div v-if="filteredTimeline.length === 0" class="hm-no-results">
-              Aucun événement pour ces filtres.
-            </div>
-
-            <div v-for="(ev, idx) in filteredTimeline" :key="idx" class="hm-event">
-              <!-- Connector line -->
-              <div class="hm-event-connector">
-                <div class="hm-event-node" :style="{ background: TYPE_COLOR[ev.type] }">
-                  {{ ev.icon }}
-                </div>
-                <div v-if="idx < filteredTimeline.length - 1" class="hm-event-line"></div>
-              </div>
-
-              <!-- Card -->
-              <div class="hm-event-card">
-                <!-- Top row -->
-                <div class="hm-event-toprow">
-                  <span
-                    class="hm-event-badge"
-                    :style="{ background: TYPE_COLOR[ev.type] + '1a', color: TYPE_COLOR[ev.type] }"
-                  >
-                    {{ TYPE_LABEL[ev.type] }}
-                  </span>
-                  <time class="hm-event-time">{{ fmtDate(ev.date) }}</time>
-                </div>
-
-                <div class="hm-event-title">{{ ev.label }}</div>
-                <div class="hm-event-desc">{{ ev.detail }}</div>
-
-                <!-- ── Enrollment details ── -->
-                <div v-if="ev.type === 'enrollment' && ev.meta" class="hm-meta">
-                  <div class="hm-meta-row">
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Enseignant</span>
-                      <span class="hm-mv">{{ ev.meta.teacher_name || '—' }}</span>
+            <!-- ── TAB: OVERVIEW ──────────────────────────────────────────── -->
+            <div v-if="activeTab === 'overview'" class="shm-panel">
+              <div class="shm-overview-grid">
+                <!-- Per-course attendance breakdown -->
+                <div v-for="enr in historyData.enrollments" :key="enr.id" class="shm-course-card">
+                  <div class="shm-cc-top">
+                    <div>
+                      <p class="shm-cc-title">{{ enr.course_title }}</p>
+                      <p class="shm-cc-group">
+                        {{ enr.group_name }} · {{ dayMap[enr.day_of_week] ?? enr.day_of_week }}
+                      </p>
                     </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Niveau</span>
-                      <span class="hm-mv"
-                        >{{ ev.meta.education_level }} — {{ ev.meta.year_level }}ème</span
-                      >
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Branche</span>
-                      <span class="hm-mv">{{ ev.meta.branch || '—' }}</span>
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Type</span>
-                      <span class="hm-mv">{{ ev.meta.enrollment_type }}</span>
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Statut</span>
-                      <span
-                        class="hm-mv hm-status"
+                    <span
+                      class="shm-badge"
+                      :class="enr.status === 'active' ? 'shm-badge-green' : 'shm-badge-gray'"
+                    >
+                      {{ enr.status }}
+                    </span>
+                  </div>
+                  <!-- mini progress bar: sessions_attended / group_total_sessions -->
+                  <div class="shm-mini-bar-wrap">
+                    <div class="shm-mini-bar-track">
+                      <div
+                        class="shm-mini-bar-fill shm-bar-green"
                         :style="{
-                          background: statusColor(ev.meta.status) + '1a',
-                          color: statusColor(ev.meta.status),
+                          width: enr.group_total_sessions
+                            ? Math.min(
+                                100,
+                                (enr.sessions_attended / enr.group_total_sessions) * 100,
+                              ) + '%'
+                            : '0%',
                         }"
-                        >{{ ev.meta.status }}</span
-                      >
+                      />
                     </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Paiement</span>
-                      <span
-                        class="hm-mv hm-status"
-                        :style="{
-                          background: statusColor(ev.meta.payment_status) + '1a',
-                          color: statusColor(ev.meta.payment_status),
-                        }"
-                        >{{ ev.meta.payment_status }}</span
-                      >
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Prix du cours</span>
-                      <span class="hm-mv">{{ ev.meta.price ? ev.meta.price + ' DA' : '—' }}</span>
-                    </div>
+                    <span class="shm-mini-bar-label">
+                      {{ enr.sessions_attended }} / {{ enr.group_total_sessions ?? '?' }} séances
+                    </span>
+                  </div>
+                  <div class="shm-cc-meta">
+                    <span
+                      :class="enr.payment_status === 'paid' ? 'shm-pill-green' : 'shm-pill-red'"
+                    >
+                      {{ enr.payment_status === 'paid' ? '✓ Payé' : '✗ Non payé' }}
+                    </span>
+                    <span class="shm-cc-since"
+                      >Inscrit {{ fmtDate(enr.enrollment_date, false) }}</span
+                    >
                   </div>
                 </div>
 
-                <!-- ── Payment details ── -->
-                <div v-if="ev.type === 'payment' && ev.meta" class="hm-meta">
-                  <div class="hm-meta-row">
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Montant payé</span>
-                      <span class="hm-mv hm-paid">{{ ev.meta.amount_paid }} DA</span>
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Montant dû</span>
-                      <span class="hm-mv">{{
-                        ev.meta.payment_due ? ev.meta.payment_due + ' DA' : '—'
-                      }}</span>
-                    </div>
-                    <div class="hm-meta-cell">
-                      <span class="hm-mk">Statut</span>
-                      <span
-                        class="hm-mv hm-status"
-                        :style="{
-                          background: statusColor(ev.meta.payment_status) + '1a',
-                          color: statusColor(ev.meta.payment_status),
-                        }"
-                        >{{ ev.meta.payment_status }}</span
-                      >
-                    </div>
+                <!-- No enrollments -->
+                <div v-if="!historyData.enrollments?.length" class="shm-no-data">
+                  Aucune inscription
+                </div>
+              </div>
+            </div>
+
+            <!-- ── TAB: SESSIONS ──────────────────────────────────────────── -->
+            <div v-if="activeTab === 'sessions'" class="shm-panel">
+              <div v-if="!filteredSessions.length" class="shm-no-data">
+                Aucune séance dans cette période
+              </div>
+              <table v-else class="shm-table">
+                <thead>
+                  <tr>
+                    <th>Date &amp; Heure</th>
+                    <th>Matière</th>
+                    <th>Groupe</th>
+                    <th>Salle</th>
+                    <th class="shm-th-center">N° Séance</th>
+                    <th>Scanné par</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="a in filteredSessions" :key="a.id" class="shm-tr">
+                    <td class="shm-td-date">
+                      <span class="shm-date-badge">{{ fmtDate(a.scanned_at) }}</span>
+                    </td>
+                    <td class="shm-td-course">{{ a.course_title }}</td>
+                    <td class="shm-td-light">{{ a.group_name }}</td>
+                    <td class="shm-td-light">{{ a.salle || '—' }}</td>
+                    <td class="shm-td-center">
+                      <span class="shm-session-num">#{{ a.session_number }}</span>
+                    </td>
+                    <td class="shm-td-light">
+                      {{ a.scanned_by_name ? `${a.scanned_by_name} ${a.scanned_by_last}` : '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- ── TAB: ABSENCES ──────────────────────────────────────────── -->
+            <div v-if="activeTab === 'absences'" class="shm-panel">
+              <div v-if="!filteredAbsences.length" class="shm-no-data shm-no-data-good">
+                ✓ Aucune absence dans cette période
+              </div>
+              <table v-else class="shm-table">
+                <thead>
+                  <tr>
+                    <th>Date prévue</th>
+                    <th>Matière</th>
+                    <th>Groupe</th>
+                    <th>Heure</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(a, i) in filteredAbsences" :key="i" class="shm-tr shm-tr-absent">
+                    <td class="shm-td-date">
+                      <span class="shm-absent-badge">{{ fmtDate(a.session_date, false) }}</span>
+                    </td>
+                    <td class="shm-td-course">{{ a.course_title }}</td>
+                    <td class="shm-td-light">{{ a.group_name }}</td>
+                    <td class="shm-td-light">{{ a.session_start_time?.slice(0, 5) ?? '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- ── TAB: PAYMENTS ──────────────────────────────────────────── -->
+            <div v-if="activeTab === 'payments'" class="shm-panel">
+              <div v-if="!filteredPayments.length" class="shm-no-data">
+                Aucun paiement enregistré
+              </div>
+              <div v-else>
+                <div class="shm-pay-summary">
+                  Total payé : <strong>{{ totalPaid.toLocaleString('fr-DZ') }} DZD</strong>
+                </div>
+                <table class="shm-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th class="shm-th-right">Montant</th>
+                      <th>Méthode</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="p in filteredPayments" :key="p.id" class="shm-tr">
+                      <td class="shm-td-date">
+                        <span class="shm-date-badge">{{ fmtDate(p.payment_date, false) }}</span>
+                      </td>
+                      <td class="shm-td-amount">
+                        {{ parseFloat(p.amount_paid || 0).toLocaleString('fr-DZ') }} DZD
+                      </td>
+                      <td class="shm-td-light">{{ p.payment_method || '—' }}</td>
+                      <td class="shm-td-light">{{ p.notes || '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ── TAB: TIMELINE ──────────────────────────────────────────── -->
+            <div v-if="activeTab === 'timeline'" class="shm-panel">
+              <div v-if="!filteredTimeline.length" class="shm-no-data">
+                Aucun événement dans cette période
+              </div>
+              <div class="shm-timeline">
+                <div v-for="(e, i) in filteredTimeline" :key="i" class="shm-tl-item">
+                  <div
+                    class="shm-tl-dot"
+                    :class="{
+                      'shm-dot-purple': e.type === 'account_created',
+                      'shm-dot-blue': e.type === 'enrollment',
+                      'shm-dot-green': e.type === 'payment' || e.type === 'attendance',
+                      'shm-dot-red': e.type === 'absence',
+                    }"
+                  />
+                  <div class="shm-tl-body">
+                    <p class="shm-tl-label">{{ e.label }}</p>
+                    <p v-if="e.detail" class="shm-tl-detail">{{ e.detail }}</p>
+                    <time class="shm-tl-time">{{ fmtDate(e.date) }}</time>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+          <!-- /shm-content -->
         </div>
       </div>
     </Transition>
@@ -514,810 +579,874 @@ watch(
 </template>
 
 <style scoped>
-/* ═══════════════════════════════════════════════════
-   OVERLAY & MODAL SHELL
-═══════════════════════════════════════════════════ */
-.hm-overlay {
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+.shm-shell {
+  --bg: #ffffff;
+  --bg2: #f8fafc;
+  --bg3: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text2: #475569;
+  --text3: #94a3b8;
+  --accent: #6366f1;
+  --accent2: #818cf8;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --blue: #3b82f6;
+  --radius: 14px;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.13), 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+.shm-shell.dark {
+  --bg: #0f1117;
+  --bg2: #1a1d27;
+  --bg3: #252936;
+  --border: #2d3144;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #475569;
+}
+
+/* ── Backdrop & Shell ────────────────────────────────────────────────────── */
+.shm-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(4, 13, 31, 0.75);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   z-index: 9999;
+  background: rgba(15, 17, 25, 0.6);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 16px;
 }
-
-.hm-modal {
-  background: #ffffff;
-  border-radius: 24px;
+.shm-shell {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
   width: 100%;
-  max-width: 880px;
+  max-width: 940px;
   max-height: 92vh;
-  overflow-y: auto;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow:
-    0 32px 100px rgba(2, 85, 174, 0.2),
-    0 0 0 1px rgba(2, 85, 174, 0.06);
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-.hm-modal::-webkit-scrollbar {
-  width: 5px;
-}
-.hm-modal::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
 }
 
-.hm-dark.hm-modal {
-  background: #0d1829;
-  box-shadow:
-    0 32px 100px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-}
-
-/* ═══════════════════════════════════════════════════
-   HEADER
-═══════════════════════════════════════════════════ */
-.hm-header {
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.shm-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 1.75rem 1.25rem;
-  border-bottom: 1px solid rgba(2, 85, 174, 0.07);
-  position: sticky;
-  top: 0;
-  background: inherit;
-  z-index: 20;
-  border-radius: 24px 24px 0 0;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
-.hm-dark .hm-header {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-.hm-title-row {
+.shm-header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 14px;
 }
-
-.hm-header-icon {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-  background: linear-gradient(135deg, #0255ae, #0ea5e9);
-  border-radius: 14px;
+.shm-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(2, 85, 174, 0.3);
+  flex-shrink: 0;
 }
-.hm-header-icon svg {
+.shm-logo svg {
   width: 22px;
   height: 22px;
-  stroke: #fff;
+  stroke: white;
 }
-
-.hm-title {
+.shm-title {
   font-size: 1.15rem;
-  font-weight: 800;
-  color: #040d1f;
-  margin: 0 0 0.2rem;
-  letter-spacing: -0.02em;
-}
-.hm-dark .hm-title {
-  color: #f1f5f9;
-}
-.hm-subtitle {
-  font-size: 0.78rem;
-  color: #64748b;
+  font-weight: 700;
   margin: 0;
+  line-height: 1.2;
 }
-
-.hm-close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.shm-subtitle {
+  font-size: 0.75rem;
+  color: var(--text3);
+  margin: 2px 0 0;
+}
+.shm-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   border: none;
-  background: #f1f5f9;
+  background: var(--bg3);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
-  flex-shrink: 0;
+  transition: background 0.15s;
 }
-.hm-close-btn:hover {
-  background: #e2e8f0;
+.shm-close:hover {
+  background: var(--border);
 }
-.hm-dark .hm-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-}
-.hm-dark .hm-close-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-.hm-close-btn svg {
+.shm-close svg {
   width: 16px;
   height: 16px;
-  stroke: #64748b;
+  stroke: var(--text2);
 }
 
-/* ═══════════════════════════════════════════════════
-   SEARCH
-═══════════════════════════════════════════════════ */
-.hm-search-section {
-  padding: 1.25rem 1.75rem 0;
+/* ── Search ──────────────────────────────────────────────────────────────── */
+.shm-search-wrap {
+  padding: 14px 24px 0;
+  flex-shrink: 0;
   position: relative;
 }
-
-.hm-search-box {
+.shm-search-box {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 0.7rem 1rem;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: border-color 0.15s;
 }
-.hm-dark .hm-search-box {
-  background: #1a2744;
-  border-color: rgba(255, 255, 255, 0.1);
+.shm-search-box:focus-within {
+  border-color: var(--accent);
 }
-.hm-search-box:focus-within {
-  border-color: #0255ae;
-  box-shadow: 0 0 0 3px rgba(2, 85, 174, 0.1);
-}
-
-.hm-search-ico {
-  width: 18px;
-  height: 18px;
-  color: #94a3b8;
+.shm-search-icon {
+  width: 17px;
+  height: 17px;
+  stroke: var(--text3);
   flex-shrink: 0;
 }
-
-.hm-search-input {
+.shm-search-input {
   flex: 1;
-  background: none;
   border: none;
+  background: transparent;
   outline: none;
   font-size: 0.9rem;
-  color: #040d1f;
-  font-family: inherit;
+  color: var(--text);
 }
-.hm-dark .hm-search-input {
-  color: #e2e8f0;
+.shm-search-input::placeholder {
+  color: var(--text3);
 }
-.hm-search-input::placeholder {
-  color: #94a3b8;
-}
-
-.hm-search-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #e2e8f0;
-  border-top-color: #0255ae;
+.shm-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
-  animation: hm-spin 0.7s linear infinite;
+  animation: shm-spin 0.6s linear infinite;
   flex-shrink: 0;
 }
-@keyframes hm-spin {
+@keyframes shm-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-.hm-search-clear {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  flex-shrink: 0;
-}
-.hm-search-clear svg {
-  width: 16px;
-  height: 16px;
-  stroke: #94a3b8;
-}
-.hm-search-clear:hover svg {
-  stroke: #ef4444;
-}
-
-/* Dropdown */
-.hm-dropdown {
+.shm-dropdown {
   position: absolute;
-  top: calc(100% + 2px);
-  left: 1.75rem;
-  right: 1.75rem;
-  background: #fff;
-  border-radius: 14px;
-  border: 1px solid rgba(2, 85, 174, 0.1);
-  box-shadow: 0 12px 40px rgba(2, 85, 174, 0.14);
-  z-index: 30;
-  overflow: hidden;
+  top: calc(100% + 4px);
+  left: 24px;
+  right: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 230px;
+  overflow-y: auto;
 }
-.hm-dark .hm-dropdown {
-  background: #1a2744;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.hm-dropdown-header {
-  padding: 0.5rem 1rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-}
-.hm-dark .hm-dropdown-header {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
-}
-
-.hm-dropdown-item {
+.shm-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.75rem 1rem;
+  gap: 12px;
   width: 100%;
-  background: none;
+  padding: 10px 14px;
   border: none;
+  background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  transition: background 0.12s;
 }
-.hm-dropdown-item:last-child {
-  border-bottom: none;
+.shm-dropdown-item:hover {
+  background: var(--bg2);
 }
-.hm-dropdown-item:hover {
-  background: rgba(2, 85, 174, 0.05);
-}
-.hm-dark .hm-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.hm-drop-avatar {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 800;
+.shm-avatar-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
   font-size: 0.78rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.hm-drop-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-.hm-drop-name {
-  font-weight: 700;
-  font-size: 0.87rem;
-  color: #040d1f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hm-dark .hm-drop-name {
-  color: #e2e8f0;
-}
-.hm-drop-email {
-  font-size: 0.73rem;
-  color: #64748b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hm-drop-since {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+.shm-dr-name {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.shm-dr-email {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text3);
 }
 
-/* ═══════════════════════════════════════════════════
-   EMPTY / LOADING / ERROR
-═══════════════════════════════════════════════════ */
-.hm-empty {
+/* ── Empty / Loading / Error ─────────────────────────────────────────────── */
+.shm-empty {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4rem 2rem 3rem;
-  gap: 0.75rem;
-  color: #94a3b8;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px;
+}
+.shm-empty-art svg {
+  width: 72px;
+  height: 72px;
+  stroke: var(--text3);
+}
+.shm-empty-label {
+  color: var(--text3);
+  font-size: 0.9rem;
   text-align: center;
 }
-.hm-empty-illustration {
-  width: 80px;
-  height: 80px;
-  color: #cbd5e1;
-}
-.hm-dark .hm-empty-illustration {
-  color: rgba(255, 255, 255, 0.12);
-}
-.hm-empty-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #475569;
-  margin: 0;
-}
-.hm-dark .hm-empty-title {
-  color: #94a3b8;
-}
-.hm-empty-sub {
-  font-size: 0.83rem;
-  max-width: 360px;
-  margin: 0;
-  line-height: 1.6;
-}
-
-.hm-loading {
+.shm-loading {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  padding: 3.5rem;
-  color: #64748b;
-  font-size: 0.88rem;
+  justify-content: center;
+  gap: 14px;
+  color: var(--text3);
+  font-size: 0.87rem;
 }
-.hm-loading-dots {
+.shm-dots {
   display: flex;
   gap: 6px;
 }
-.hm-loading-dots span {
+.shm-dots span {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0255ae;
-  animation: hm-bounce 1.2s ease-in-out infinite;
+  background: var(--accent);
+  animation: shm-bounce 0.9s ease-in-out infinite;
 }
-.hm-loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
+.shm-dots span:nth-child(2) {
+  animation-delay: 0.15s;
 }
-.hm-loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
+.shm-dots span:nth-child(3) {
+  animation-delay: 0.3s;
 }
-@keyframes hm-bounce {
+@keyframes shm-bounce {
   0%,
-  80%,
   100% {
-    transform: scale(0.7);
-    opacity: 0.4;
+    transform: translateY(0);
   }
-  40% {
-    transform: scale(1);
-    opacity: 1;
+  50% {
+    transform: translateY(-6px);
   }
 }
-
-.hm-error-box {
-  margin: 1rem 1.75rem;
-  padding: 0.8rem 1rem;
+.shm-error {
+  margin: 14px 24px;
+  padding: 12px 16px;
+  border-radius: 10px;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  border-radius: 10px;
   color: #dc2626;
-  font-size: 0.85rem;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 10px;
+  font-size: 0.87rem;
 }
-.hm-error-box svg {
+.shm-error svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
 }
-.hm-dark .hm-error-box {
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.3);
+
+/* ── Content scroll area ─────────────────────────────────────────────────── */
+.shm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.shm-content::-webkit-scrollbar {
+  width: 5px;
+}
+.shm-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.shm-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
 }
 
-/* ═══════════════════════════════════════════════════
-   STUDENT BANNER
-═══════════════════════════════════════════════════ */
-.hm-student-banner {
-  margin: 1.25rem 1.75rem 0;
-  background: linear-gradient(135deg, #012254 0%, #0255ae 50%, #0ea5e9 100%);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
+/* ── Banner ──────────────────────────────────────────────────────────────── */
+.shm-banner {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 16px;
   flex-wrap: wrap;
-  box-shadow: 0 8px 28px rgba(2, 85, 174, 0.25);
+  padding: 18px 0 14px;
+  border-bottom: 1px solid var(--border);
 }
-.hm-banner-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-  min-width: 200px;
-}
-.hm-banner-avatar {
+.shm-avatar-lg {
   width: 56px;
   height: 56px;
-  min-width: 56px;
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-.hm-banner-name {
-  color: #fff;
-  font-weight: 800;
-  font-size: 1rem;
-  margin-bottom: 0.15rem;
-}
-.hm-banner-email {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.78rem;
-  margin-bottom: 0.5rem;
-}
-.hm-banner-chips {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-.hm-chip {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-}
-
-.hm-banner-kpis {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-.hm-kpi {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 0.75rem;
-  text-align: center;
-}
-.hm-kpi-val {
-  color: #fff;
-  font-weight: 800;
-  font-size: 1rem;
-  white-space: nowrap;
-}
-.hm-kpi-lbl {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.68rem;
-  white-space: nowrap;
-  margin-top: 0.1rem;
-}
-.hm-kpi-divider {
-  width: 1px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* ═══════════════════════════════════════════════════
-   FILTER BAR
-═══════════════════════════════════════════════════ */
-.hm-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  padding: 1rem 1.75rem 0;
-}
-.hm-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-.hm-filter-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #64748b;
-  white-space: nowrap;
-}
-
-.hm-filter-pill {
-  padding: 0.28rem 0.75rem;
-  border-radius: 20px;
-  border: 1.5px solid #e2e8f0;
-  background: transparent;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.18s;
-  font-family: inherit;
-}
-.hm-dark .hm-filter-pill {
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #94a3b8;
-}
-.hm-filter-pill:hover {
-  border-color: #0255ae;
-  color: #0255ae;
-}
-.hm-filter-pill--on {
-  border-color: transparent !important;
-}
-
-.hm-date-pick {
-  padding: 0.3rem 0.65rem;
-  border-radius: 8px;
-  border: 1.5px solid #e2e8f0;
-  background: transparent;
-  color: inherit;
-  font-size: 0.78rem;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.hm-date-pick:focus {
-  border-color: #0255ae;
-}
-.hm-dark .hm-date-pick {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: #1a2744;
-  color: #e2e8f0;
-}
-
-.hm-clear-filters {
-  padding: 0.28rem 0.75rem;
-  border-radius: 20px;
-  border: 1.5px solid #ef4444;
-  background: transparent;
-  color: #ef4444;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s;
-  font-family: inherit;
-}
-.hm-clear-filters:hover {
-  background: #ef4444;
-  color: #fff;
-}
-
-.hm-event-count {
-  margin-left: auto;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 600;
-}
-
-/* ═══════════════════════════════════════════════════
-   TIMELINE
-═══════════════════════════════════════════════════ */
-.hm-timeline {
-  padding: 1.25rem 1.75rem 2rem;
-  display: flex;
-  flex-direction: column;
-}
-.hm-no-results {
-  text-align: center;
-  padding: 2.5rem 1rem;
-  color: #94a3b8;
-  font-size: 0.87rem;
-}
-
-.hm-event {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.hm-event-connector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  border-radius: 16px;
   flex-shrink: 0;
-  padding-top: 2px;
-}
-
-.hm-event-node {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  position: relative;
-  z-index: 1;
+  overflow: hidden;
 }
-
-.hm-event-line {
+.shm-avatar-lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.shm-banner-info {
   flex: 1;
-  width: 2px;
-  background: linear-gradient(to bottom, rgba(2, 85, 174, 0.15), rgba(2, 85, 174, 0.05));
-  min-height: 16px;
-  margin: 3px 0;
+  min-width: 140px;
 }
-.hm-dark .hm-event-line {
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+.shm-student-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+.shm-student-meta {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0;
 }
 
-.hm-event-card {
+.shm-kpis {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.shm-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 12px;
+  min-width: 62px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+}
+.shm-kpi-green {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.shm-kpi-red {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+.shm-kpi-yellow {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+.shm-kpi-blue {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+.shm-kpi-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.shm-kpi-lbl {
+  font-size: 0.68rem;
+  color: var(--text3);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.shm-kpi-green .shm-kpi-val {
+  color: var(--green);
+}
+.shm-kpi-red .shm-kpi-val {
+  color: var(--red);
+}
+.shm-kpi-yellow .shm-kpi-val {
+  color: var(--yellow);
+}
+.shm-kpi-blue .shm-kpi-val {
+  color: var(--blue);
+}
+.dark .shm-kpi-green {
+  border-color: #166534;
+  background: #052e16;
+}
+.dark .shm-kpi-red {
+  border-color: #7f1d1d;
+  background: #1c0a0a;
+}
+.dark .shm-kpi-yellow {
+  border-color: #78350f;
+  background: #1c1003;
+}
+.dark .shm-kpi-blue {
+  border-color: #1e3a5f;
+  background: #0c1a2e;
+}
+
+/* ── Attendance rate bar ─────────────────────────────────────────────────── */
+.shm-rate-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 0;
+}
+.shm-rate-bar-track {
   flex: 1;
-  background: #f8fafc;
-  border: 1px solid rgba(2, 85, 174, 0.06);
-  border-radius: 14px;
-  padding: 1rem 1.15rem;
-  margin-bottom: 0.75rem;
-  transition: box-shadow 0.2s;
+  height: 7px;
+  background: var(--bg3);
+  border-radius: 99px;
+  overflow: hidden;
 }
-.hm-event-card:hover {
-  box-shadow: 0 4px 20px rgba(2, 85, 174, 0.08);
+.shm-rate-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
 }
-.hm-dark .hm-event-card {
-  background: #1a2744;
-  border-color: rgba(255, 255, 255, 0.05);
+.shm-bar-green {
+  background: var(--green);
 }
-.hm-dark .hm-event-card:hover {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+.shm-bar-yellow {
+  background: var(--yellow);
+}
+.shm-bar-red {
+  background: var(--red);
+}
+.shm-rate-label {
+  font-size: 0.73rem;
+  color: var(--text3);
+  white-space: nowrap;
 }
 
-.hm-event-toprow {
+/* ── Filters ─────────────────────────────────────────────────────────────── */
+.shm-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 0 2px;
+}
+.shm-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shm-filter-group label {
+  font-size: 0.7rem;
+  color: var(--text3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.shm-filter-input {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.shm-filter-input:focus {
+  border-color: var(--accent);
+}
+.shm-filter-grow .shm-filter-input {
+  min-width: 160px;
+}
+.shm-filter-clear {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.shm-filter-clear:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--red);
+}
+.shm-filter-clear svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.shm-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 10px 0 0;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.shm-tabs::-webkit-scrollbar {
+  display: none;
+}
+.shm-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  border-radius: 6px 6px 0 0;
+}
+.shm-tab:hover {
+  color: var(--text);
+  background: var(--bg2);
+}
+.shm-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+.shm-tab-icon {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+.shm-tab-badge {
+  background: var(--bg3);
+  color: var(--text3);
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+}
+.shm-badge-red {
+  background: #fef2f2;
+  color: var(--red);
+}
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+.shm-panel {
+  padding: 16px 0 0;
+}
+
+/* ── Overview grid ───────────────────────────────────────────────────────── */
+.shm-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.shm-course-card {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.shm-cc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.shm-cc-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+.shm-cc-group {
+  font-size: 0.75rem;
+  color: var(--text3);
+  margin: 0;
+}
+.shm-cc-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  gap: 8px;
 }
-.hm-event-badge {
-  padding: 0.18rem 0.65rem;
-  border-radius: 20px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.hm-event-time {
+.shm-cc-since {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--text3);
 }
-
-.hm-event-title {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #040d1f;
-  margin-bottom: 0.2rem;
-}
-.hm-dark .hm-event-title {
-  color: #e2e8f0;
-}
-
-.hm-event-desc {
-  font-size: 0.82rem;
-  color: #475569;
-  margin-bottom: 0.5rem;
-}
-.hm-dark .hm-event-desc {
-  color: #94a3b8;
-}
-
-/* Meta grid */
-.hm-meta {
-  margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(2, 85, 174, 0.06);
-}
-.hm-dark .hm-meta {
-  border-top-color: rgba(255, 255, 255, 0.05);
-}
-
-.hm-meta-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.5rem;
-}
-.hm-meta-cell {
+.shm-mini-bar-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 4px;
 }
-.hm-mk {
-  font-size: 0.65rem;
-  color: #94a3b8;
+.shm-mini-bar-track {
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.shm-mini-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s;
+}
+.shm-mini-bar-label {
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+
+/* ── Badges & Pills ──────────────────────────────────────────────────────── */
+.shm-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.shm-badge-green {
+  background: #dcfce7;
+  color: #166534;
+}
+.shm-badge-gray {
+  background: var(--bg3);
+  color: var(--text3);
+}
+.dark .shm-badge-green {
+  background: #052e16;
+  color: #4ade80;
+}
+.shm-pill-green {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--green);
+}
+.shm-pill-red {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--red);
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.shm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.shm-table th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--text3);
+  border-bottom: 1.5px solid var(--border);
+}
+.shm-th-center {
+  text-align: center;
+}
+.shm-th-right {
+  text-align: right;
+}
+.shm-tr {
+  transition: background 0.1s;
+}
+.shm-tr:hover {
+  background: var(--bg2);
+}
+.shm-tr-absent:hover {
+  background: #fef2f2;
+}
+.dark .shm-tr-absent:hover {
+  background: #1c0a0a;
+}
+.shm-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.shm-td-date {
+  white-space: nowrap;
+}
+.shm-td-course {
   font-weight: 600;
+  color: var(--text);
 }
-.hm-mv {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1e293b;
+.shm-td-light {
+  color: var(--text2);
 }
-.hm-dark .hm-mv {
-  color: #e2e8f0;
+.shm-td-center {
+  text-align: center;
 }
-.hm-status {
-  display: inline-block;
-  padding: 0.12rem 0.5rem;
-  border-radius: 20px;
-  font-size: 0.72rem;
-}
-.hm-paid {
-  color: #10b981;
+.shm-td-amount {
   font-weight: 700;
+  color: var(--green);
+  text-align: right;
+}
+.shm-date-badge {
+  display: inline-block;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  color: var(--text2);
+}
+.shm-absent-badge {
+  display: inline-block;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  color: var(--red);
+  font-weight: 600;
+}
+.dark .shm-absent-badge {
+  background: #1c0a0a;
+  border-color: #7f1d1d;
+}
+.shm-session-num {
+  display: inline-block;
+  background: var(--bg3);
+  color: var(--accent);
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 2px 9px;
+  border-radius: 99px;
 }
 
-/* ═══════════════════════════════════════════════════
-   TRANSITIONS
-═══════════════════════════════════════════════════ */
-.hm-fade-enter-active,
-.hm-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* ── No data ─────────────────────────────────────────────────────────────── */
+.shm-no-data {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+  font-size: 0.88rem;
 }
-.hm-fade-enter-from,
-.hm-fade-leave-to {
+.shm-no-data-good {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ── Payments summary ────────────────────────────────────────────────────── */
+.shm-pay-summary {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 12px;
+}
+.shm-pay-summary strong {
+  color: var(--green);
+  font-size: 1rem;
+}
+
+/* ── Timeline ────────────────────────────────────────────────────────────── */
+.shm-timeline {
+  display: flex;
+  flex-direction: column;
+  padding-left: 12px;
+}
+.shm-tl-item {
+  display: flex;
+  gap: 14px;
+  padding: 0 0 18px;
+  border-left: 2px solid var(--border);
+  position: relative;
+}
+.shm-tl-item:last-child {
+  border-left-color: transparent;
+}
+.shm-tl-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2.5px solid currentColor;
+  background: var(--bg);
+  flex-shrink: 0;
+  position: absolute;
+  left: -6.5px;
+  top: 4px;
+}
+.shm-dot-purple {
+  color: #8b5cf6;
+}
+.shm-dot-blue {
+  color: var(--blue);
+}
+.shm-dot-green {
+  color: var(--green);
+}
+.shm-dot-red {
+  color: var(--red);
+}
+.shm-tl-body {
+  padding-left: 16px;
+}
+.shm-tl-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 2px;
+}
+.shm-tl-detail {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0 0 3px;
+}
+.shm-tl-time {
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+
+/* ── Transition ──────────────────────────────────────────────────────────── */
+.shm-fade-enter-active,
+.shm-fade-leave-active {
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.shm-fade-enter-from,
+.shm-fade-leave-to {
   opacity: 0;
-}
-.hm-fade-enter-from .hm-modal {
-  transform: scale(0.96) translateY(16px);
-}
-
-.hm-drop-enter-active,
-.hm-drop-leave-active {
-  transition: all 0.18s ease;
-}
-.hm-drop-enter-from,
-.hm-drop-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-/* ═══════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════ */
-@media (max-width: 640px) {
-  .hm-modal {
-    border-radius: 16px;
-  }
-  .hm-header {
-    padding: 1.25rem 1.25rem 1rem;
-  }
-  .hm-search-section,
-  .hm-filter-bar,
-  .hm-timeline {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
-  }
-  .hm-student-banner {
-    margin-left: 1.25rem;
-    margin-right: 1.25rem;
-  }
-  .hm-banner-kpis {
-    gap: 0.25rem;
-  }
-  .hm-kpi-divider {
-    display: none;
-  }
+  transform: scale(0.97);
 }
 </style>
