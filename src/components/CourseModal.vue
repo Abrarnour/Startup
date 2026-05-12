@@ -247,7 +247,7 @@ onMounted(() => {
       >
         <div
           :class="darkMode ? 'bg-gray-800' : 'bg-white'"
-          class="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-hidden"
+          class="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
           @click.stop
         >
           <!-- Header -->
@@ -792,6 +792,12 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.modal-body::-webkit-scrollbar {
+  display: none;
+}
+.modal-body {
+  scrollbar-width: none;
+}
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.3s ease;
