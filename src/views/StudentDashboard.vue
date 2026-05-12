@@ -114,24 +114,30 @@ onMounted(() => {
         </div>
 
         <!-- ONE profile button -->
-        <button
-          @click="openProfile"
-          class="flex-shrink-0 w-10 h-10 rounded-2xl shadow-lg transition-transform transform hover:scale-105 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-          title="Mon profil"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            stroke-width="2"
+        <div class="flex flex-col items-center">
+          <button
+            @click="openProfile"
+            class="flex-shrink-0 w-16 h-16 rounded-3xl shadow-xl transition-transform transform hover:scale-110 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            title="My Profile"
           >
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="34"
+              height="34"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </button>
+
+          <span class="mt-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+            My Profile
+          </span>
+        </div>
       </div>
     </div>
 
