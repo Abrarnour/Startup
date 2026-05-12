@@ -320,7 +320,7 @@
       <!-- Card top bar: school -->
       <div
         style="
-          background: linear-gradient(135deg, #1e40af 0%, #4f46e5 50%, #7c3aed 100%);
+          background: #1e3a8a;
           padding: 28px 36px 20px;
           display: flex;
           align-items: center;
@@ -364,21 +364,8 @@
           >
             École Belmahi
           </p>
-          <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin: 4px 0 0">
+          <p style="color: rgba(255, 255, 255, 0.75); font-size: 13px; margin: 4px 0 0">
             Carte d'Identité Étudiant
-          </p>
-        </div>
-        <div
-          style="
-            margin-left: auto;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            padding: 6px 14px;
-          "
-        >
-          <p style="color: rgba(255, 255, 255, 0.7); font-size: 11px; margin: 0">N° Étudiant</p>
-          <p style="color: white; font-size: 18px; font-weight: 700; margin: 2px 0 0">
-            #{{ profile.id }}
           </p>
         </div>
       </div>
@@ -475,10 +462,11 @@
             <p
               style="
                 font-size: 11px;
-                color: #9ca3af;
+                color: #111827;
                 text-transform: uppercase;
                 letter-spacing: 1px;
                 margin: 0 0 4px;
+                font-weight: 600;
               "
             >
               Nom complet
@@ -503,10 +491,11 @@
               <p
                 style="
                   font-size: 10px;
-                  color: #9ca3af;
+                  color: #111827;
                   margin: 0 0 2px;
                   text-transform: uppercase;
                   letter-spacing: 0.5px;
+                  font-weight: 600;
                 "
               >
                 Âge
@@ -522,10 +511,11 @@
               <p
                 style="
                   font-size: 10px;
-                  color: #9ca3af;
+                  color: #111827;
                   margin: 0 0 2px;
                   text-transform: uppercase;
                   letter-spacing: 0.5px;
+                  font-weight: 600;
                 "
               >
                 Ville
@@ -535,44 +525,31 @@
               </p>
             </div>
             <div
-              v-if="profile.phone"
-              style="background: #f9fafb; border-radius: 8px; padding: 10px 12px"
-            >
-              <p
-                style="
-                  font-size: 10px;
-                  color: #9ca3af;
-                  margin: 0 0 2px;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                "
-              >
-                Téléphone
-              </p>
-              <p style="font-size: 15px; font-weight: 700; color: #111827; margin: 0">
-                {{ profile.phone }}
-              </p>
-            </div>
-            <div
               v-if="profile.email"
-              style="background: #f9fafb; border-radius: 8px; padding: 10px 12px"
+              style="
+                background: #f9fafb;
+                border-radius: 8px;
+                padding: 10px 12px;
+                grid-column: span 2;
+              "
             >
               <p
                 style="
                   font-size: 10px;
-                  color: #9ca3af;
+                  color: #111827;
                   margin: 0 0 2px;
                   text-transform: uppercase;
                   letter-spacing: 0.5px;
+                  font-weight: 600;
                 "
               >
                 Email
               </p>
               <p
                 style="
-                  font-size: 12px;
+                  font-size: 13px;
                   font-weight: 600;
-                  color: #374151;
+                  color: #111827;
                   margin: 0;
                   word-break: break-all;
                 "
@@ -580,45 +557,6 @@
                 {{ profile.email }}
               </p>
             </div>
-          </div>
-
-          <!-- Courses strip -->
-          <div
-            style="
-              background: #f0fdf4;
-              border-radius: 8px;
-              padding: 10px 14px;
-              border-left: 4px solid #22c55e;
-            "
-          >
-            <p
-              style="
-                font-size: 10px;
-                color: #15803d;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin: 0 0 4px;
-              "
-            >
-              Cours inscrits ({{ courses.filter((c) => c.enrollment_status === 'active').length }}
-              actifs)
-            </p>
-            <p style="font-size: 12px; color: #374151; margin: 0; line-height: 1.5">
-              {{
-                courses
-                  .filter((c) => c.enrollment_status === 'active')
-                  .slice(0, 3)
-                  .map((c) => c.title)
-                  .join(' · ')
-              }}
-              <span
-                v-if="courses.filter((c) => c.enrollment_status === 'active').length > 3"
-                style="color: #9ca3af"
-              >
-                + {{ courses.filter((c) => c.enrollment_status === 'active').length - 3 }} autres
-              </span>
-            </p>
           </div>
         </div>
 
@@ -633,11 +571,11 @@
           "
         >
           <div
-            style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 10px"
+            style="background: white; border: 2px solid #d1d5db; border-radius: 12px; padding: 10px"
           >
-            <canvas ref="qrCanvasPdf" width="140" height="140"></canvas>
+            <canvas ref="qrCanvasPdf" width="190" height="190"></canvas>
           </div>
-          <p style="font-size: 11px; color: #6b7280; font-weight: 600; text-align: center">
+          <p style="font-size: 12px; color: #111827; font-weight: 700; text-align: center">
             Scannez pour<br />identifier
           </p>
         </div>
@@ -654,9 +592,9 @@
           align-items: center;
         "
       >
-        <p style="font-size: 11px; color: #9ca3af; margin: 0">www.ecole-belmahi.dz</p>
-        <p style="font-size: 11px; color: #9ca3af; margin: 0">Année scolaire 2025–2026</p>
-        <p style="font-size: 11px; color: #9ca3af; margin: 0">
+        <p style="font-size: 11px; color: #111827; margin: 0">www.ecole-belmahi.dz</p>
+        <p style="font-size: 11px; color: #111827; margin: 0">Année scolaire 2025–2026</p>
+        <p style="font-size: 11px; color: #111827; margin: 0">
           Document officiel — ne pas falsifier
         </p>
       </div>
@@ -703,7 +641,7 @@ const generateQR = async () => {
       await QRCode.toCanvas(qrCanvas.value, qrData, { ...opts, width: 120 })
     }
     if (qrCanvasPdf.value) {
-      await QRCode.toCanvas(qrCanvasPdf.value, qrData, { ...opts, width: 140 })
+      await QRCode.toCanvas(qrCanvasPdf.value, qrData, { ...opts, width: 190 })
     }
   } catch (err) {
     console.error('QR generation failed:', err)
