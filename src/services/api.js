@@ -1512,6 +1512,18 @@ export const searchStudents = async (q) => {
   return response.json()
 }
 
+// Parent-scoped: fetch history for own child only
+export const getChildHistory = async (studentId) => {
+  const response = await fetch(`${API_URL}/parents/children/${studentId}/history`, {
+    headers: getHeaders(),
+  })
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || "Erreur récupération de l'historique")
+  }
+  return response.json()
+}
+
 export const getStudentHistory = async (studentId) => {
   const response = await fetch(`${API_URL}/stats/student-history/${studentId}`, {
     headers: getHeaders(),

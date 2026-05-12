@@ -12,10 +12,12 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  History,
 } from 'lucide-vue-next'
 import * as api from '../services/api.js'
 import AddChildModal from '../components/AddChildModal.vue'
 import EnrollChildModal from '../components/EnrollChildModal.vue'
+import ChildHistoryModal from '../components/ChildHistoryModal.vue'
 import { useLanguage } from '../composables/useLanguage.js' // ⬅️ استيراد اللغة
 import AppLoader from '../components/AppLoader.vue'
 const { t } = useLanguage() // ⬅️ تفعيل الترجمة
@@ -37,6 +39,14 @@ const showAddChildModal = ref(false)
 const showEnrollModal = ref(false)
 const selectedCourseForEnroll = ref(null)
 const activeTab = ref('children')
+
+// History modal
+const showHistoryModal = ref(false)
+const historyChild = ref(null)
+const openHistoryModal = (child) => {
+  historyChild.value = child
+  showHistoryModal.value = true
+}
 
 // Notes: key = `groupId-studentId`
 const notesMap = ref({})
@@ -309,9 +319,21 @@ onMounted(() => {
                     {{ child.email }}
                   </p>
                 </div>
-                <button @click.stop="unlinkChild(child.id)" class="text-red-400 hover:text-red-600">
-                  <Trash2 :size="18" />
-                </button>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click.stop="openHistoryModal(child)"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 shadow-sm"
+                    title="Voir l'historique"
+                  >
+                    <History :size="14" /> Historique
+                  </button>
+                  <button
+                    @click.stop="unlinkChild(child.id)"
+                    class="text-red-400 hover:text-red-600"
+                  >
+                    <Trash2 :size="18" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -686,6 +708,12 @@ onMounted(() => {
       :children="children"
       @close="showEnrollModal = false"
       @enrolled="handleEnrolled"
+    />
+    <ChildHistoryModal
+      :show="showHistoryModal"
+      :dark-mode="darkMode"
+      :child="historyChild"
+      @close="showHistoryModal = false"
     />
   </div>
 </template>

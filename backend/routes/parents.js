@@ -395,4 +395,180 @@ router.delete('/unlink-child/:studentId', authMiddleware, parentMiddleware, asyn
   }
 })
 
+// ─── GET CHILD HISTORY ────────────────────────────────────────────────────────
+router.get('/children/:studentId/history', authMiddleware, parentMiddleware, async (req, res) => {
+  try {
+    const { studentId } = req.params
+
+    // Ownership check — parent must be linked to this student
+    const childCheck = await pool.query(
+      'SELECT id FROM parent_students WHERE parent_id=$1 AND student_id=$2',
+      [req.user.id, studentId],
+    )
+    if (childCheck.rows.length === 0)
+      return res.status(403).json({ error: 'Cet enfant ne vous appartient pas' })
+
+    // 1. Profile
+    const student = await pool.query(
+      `SELECT id, name, last_name, email, phone, gender, city, birthday, created_at, photo_url
+       FROM users WHERE id = $1 AND role = 'student'`,
+      [studentId],
+    )
+    if (student.rows.length === 0) return res.status(404).json({ error: 'Étudiant introuvable' })
+    const profile = student.rows[0]
+
+    // 2. Enrollments
+    const enrollments = await pool.query(
+      `SELECT
+         gs.id AS enrollment_id, gs.enrollment_date, gs.enrollment_type,
+         gs.status AS enrollment_status, gs.payment_status, gs.amount_paid,
+         gs.payment_due, gs.payment_deadline, gs.last_payment_date, gs.sessions_attended,
+         g.id AS group_id, g.group_name, g.start_date AS group_start_date,
+         g.day_of_week, g.session_start_time, g.session_end_time,
+         g.total_sessions AS group_total_sessions, g.salle,
+         c.id AS course_id, c.title AS course_title,
+         c.education_level, c.year_level, c.branch, c.price,
+         (u.name || ' ' || u.last_name) AS teacher_name
+       FROM group_students gs
+       JOIN groups  g ON g.id = gs.group_id
+       JOIN courses c ON c.id = g.course_id
+       LEFT JOIN users u ON u.id = c.teacher_id
+       WHERE gs.student_id = $1
+       ORDER BY gs.enrollment_date DESC`,
+      [studentId],
+    )
+
+    // 3. Payments
+    const payments = await pool.query(
+      `SELECT gs.id, gs.last_payment_date AS payment_date, gs.amount_paid,
+              gs.payment_status, gs.payment_due, c.title AS course_title, c.price
+       FROM group_students gs
+       JOIN groups  g ON g.id = gs.group_id
+       JOIN courses c ON c.id = g.course_id
+       WHERE gs.student_id = $1 AND gs.last_payment_date IS NOT NULL
+       ORDER BY gs.last_payment_date DESC`,
+      [studentId],
+    )
+
+    // 4. Attendance log
+    const attQ = await pool.query(
+      `SELECT al.id, al.scanned_at, al.session_number, al.group_id,
+              g.group_name, g.day_of_week, g.session_start_time, g.salle,
+              c.title AS course_title,
+              (u.name || ' ' || u.last_name) AS scanned_by_name
+       FROM attendance_log al
+       JOIN groups  g ON g.id = al.group_id
+       JOIN courses c ON c.id = g.course_id
+       LEFT JOIN users u ON u.id = al.scanned_by
+       WHERE al.student_id = $1
+       ORDER BY al.scanned_at DESC`,
+      [studentId],
+    )
+
+    // 5. Absences (last 90 days, active enrollments only)
+    const absQ = await pool.query(
+      `WITH active_enroll AS (
+         SELECT gs.group_id, gs.enrollment_date,
+                g.day_of_week, g.session_start_time,
+                g.group_name, c.title AS course_title
+         FROM group_students gs
+         JOIN groups  g ON g.id = gs.group_id
+         JOIN courses c ON c.id = g.course_id
+         WHERE gs.student_id = $1 AND gs.status = 'active'
+       ),
+       scheduled AS (
+         SELECT ae.group_id, ae.group_name, ae.course_title, ae.session_start_time,
+                d::date AS session_date
+         FROM active_enroll ae
+         CROSS JOIN LATERAL generate_series(
+           GREATEST(ae.enrollment_date::date, CURRENT_DATE - INTERVAL '90 days'),
+           CURRENT_DATE - INTERVAL '1 day',
+           '1 day'::interval
+         ) AS d
+         WHERE TO_CHAR(d, 'day') ILIKE ae.day_of_week || '%'
+       )
+       SELECT s.group_id, s.group_name, s.course_title, s.session_start_time, s.session_date
+       FROM scheduled s
+       WHERE NOT EXISTS (
+         SELECT 1 FROM attendance_log al
+         WHERE al.group_id = s.group_id AND al.student_id = $1
+           AND al.scanned_at::date = s.session_date
+       )
+       ORDER BY s.session_date DESC`,
+      [studentId],
+    )
+
+    // 6. Timeline
+    const timeline = []
+    timeline.push({
+      type: 'account_created',
+      date: profile.created_at,
+      label: 'Compte créé',
+      detail: `Inscription de ${profile.name} ${profile.last_name}`,
+      icon: '👤',
+    })
+    for (const e of enrollments.rows) {
+      timeline.push({
+        type: 'enrollment',
+        date: e.enrollment_date,
+        label: 'Inscription au cours',
+        detail: `${e.course_title} — ${e.group_name}`,
+        icon: '📚',
+        meta: {
+          course_title: e.course_title,
+          group_name: e.group_name,
+          teacher_name: e.teacher_name,
+          education_level: e.education_level,
+          year_level: e.year_level,
+          branch: e.branch,
+          enrollment_type: e.enrollment_type,
+          status: e.enrollment_status,
+          payment_status: e.payment_status,
+          price: e.price,
+        },
+      })
+      if (e.last_payment_date) {
+        timeline.push({
+          type: 'payment',
+          date: e.last_payment_date,
+          label: 'Paiement enregistré',
+          detail: `${e.course_title} — ${e.amount_paid} DA`,
+          icon: '💳',
+          meta: {
+            course_title: e.course_title,
+            amount_paid: e.amount_paid,
+            payment_due: e.payment_due,
+            payment_status: e.payment_status,
+          },
+        })
+      }
+    }
+    for (const a of attQ.rows) {
+      timeline.push({
+        type: 'attendance',
+        date: a.scanned_at,
+        label: `Présent — ${a.course_title}`,
+        detail: `${a.group_name} · Séance #${a.session_number}`,
+        icon: '✅',
+        group_id: a.group_id,
+        session_number: a.session_number,
+      })
+    }
+    timeline.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+    res.json({
+      profile,
+      student: profile,
+      timeline,
+      enrollments: enrollments.rows,
+      payments: payments.rows,
+      attendance: attQ.rows,
+      absences: absQ.rows,
+    })
+  } catch (error) {
+    console.error('Erreur child-history:', error.message)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
 export default router
