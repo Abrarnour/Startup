@@ -380,7 +380,7 @@ onMounted(() => {
               <polyline points="12 6 12 12 16 14" />
             </svg>
             <div class="text-2xl font-bold relative z-10">{{ stats.students }}</div>
-            <div class="text-sm text-blue-100 relative z-10">Historique étudiants</div>
+            <div class="text-sm text-blue-100 relative z-10">{{ t('Historique_étudiants') }}</div>
             <p
               class="text-yellow-300 text-xs mt-1 flex items-center justify-center gap-1 relative z-10"
             >

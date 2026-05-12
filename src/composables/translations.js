@@ -18,7 +18,7 @@ export const translations = {
       'Définissez le nombre de jours — les élèves inactifs depuis plus longtemps seront supprimés.',
     days_count: 'Nombre de jours',
     enter_number: 'Entrez un nombre',
-    warning_days_low: '⚠️ Attention : nombre de jours trop faible !',
+    warning_days_low: ' Attention : nombre de jours trop faible !',
     confirm_btn: 'Confirmer',
     processing: 'En cours...',
     deleting: 'Suppression...',
@@ -752,7 +752,7 @@ export const translations = {
     enrolled_awaiting_payment: 'Inscrit — en attente de confirmation',
     enrolled_closed: 'Inscrit (fermé)',
     unpaid_active: 'Non payé (actif)',
-
+    Historique_étudiants: 'Regitre des étudiants ',
     // ── MATERIALS NOTIFICATION ──
     new_material_notif: ' Nouveau document publié pour la Matiére ',
 
@@ -885,7 +885,7 @@ export const translations = {
     enrolled_not_paid: 'Inscrit mais non payé',
     paid_session_1: 'Payé + Séance 1',
     wrong_day_no_session: 'Jour incorrect — Pas de séance aujourd’hui',
-    course_ended_renew: '🔔 Cours terminé — Renouvellement requis',
+    course_ended_renew: ' Cours terminé — Renouvellement requis',
     scheduled_day: 'Jour de séance prévu :',
 
     no_absents_recorded: 'Aucun absent enregistré pour cette séance.',
@@ -936,7 +936,7 @@ export const translations = {
     cleanup_inactiv: 'حدد عدد الأيام — سيتم حذف الطلاب غير النشطين الذين تجاوزوا هذه المدة.',
     days_count: 'عدد الأيام',
     enter_number: 'أدخل عددًا',
-    warning_days_low: '⚠️ تحذير: عدد الأيام منخفض جدًا!',
+    warning_days_low: ' تحذير: عدد الأيام منخفض جدًا!',
     confirm_btn: 'تأكيد',
     processing: 'جاري التنفيذ...',
     deleting: 'جاري الحذف...',
@@ -970,14 +970,14 @@ export const translations = {
     payment_not_made: 'الدفع لم يتم',
     not_enrolled_group: 'غير مسجل في هذه المجموعة',
     enrollment_inactive: 'التسجيل غير مفعل',
-    already_scanned_today: '⚡ مسجّل اليوم مسبقاً',
-    not_session_day: '⚠️ ليس يوم الحصة',
-    enroll_in_group: '➕ تسجيل في المجموعة',
+    already_scanned_today: ' مسجّل اليوم مسبقاً',
+    not_session_day: ' ليس يوم الحصة',
+    enroll_in_group: 'تسجيل في المجموعة',
     enrolling: 'جاري التسجيل...',
     enrolled_not_paid: 'الطالب مسجّل لكن لم يدفع بعد',
     paid_session_1: '✓ دافع + جلسة 1',
     wrong_day_no_session: 'يوم خاطئ — لا حصة اليوم',
-    course_ended_renew: '🔔 انتهت الدورة — يجب التجديد',
+    course_ended_renew: ' انتهت الدورة — يجب التجديد',
     scheduled_day: 'يوم الحصة المجدولة:',
 
     no_absents_recorded: 'لا يوجد غائبون مسجلون لهذه الحصة.',
@@ -1500,7 +1500,7 @@ export const translations = {
     // Student & Parent Dashboards
     loading_your_courses: 'جاري تحميل دروسك...',
     error_prefix: ' خطأ:',
-
+    Historique_étudiants: 'أرشيف الطلاب ',
     welcome_comma: 'مرحباً، ',
     your_enrolled_courses: 'دروسك المسجلة',
     no_enrolled_courses: 'لا توجد دروس مسجلة',
