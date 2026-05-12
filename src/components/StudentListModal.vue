@@ -272,11 +272,7 @@
           {{ cleanupDialog.type === 'pending' ? t('cleanup_pending_14d') : t('cleanup_inactive') }}
         </h3>
         <p class="text-sm text-center mb-5" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
-          {{
-            cleanupDialog.type === 'pending'
-              ? t('days_count_label') + ' — ' + t('cancel_pending_text')
-              : t('days_count_label') + ' — ' + t('delete_inactive_text')
-          }}
+          {{ cleanupDialog.type === 'pending' ? t('cleanup_pending_14') : t('cleanup_inactiv') }}
         </p>
 
         <!-- Days input -->

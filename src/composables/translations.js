@@ -561,6 +561,11 @@ export const translations = {
     fri: 'Ven',
     sat: 'Sam',
 
+    cleanup_pending_14:
+      'Définissez le nombre de jours – les inscriptions en attente depuis plus de {days} jours seront annulées',
+    cleanup_inactiv:
+      'Définissez le nombre de jours – les élèves inactifs depuis plus de {days} jours seront supprimés',
+
     sunday_full: 'Dimanche',
     monday_full: 'Lundi',
     tuesday_full: 'Mardi',
@@ -1273,6 +1278,8 @@ export const translations = {
     role: 'الدور',
     actions: 'الإجراءات',
     close: 'إغلاق',
+    cleanup_pending_14: 'حدد عدد الأيام – سيتم إلغاء التسجيلات المعلقة الأقدم من هذه المدة',
+    cleanup_inactiv: 'حدد عدد الأيام – سيتم حذف الطلاب الغير نشطين الذين تجاوزوا هذه المدة',
 
     // ── TEACHER DASHBOARD ──
     my_courses: 'دروسي',
