@@ -607,6 +607,51 @@ const onScanSuccess = async (decodedText) => {
 }
 
 // ── Reset to scan again ─────────────────────────────────────────────
+// ── Enroll NOT_ENROLLED student into the group ─────────────────────────────
+const handleEnroll = async () => {
+  if (!scanResult.value || !props.groupId) return
+  enrollLoading.value = true
+  try {
+    await api.addStudentToGroup(props.groupId, { student_id: scanResult.value.id })
+    enrollDone.value = true
+    scanResult.value = {
+      ...scanResult.value,
+      enrollment_status: 'active',
+      payment_status: 'pending',
+    }
+  } catch (err) {
+    console.error('Enroll error:', err)
+    alert(err.message || 'حدث خطأ أثناء التسجيل')
+  } finally {
+    enrollLoading.value = false
+  }
+}
+
+// ── Pay + count as session 1 (NOT_PAID or just-enrolled student) ────────────
+const handlePayAndScan = async () => {
+  if (!scanResult.value || !props.groupId) return
+  payLoading.value = true
+  try {
+    const studentId = scanResult.value.id
+    await api.markStudentPaidAndScan(props.groupId, studentId)
+    scanResult.value = {
+      ...scanResult.value,
+      access: 'GRANTED',
+      payment_status: 'paid',
+      sessions_attended: 1,
+      session_number: 1,
+      already_scanned_today: false,
+    }
+    enrollDone.value = false
+  } catch (err) {
+    console.error('Pay-and-scan error:', err)
+    alert(err.message || 'حدث خطأ أثناء تسجيل الدفع')
+  } finally {
+    payLoading.value = false
+  }
+}
+
+// ── Reset to scan again ──────────────────────────────────────────────────────
 const resetScan = async () => {
   scanResult.value = null
   enrollDone.value = false
