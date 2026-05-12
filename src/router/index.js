@@ -70,6 +70,16 @@ const router = createRouter({
     },
     { path: '/public-courses', name: 'public-courses', component: PublicCourses },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+
+    return {
+      top: 0,
+      behavior: 'smooth',
+    }
+  },
 })
 
 // Navigation guards
