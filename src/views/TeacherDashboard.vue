@@ -82,31 +82,23 @@ const loadCourses = async () => {
 
     let totalSessions = 0
     let totalStudents = 0
-    let availableSeats = 0
-
+    // AFTER
     courses.value.forEach((course) => {
-      // Compter les séances par semaine
-      if (course.sessions_per_week) {
-        totalSessions += parseInt(course.sessions_per_week)
-      }
-
-      // Compter les étudiants
-      const current = parseInt(course.current_students) || 0
-      const max = parseInt(course.max_students_per_group || course.max_students) || 25
-      totalStudents += current
-      availableSeats += max - current
+      if (course.sessions_per_week) totalSessions += parseInt(course.sessions_per_week)
     })
-
     stats.value.totalSessionsPerWeek = totalSessions
-    stats.value.totalStudents = totalStudents
-    stats.value.availableSeats = availableSeats
+
+    // Always get seats/students from teacher-scoped API, never from local calc
     try {
       const apiStats = await api.getTeacherStats()
-      stats.value.totalGroups = apiStats.totalSessionsPerWeek // backend sends groups count under this key
-      stats.value.totalStudents = apiStats.totalStudents // more accurate: from DB not local calc
-      stats.value.availableSeats = apiStats.availableSeats
+      stats.value.totalGroups = apiStats.totalSessionsPerWeek
+      stats.value.totalStudents = apiStats.totalStudents
+      stats.value.availableSeats = apiStats.availableSeats // ← teacher-only ✅
     } catch (e) {
-      console.warn('Stats API fallback to local calc', e)
+      console.warn('Could not load teacher stats', e)
+      // fallback: count students from local courses (getCourses returns all,
+      // but at least don't show available seats at all)
+      stats.value.availableSeats = 0
     }
   } catch (err) {
     console.error('Erreur chargement cours:', err)
