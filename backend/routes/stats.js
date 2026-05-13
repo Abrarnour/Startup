@@ -225,13 +225,14 @@ router.get('/teacher', authMiddleware, async (req, res) => {
       ),
       pool.query(
         `SELECT
-           COALESCE(SUM(c.max_students_per_group), 0)::integer AS total_seats,
-           COUNT(gs.student_id)::integer                       AS occupied_seats
-         FROM groups g
-         JOIN courses c ON g.course_id = c.id
-         LEFT JOIN group_students gs ON gs.group_id = g.id
-         WHERE c.teacher_id = $1
-         GROUP BY g.id`,
+        COALESCE(SUM(g.max_students), 0)::integer        AS total_seats,
+  COUNT(DISTINCT gs.student_id)::integer            AS occupied_seats
+FROM groups g
+JOIN courses c ON g.course_id = c.id
+LEFT JOIN group_students gs
+  ON gs.group_id = g.id
+  AND gs.status = 'active'
+WHERE c.teacher_id = $1`,
         [tid],
       ),
       pool.query('SELECT COUNT(*)::integer AS count FROM course_materials WHERE teacher_id = $1', [
@@ -239,8 +240,8 @@ router.get('/teacher', authMiddleware, async (req, res) => {
       ]),
     ])
 
-    const totalSeats = seats.rows.reduce((s, r) => s + r.total_seats, 0)
-    const occupiedSeats = seats.rows.reduce((s, r) => s + r.occupied_seats, 0)
+    const totalSeats = seats.rows[0]?.total_seats || 0
+    const occupiedSeats = seats.rows[0]?.occupied_seats || 0
 
     res.json({
       totalCourses: courses.rows[0].count,
