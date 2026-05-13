@@ -1054,7 +1054,7 @@ onMounted(() => {
             </h2>
 
             <button
-              v-if="(isAdmin || isTeacher) && selectedGroup"
+              v-if="isAdmin && selectedGroup"
               @click="showScannerModal = true"
               class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-lg"
             >
@@ -1076,6 +1076,7 @@ onMounted(() => {
             </button>
             <!-- Absent students button -->
             <button
+              v-if="isAdmin && selectedGroup"
               @click="openAbsentModal(selectedGroup)"
               class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border"
               :class="
@@ -1102,7 +1103,7 @@ onMounted(() => {
               Absents
             </button>
             <button
-              v-if="isAdmin || isTeacher"
+              v-if="isAdmin"
               @click="openAddStudentModal"
               class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
@@ -1224,7 +1225,7 @@ onMounted(() => {
                   </td>
                   <td class="px-4 py-3 text-right">
                     <button
-                      v-if="isAdmin || isTeacher"
+                      v-if="isAdmin"
                       @click="handleRemoveStudent(student.student_id)"
                       class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >

@@ -51,6 +51,17 @@ export function useNotifications(user) {
   const toastNotif = ref(null)
   let pollingInterval = null
   let toastTimer = null
+  let isOnline = navigator.onLine
+
+  const handleOnline = () => {
+    isOnline = true
+    if (user?.value?.id) fetchAndSyncNotifications()
+  }
+  const handleOffline = () => {
+    isOnline = false
+  }
+  window.addEventListener('online', handleOnline)
+  window.addEventListener('offline', handleOffline)
 
   // ─── Request browser OS notification permission ───────────────────────────
   const requestPermission = async () => {
@@ -124,6 +135,7 @@ export function useNotifications(user) {
   // ─── Fetch notifications and detect new ones ──────────────────────────────
   const fetchAndSyncNotifications = async () => {
     if (!user?.value?.id) return
+    if (!isOnline) return // ← skip silently when offline
     try {
       const data = await getNotifications()
       const existingIds = new Set(notifications.value.map((n) => n.id))
@@ -218,6 +230,8 @@ export function useNotifications(user) {
   onUnmounted(() => {
     stopPolling()
     if (toastTimer) clearTimeout(toastTimer)
+    window.removeEventListener('online', handleOnline)
+    window.removeEventListener('offline', handleOffline)
   })
 
   return {
