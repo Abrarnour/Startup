@@ -64,8 +64,12 @@ function generateRecurringDates(dayOfWeek, startTime, endTime, year, month) {
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month - 1, d)
     if (date.getDay() === targetDay) {
+      // AFTER (fixed)
+      const yyyy = date.getFullYear()
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const dd = String(date.getDate()).padStart(2, '0')
       dates.push({
-        date: date.toISOString().split('T')[0],
+        date: `${yyyy}-${mm}-${dd}`,
         start_time: startTime,
         end_time: endTime,
       })
