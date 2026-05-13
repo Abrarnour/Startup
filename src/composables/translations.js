@@ -99,6 +99,7 @@ export const translations = {
     admin_dashboard: 'Tableau de bord Admin',
     students: 'Étudiants',
     teachers: 'Enseignants',
+    color_per_child: 'Couleur par fils',
     courses_label: 'Matiére',
     parents: 'Parents',
     total_users: 'Utilisateurs total',
@@ -1194,7 +1195,7 @@ export const translations = {
     free_uppercase: ' مجاني',
     login_to_register: 'تسجيل الدخول للتسجيل',
     no_courses_available_now: 'لا توجد دورات متاحة في الوقت الحالي',
-
+    color_per_child: 'اللون حسب الابن',
     // ── MATERIALS MODAL ──
     seen_check: '✓ شوهد',
     watch: 'مشاهدة',
