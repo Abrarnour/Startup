@@ -431,11 +431,7 @@ const handleAddGroup = async () => {
     if (groupForm.calendar_type === 'weekly_fixed' && groupForm.weekly_schedule.length > 0) {
       groupData.weekly_schedule = groupForm.weekly_schedule
     }
-    if (!groupData.day_of_week && groupData.weekly_schedule?.[0]?.day_of_week) {
-      groupData.day_of_week = groupData.weekly_schedule[0].day_of_week
-      groupData.session_start_time = groupData.weekly_schedule[0].start_time
-      groupData.session_end_time = groupData.weekly_schedule[0].end_time
-    }
+
     await api.createGroup(groupData)
     showAddGroupModal.value = false
     successMessage.value = t('group_created_success')

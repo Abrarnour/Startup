@@ -6,12 +6,7 @@ import { authMiddleware } from './auth.js'
 import { sendNotif, notifyAllAdmins, notifyParentsOf } from '../notifHelper.js'
 
 const router = express.Router()
-const weekly_schedule = req.body.weekly_schedule
 
-// Then before the INSERT, ADD:
-const effectiveDayOfWeek = day_of_week || weekly_schedule?.[0]?.day_of_week || null
-const effectiveStartTime = session_start_time || weekly_schedule?.[0]?.start_time || null
-const effectiveEndTime = session_end_time || weekly_schedule?.[0]?.end_time || null
 const adminMiddleware = (req, res, next) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ error: 'Accès refusé - Admin uniquement' })

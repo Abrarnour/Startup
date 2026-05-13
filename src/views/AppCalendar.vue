@@ -182,7 +182,7 @@ const formatTime = (time) => {
 
 const formatDate = (dateString) => {
   const [y, m, d] = dateString.split('-').map(Number)
-  const date = new Date(y, m - 1, d)
+  const date = new Date(y, m - 1, d + 1)
   return date.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     weekday: 'long',
     day: 'numeric',
