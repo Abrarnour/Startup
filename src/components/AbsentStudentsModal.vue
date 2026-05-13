@@ -273,7 +273,8 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import * as api from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js'
+const { t } = useLanguage()
 // ── Props & Emits ────────────────────────────────────────────────────────────
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

@@ -455,7 +455,8 @@
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
 import * as api from '../services/api.js'
-
+import { useLanguage } from '../composables/useLanguage.js'
+const { t } = useLanguage()
 // ── Props & Emits ───────────────────────────────────────────────────
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
