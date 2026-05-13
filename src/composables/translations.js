@@ -43,7 +43,7 @@ export const translations = {
     schedule_2: 'Samedi: 8h00 - 12h00',
     closed_friday: 'Fermé le vendredi',
     copyright: '© 2026 Lacida_Abrar_Nour',
-    download_btn: 'Télécharger',
+    download_btn: 'Imprimer',
     delete_btn: 'Supprimer',
     // ── NAVBAR ──
     home: 'Accueil',
