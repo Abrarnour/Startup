@@ -128,7 +128,10 @@ const calendarDays = computed(() => {
       fullDate.getMonth() === today.getMonth() &&
       fullDate.getFullYear() === today.getFullYear()
 
-    const dateString = fullDate.toISOString().split('T')[0]
+    const yyyy = fullDate.getFullYear()
+    const mm = String(fullDate.getMonth() + 1).padStart(2, '0')
+    const dd = String(fullDate.getDate()).padStart(2, '0')
+    const dateString = `${yyyy}-${mm}-${dd}`
     // ✅ FIX: collect ALL events for this day (not slice)
     const dayEvents = events.value.filter((e) => e.date === dateString)
     // ✅ Sort by start time so the earliest course shows first
@@ -179,7 +182,7 @@ const formatTime = (time) => {
 
 const formatDate = (dateString) => {
   const [y, m, d] = dateString.split('-').map(Number)
-  const date = new Date(y, m - 1, d + 1)
+  const date = new Date(y, m - 1, d)
   return date.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     weekday: 'long',
     day: 'numeric',
