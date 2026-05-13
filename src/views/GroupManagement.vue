@@ -1076,7 +1076,6 @@ onMounted(() => {
             </button>
             <!-- Absent students button -->
             <button
-              v-if="isAdmin && selectedGroup"
               @click="openAbsentModal(selectedGroup)"
               class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border"
               :class="
