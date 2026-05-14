@@ -210,12 +210,20 @@
                     {{ student.enrolled_courses }} {{ t('courses_label') }}
                   </span>
                 </td>
-                <td class="p-3 text-right flex justify-end gap-2">
+                <td class="p-3 text-right flex justify-end gap-2 flex-wrap">
                   <button
                     @click="manageStudentEnrollments(student)"
                     class="px-3 py-1.5 bg-blue-100 hover:bg-blue-500 text-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all"
                   >
                     {{ t('manage_courses') }}
+                  </button>
+                  <!-- ✅ NEW: Print student ID card -->
+                  <button
+                    @click="printStudentCard(student)"
+                    class="px-3 py-1.5 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                    title="Imprimer la carte de l'étudiant"
+                  >
+                    🖨️ {{ t('print_card') || 'Imprimer la carte' }}
                   </button>
                   <button
                     @click="initiateDelete(student)"
@@ -610,6 +618,60 @@ const filteredStudents = computed(() => {
       .includes(q),
   )
 })
+
+// ✅ NEW: Print student ID card
+function printStudentCard(student) {
+  const win = window.open('', '_blank', 'width=400,height=280')
+  const schoolName = 'مدرسة بلماحي'
+  win.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>بطاقة الطالب</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial', sans-serif; background: #f0f4ff; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { width: 340px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.15); }
+        .card-header { background: linear-gradient(135deg,#012254,#0255ae,#1ba8f4); padding: 18px 20px; color: white; display: flex; align-items: center; gap: 12px; }
+        .logo { width: 48px; height: 48px; background: rgba(255,255,255,.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+        .school-name { font-size: 14px; font-weight: 800; letter-spacing: .5px; }
+        .school-sub { font-size: 10px; opacity: .7; margin-top: 2px; }
+        .avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: white; border: 3px solid white; flex-shrink: 0; margin-right: auto; }
+        .card-body { padding: 16px 20px; }
+        .student-name { font-size: 16px; font-weight: 800; color: #1e293b; margin-bottom: 12px; text-align: center; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
+        .info-label { color: #94a3b8; }
+        .info-value { color: #1e293b; font-weight: 600; }
+        .card-footer { background: #f8fafc; padding: 10px 20px; text-align: center; font-size: 10px; color: #94a3b8; }
+        @media print { body { background: white; } .card { box-shadow: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="card-header">
+          <div class="logo">🎓</div>
+          <div>
+            <div class="school-name">${schoolName}</div>
+            <div class="school-sub">Belmahi School — بطاقة طالب</div>
+          </div>
+          <div class="avatar">${(student.name || '?')[0]}${(student.last_name || '?')[0]}</div>
+        </div>
+        <div class="card-body">
+          <div class="student-name">${student.name} ${student.last_name}</div>
+          <div class="info-row"><span class="info-label">البريد الإلكتروني</span><span class="info-value">${student.email || '—'}</span></div>
+          <div class="info-row"><span class="info-label">الهاتف</span><span class="info-value">${student.parent_phone || student.phone || '—'}</span></div>
+          <div class="info-row"><span class="info-label">المدينة</span><span class="info-value">${student.city || '—'}</span></div>
+          <div class="info-row"><span class="info-label">المواد المسجلة</span><span class="info-value">${student.enrolled_courses || 0} مادة</span></div>
+        </div>
+        <div class="card-footer">السنة الدراسية — Année scolaire 2025/2026</div>
+      </div>
+      <script>window.onload=()=>{window.print();window.close();}<\/script>
+    </body>
+    </html>
+  `)
+  win.document.close()
+}
 
 async function loadStudents() {
   loading.value = true

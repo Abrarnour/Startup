@@ -117,9 +117,14 @@ function buildEvents(row, year, month, extraFields = {}) {
       if (d.getFullYear() === year && d.getMonth() + 1 === month && !s.is_cancelled) {
         events.push({
           ...base,
-          date: s.session_date.toISOString
-            ? s.session_date.toISOString().split('T')[0]
-            : String(s.session_date).split('T')[0],
+          date: (() => {
+            const raw = s.session_date
+            if (typeof raw === 'string') return raw.split('T')[0]
+            if (raw instanceof Date) {
+              return `${raw.getFullYear()}-${String(raw.getMonth() + 1).padStart(2, '0')}-${String(raw.getDate()).padStart(2, '0')}`
+            }
+            return String(raw).split('T')[0]
+          })(),
           start_time: s.start_time || row.session_start_time,
           end_time: s.end_time || row.session_end_time,
           is_recurring: false,
@@ -191,7 +196,8 @@ function buildEvents(row, year, month, extraFields = {}) {
 async function fetchSessionsByGroupIds(groupIds, year, month) {
   if (!groupIds.length) return {}
   const firstDay = `${year}-${String(month).padStart(2, '0')}-01`
-  const lastDay = new Date(year, month, 0).toISOString().split('T')[0]
+  const lastDate = new Date(year, month, 0)
+  const lastDay = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}-${String(lastDate.getDate()).padStart(2, '0')}`
 
   const result = await pool.query(
     `SELECT group_id, id, session_number, session_date, start_time, end_time, is_cancelled
