@@ -370,7 +370,7 @@ export const translations = {
     paid_status_ok: ' Payé',
     unpaid_status: ' Non payé',
     monthly_cycle_ended: "Le cycle mensuel est terminé. Contactez l'école pour renouveler.",
-
+    print_card: 'Imprimer La carte',
     confirm_unenroll_child: 'Retirer cet enfant de ce Matiére ?',
     confirm_unlink_child: 'Retirer cet enfant de votre liste?',
     error_prefix_short: 'Erreur: ',
@@ -1395,7 +1395,7 @@ export const translations = {
     pending: 'قيد الانتظار',
     partial: 'جزئي',
     next_session: 'الحصة القادمة',
-
+    print_card: 'اطبع البطاقة ',
     day: 'اليوم',
     time: 'الوقت',
 
