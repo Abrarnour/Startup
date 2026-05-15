@@ -75,29 +75,25 @@ const loadCourses = async () => {
 
   try {
     // Récupérer les cours de l'enseignant
+    // ─── AFTER ────────────────────────────────────────────
     courses.value = await api.getCourses()
     await loadMaterialsCounts()
-    // Calculer les statistiques
+
+    // Temporary local fallback (will be overwritten by API below)
     stats.value.totalCourses = courses.value.length
 
-    let totalSessions = 0
-    let totalStudents = 0
-    // AFTER
-    courses.value.forEach((course) => {
-      if (course.sessions_per_week) totalSessions += parseInt(course.sessions_per_week)
-    })
-    stats.value.totalSessionsPerWeek = totalSessions
-
-    // Always get seats/students from teacher-scoped API, never from local calc
     try {
       const apiStats = await api.getTeacherStats()
-      stats.value.totalGroups = apiStats.totalSessionsPerWeek
+
+      // ✅ FIX: use backend-computed, teacher-scoped course count
+      //    (the old code ignored apiStats.totalCourses entirely)
+      stats.value.totalCourses = apiStats.totalCourses // was never read before!
+      stats.value.totalGroups = apiStats.totalGroups ?? apiStats.totalSessionsPerWeek
       stats.value.totalStudents = apiStats.totalStudents
-      stats.value.availableSeats = apiStats.availableSeats // ← teacher-only ✅
+      stats.value.availableSeats = apiStats.availableSeats
     } catch (e) {
       console.warn('Could not load teacher stats', e)
-      // fallback: count students from local courses (getCourses returns all,
-      // but at least don't show available seats at all)
+      // Keep the local courses.value.length fallback for totalCourses
       stats.value.availableSeats = 0
     }
   } catch (err) {

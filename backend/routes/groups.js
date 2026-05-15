@@ -56,6 +56,7 @@ router.post('/', authMiddleware, async (req, res) => {
     return res.status(403).json({ error: 'Accès refusé' })
   }
 
+  // ─── AFTER ────────────────────────────────────────────
   const {
     course_id,
     group_name,
@@ -73,7 +74,28 @@ router.post('/', authMiddleware, async (req, res) => {
     session_start_time,
     session_end_time,
     registration_open = true,
+    weekly_schedule, // ← ADD: array sent by frontend for weekly_fixed groups
   } = req.body
+
+  // ── Resolve effective schedule fields from weekly_schedule if calendar is weekly_fixed ──
+  // When calendar_type = 'weekly_fixed', the frontend sends weekly_schedule[] instead of
+  // day_of_week / session_start_time / session_end_time directly.
+  // Without this, those DB columns stay NULL → calendar fallback → every group lands on
+  // the 1st of the month (currently a Friday = "vendredi bug").
+  let effective_day_of_week = day_of_week || null
+  let effective_session_start = session_start_time || null
+  let effective_session_end = session_end_time || null
+
+  if (
+    calendar_type === 'weekly_fixed' &&
+    Array.isArray(weekly_schedule) &&
+    weekly_schedule.length > 0
+  ) {
+    const first = weekly_schedule[0]
+    effective_day_of_week = first.day_of_week || effective_day_of_week
+    effective_session_start = first.start_time || effective_session_start
+    effective_session_end = first.end_time || effective_session_end
+  }
 
   try {
     if (!course_id || !group_name) {
@@ -105,9 +127,10 @@ router.post('/', authMiddleware, async (req, res) => {
         start_date || null,
         start_time || null,
         end_time || null,
-        day_of_week || null,
-        session_start_time || null,
-        session_end_time || null,
+        // ─── AFTER ────────────────────────────────────────────────────────────────
+        effective_day_of_week,
+        effective_session_start,
+        effective_session_end,
         calendar_type || 'manual',
         total_weeks || 4,
         total_sessions,

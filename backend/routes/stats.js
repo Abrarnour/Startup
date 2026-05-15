@@ -243,10 +243,12 @@ router.get('/teacher', authMiddleware, async (req, res) => {
     const totalSeats = seats.rows[0]?.total_seats || 0
     const occupiedSeats = seats.rows[0]?.occupied_seats || 0
 
+    // ─── AFTER ────────────────────────────────────────────
     res.json({
-      totalCourses: courses.rows[0].count,
+      totalCourses: courses.rows[0].count, // ← course count (by this teacher)
+      totalGroups: groups.rows[0].count, // ← correct name (was misnamed)
+      totalSessionsPerWeek: groups.rows[0].count, // ← kept for backward-compat
       totalStudents: students.rows[0].count,
-      totalSessionsPerWeek: groups.rows[0].count,
       availableSeats: totalSeats - occupiedSeats,
       totalMaterials: mats.rows[0].count,
     })
