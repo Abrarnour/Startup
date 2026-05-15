@@ -121,7 +121,7 @@ export const translations = {
     no_students: 'Aucun étudiant trouvé',
     role: 'Rôle',
     actions: 'Actions',
-    close: 'Fermer',
+    close: 'Fermer ',
 
     // ── TEACHER DASHBOARD ──
     my_courses: 'Mes Matiéres ',
