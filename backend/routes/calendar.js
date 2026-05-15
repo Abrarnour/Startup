@@ -1,3 +1,6 @@
+
+ 
+ 
 // backend/routes/calendar.js
 // ─────────────────────────────────────────────────────────────────────────────
 // FIXED VERSION — all courses appear correctly
@@ -25,9 +28,9 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import pool from '../db.js'
-
+ 
 const router = express.Router()
-
+ 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1]
@@ -40,7 +43,7 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: 'Token invalide' })
   }
 }
-
+ 
 // ─── Helper: target year/month from query (defaults to current) ───────────────
 function getTargetMonth(query) {
   const now = new Date()
@@ -48,16 +51,16 @@ function getTargetMonth(query) {
   const month = parseInt(query.month) || now.getMonth() + 1 // 1-based
   return { year, month }
 }
-
+ 
 // ─── Helper: generate all occurrences of a weekday within a given month ───────
 // dayOfWeek: 'monday' | 'tuesday' | ... (case-insensitive)
 function generateRecurringDates(dayOfWeek, startTime, endTime, year, month) {
   if (!dayOfWeek) return []
-
+ 
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const targetDay = dayNames.indexOf(dayOfWeek.toLowerCase())
   if (targetDay === -1) return []
-
+ 
   const dates = []
   // Iterate every day of the target month
   const daysInMonth = new Date(year, month, 0).getDate() // month is 1-based, so Date(y, m, 0) = last day
@@ -76,14 +79,14 @@ function generateRecurringDates(dayOfWeek, startTime, endTime, year, month) {
   }
   return dates
 }
-
+ 
 // ─── Helper: format teacher name ─────────────────────────────────────────────
 function teacherName(row) {
   if (!row.teacher_name) return null
   const title = row.teacher_gender === 'F' ? 'Mme' : 'Mr'
   return `${title} ${row.teacher_name} ${row.teacher_last_name || ''}`.trim()
 }
-
+ 
 // ─── Helper: build events from a DB result row ────────────────────────────────
 // Strategy (in priority order):
 //   1. If group has session_schedule rows in the target month → use those exact dates
@@ -92,7 +95,7 @@ function teacherName(row) {
 //   4. Fallback: show on the 1st of the month so it's at least visible
 function buildEvents(row, year, month, extraFields = {}) {
   const events = []
-
+ 
   const base = {
     group_id: row.group_id,
     group_name: row.group_name,
@@ -108,7 +111,7 @@ function buildEvents(row, year, month, extraFields = {}) {
     max_students: row.max_students_per_group,
     ...extraFields,
   }
-
+ 
   // ── Strategy 1: actual session_schedule rows ────────────────────────────────
   if (row.session_dates && row.session_dates.length > 0) {
     for (const s of row.session_dates) {
@@ -121,7 +124,7 @@ function buildEvents(row, year, month, extraFields = {}) {
             const raw = s.session_date
             if (typeof raw === 'string') return raw.split('T')[0]
             if (raw instanceof Date) {
-              return `${raw.getFullYear()}-${String(raw.getMonth() + 1).padStart(2, '0')}-${String(raw.getDate()).padStart(2, '0')}`
+              return `${raw.getFullYear()}-${String(raw.getMonth()+1).padStart(2,'0')}-${String(raw.getDate()).padStart(2,'0')}`
             }
             return String(raw).split('T')[0]
           })(),
@@ -136,7 +139,7 @@ function buildEvents(row, year, month, extraFields = {}) {
     }
     if (events.length > 0) return events
   }
-
+ 
   // ── Strategy 2: recurring weekly from day_of_week ──────────────────────────
   if (row.course_type === 'continuous' && row.day_of_week) {
     const dates = generateRecurringDates(
@@ -151,7 +154,7 @@ function buildEvents(row, year, month, extraFields = {}) {
     }
     if (events.length > 0) return events
   }
-
+ 
   // ── Strategy 3: one-time event on start_date ────────────────────────────────
   if (row.start_date) {
     const d = new Date(row.start_date)
@@ -176,7 +179,7 @@ function buildEvents(row, year, month, extraFields = {}) {
     })
     return events
   }
-
+ 
   // ── Strategy 4: fallback — show on 1st of requested month ──────────────────
   // This ensures every course is ALWAYS visible even if schedule isn't configured yet.
   const fallbackDate = `${year}-${String(month).padStart(2, '0')}-01`
@@ -190,15 +193,15 @@ function buildEvents(row, year, month, extraFields = {}) {
   })
   return events
 }
-
+ 
 // ─── Shared SQL fragment: fetch session_schedule for groups in a month ─────────
 // Returns an object: { group_id → [session rows] }
 async function fetchSessionsByGroupIds(groupIds, year, month) {
   if (!groupIds.length) return {}
   const firstDay = `${year}-${String(month).padStart(2, '0')}-01`
   const lastDate = new Date(year, month, 0)
-  const lastDay = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}-${String(lastDate.getDate()).padStart(2, '0')}`
-
+  const lastDay = `${lastDate.getFullYear()}-${String(lastDate.getMonth()+1).padStart(2,"0")}-${String(lastDate.getDate()).padStart(2,"0")}`
+ 
   const result = await pool.query(
     `SELECT group_id, id, session_number, session_date, start_time, end_time, is_cancelled
      FROM session_schedule
@@ -208,7 +211,7 @@ async function fetchSessionsByGroupIds(groupIds, year, month) {
      ORDER BY group_id, session_date, start_time`,
     [groupIds, firstDay, lastDay],
   )
-
+ 
   const map = {}
   for (const row of result.rows) {
     if (!map[row.group_id]) map[row.group_id] = []
@@ -216,16 +219,16 @@ async function fetchSessionsByGroupIds(groupIds, year, month) {
   }
   return map
 }
-
+ 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ADMIN CALENDAR  GET /api/calendar/admin?year=2026&month=4
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get('/admin', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
-
+ 
     const { year, month } = getTargetMonth(req.query)
-
+ 
     // ✅ BUG4 FIX: (c.is_active IS NOT FALSE) instead of c.is_active = true
     const result = await pool.query(`
       SELECT
@@ -256,32 +259,32 @@ router.get('/admin', authMiddleware, async (req, res) => {
         AND (c.is_active IS NOT FALSE)
       ORDER BY c.title, g.group_name
     `)
-
+ 
     const groupIds = result.rows.map((r) => r.group_id)
     const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
-
+ 
     const events = []
     for (const row of result.rows) {
       row.session_dates = sessionMap[row.group_id] || []
       events.push(...buildEvents(row, year, month))
     }
-
+ 
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar admin:', err)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
-
+ 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEACHER CALENDAR  GET /api/calendar/teacher?year=2026&month=4
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get('/teacher', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Accès refusé' })
-
+ 
     const { year, month } = getTargetMonth(req.query)
-
+ 
     const result = await pool.query(
       `SELECT
         g.id          AS group_id,
@@ -309,10 +312,10 @@ router.get('/teacher', authMiddleware, async (req, res) => {
       ORDER BY c.title, g.group_name`,
       [req.user.id],
     )
-
+ 
     const groupIds = result.rows.map((r) => r.group_id)
     const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
-
+ 
     const events = []
     for (const row of result.rows) {
       row.session_dates = sessionMap[row.group_id] || []
@@ -320,14 +323,14 @@ router.get('/teacher', authMiddleware, async (req, res) => {
       row.teacher_name = null
       events.push(...buildEvents(row, year, month))
     }
-
+ 
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar teacher:', err)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
-
+ 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PARENT CALENDAR  GET /api/calendar/parent?year=2026&month=4
 // Shows all enrolled children's courses, one event per child+group
@@ -335,9 +338,9 @@ router.get('/teacher', authMiddleware, async (req, res) => {
 router.get('/parent', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'Parent') return res.status(403).json({ error: 'Accès refusé' })
-
+ 
     const { year, month } = getTargetMonth(req.query)
-
+ 
     const result = await pool.query(
       `SELECT
         u.name        AS student_name,
@@ -373,33 +376,33 @@ router.get('/parent', authMiddleware, async (req, res) => {
       ORDER BY u.name, c.title, g.group_name`,
       [req.user.id],
     )
-
+ 
     const groupIds = [...new Set(result.rows.map((r) => r.group_id))]
     const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
-
+ 
     const events = []
     for (const row of result.rows) {
       row.session_dates = sessionMap[row.group_id] || []
       const studentFullName = `${row.student_name} ${row.student_last_name}`.trim()
       events.push(...buildEvents(row, year, month, { student_name: studentFullName }))
     }
-
+ 
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar parent:', err)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
-
+ 
 // ═══════════════════════════════════════════════════════════════════════════════
 // STUDENT CALENDAR  GET /api/calendar/student?year=2026&month=4
 // ═══════════════════════════════════════════════════════════════════════════════
 router.get('/student', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'student') return res.status(403).json({ error: 'Accès refusé' })
-
+ 
     const { year, month } = getTargetMonth(req.query)
-
+ 
     const result = await pool.query(
       `SELECT
         g.id          AS group_id,
@@ -431,21 +434,25 @@ router.get('/student', authMiddleware, async (req, res) => {
       ORDER BY c.title, g.group_name`,
       [req.user.id],
     )
-
+ 
     const groupIds = result.rows.map((r) => r.group_id)
     const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
-
+ 
     const events = []
     for (const row of result.rows) {
       row.session_dates = sessionMap[row.group_id] || []
       events.push(...buildEvents(row, year, month))
     }
-
+ 
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar student:', err)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
-
+ 
 export default router
+ 
+ 
+ 
+ 

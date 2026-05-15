@@ -1,3 +1,5 @@
+ 
+ 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -23,9 +25,9 @@ const { t, currentLang } = useLanguage()
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
 })
-
+ 
 const router = useRouter()
-
+ 
 const currentDate = ref(new Date())
 const events = ref([])
 const loading = ref(true)
@@ -34,7 +36,7 @@ const selectedEvent = ref(null) // single event detail modal
 const selectedDay = ref(null) // "all events of this day" modal
 const userRole = ref('')
 const currentUser = ref(null)
-
+ 
 // ─── Stable color palette (not random — deterministic per course_id / student_name) ────
 // 12 rich, accessible colors. Index is derived from a string hash so it's
 // always the same color for the same course / child — no random, no keys.
@@ -52,7 +54,7 @@ const COLOR_PALETTE = [
   { bg: 'linear-gradient(135deg,#fb923c,#f97316)', solid: '#fb923c' },
   { bg: 'linear-gradient(135deg,#64748b,#94a3b8)', solid: '#64748b' },
 ]
-
+ 
 function hashString(str) {
   if (!str) return 0
   let h = 0
@@ -61,7 +63,7 @@ function hashString(str) {
   }
   return Math.abs(h)
 }
-
+ 
 // ─── Color logic:
 //   • admin / teacher  → color by course_id (stable per course)
 //   • student          → color by group_id  (stable per group)
@@ -76,7 +78,7 @@ function getEventColor(event) {
   const idx = hashString(key) % COLOR_PALETTE.length
   return COLOR_PALETTE[idx]
 }
-
+ 
 // ─── Weekdays & month name ────────────────────────────────────────────────────
 const weekDays = computed(() => [
   t('sun'),
@@ -87,14 +89,14 @@ const weekDays = computed(() => [
   t('fri'),
   t('sat'),
 ])
-
+ 
 const monthName = computed(() =>
   currentDate.value.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     month: 'long',
   }),
 )
 const currentYear = computed(() => currentDate.value.getFullYear())
-
+ 
 // ─── Calendar grid ─────────────────────────────────────────────────────────────
 const calendarDays = computed(() => {
   const year = currentDate.value.getFullYear()
@@ -103,10 +105,10 @@ const calendarDays = computed(() => {
   const startingDayOfWeek = firstDay.getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const daysInPrevMonth = new Date(year, month, 0).getDate()
-
+ 
   const days = []
   const today = new Date()
-
+ 
   // Previous month filler
   for (let i = startingDayOfWeek - 1; i >= 0; i--) {
     const date = daysInPrevMonth - i
@@ -119,7 +121,7 @@ const calendarDays = computed(() => {
       events: [],
     })
   }
-
+ 
   // Current month days — ALL events (no slice here)
   for (let date = 1; date <= daysInMonth; date++) {
     const fullDate = new Date(year, month, date)
@@ -127,7 +129,7 @@ const calendarDays = computed(() => {
       fullDate.getDate() === today.getDate() &&
       fullDate.getMonth() === today.getMonth() &&
       fullDate.getFullYear() === today.getFullYear()
-
+ 
     const yyyy = fullDate.getFullYear()
     const mm = String(fullDate.getMonth() + 1).padStart(2, '0')
     const dd = String(fullDate.getDate()).padStart(2, '0')
@@ -136,7 +138,7 @@ const calendarDays = computed(() => {
     const dayEvents = events.value.filter((e) => e.date === dateString)
     // ✅ Sort by start time so the earliest course shows first
     dayEvents.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''))
-
+ 
     days.push({
       id: `curr-${date}`,
       date,
@@ -146,7 +148,7 @@ const calendarDays = computed(() => {
       events: dayEvents,
     })
   }
-
+ 
   // Next month filler
   const remainingDays = 42 - days.length
   for (let date = 1; date <= remainingDays; date++) {
@@ -159,10 +161,10 @@ const calendarDays = computed(() => {
       events: [],
     })
   }
-
+ 
   return days
 })
-
+ 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getLevelLabel = (level) => {
   const labels = {
@@ -172,17 +174,18 @@ const getLevelLabel = (level) => {
   }
   return labels[level] || level
 }
-
+ 
 const getSuffix = (year) => (year === 1 && currentLang.value !== 'ar' ? 'ère' : 'ème')
-
+ 
 const formatTime = (time) => {
   if (!time) return ''
   return time.substring(0, 5)
 }
-
+ 
 const formatDate = (dateString) => {
+  // ✅ FIX: was d+1 (off-by-one), use d directly
   const [y, m, d] = dateString.split('-').map(Number)
-  const date = new Date(y, m - 1, d + 1)
+  const date = new Date(y, m - 1, d)
   return date.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     weekday: 'long',
     day: 'numeric',
@@ -190,7 +193,7 @@ const formatDate = (dateString) => {
     year: 'numeric',
   })
 }
-
+ 
 const formatDayHeader = (fullDate) => {
   return fullDate.toLocaleDateString(currentLang.value === 'ar' ? 'ar-DZ' : 'fr-FR', {
     weekday: 'long',
@@ -198,25 +201,28 @@ const formatDayHeader = (fullDate) => {
     month: 'long',
   })
 }
-
+ 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 const previousMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1)
+  fetchEvents()  // ✅ FIX: refetch for the new month
 }
 const nextMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
+  fetchEvents()  // ✅ FIX: refetch for the new month
 }
 const goToday = () => {
   currentDate.value = new Date()
+  fetchEvents()  // ✅ FIX: refetch for current month
 }
-
+ 
 // ─── Modal controls ────────────────────────────────────────────────────────────
 const showEventDetails = (event, e) => {
   e?.stopPropagation()
   selectedEvent.value = event
   selectedDay.value = null
 }
-
+ 
 // ✅ NEW: Open "all events of this day" modal — triggered by clicking day cell
 //         or the "+N more" indicator
 const openDayModal = (day, e) => {
@@ -225,12 +231,12 @@ const openDayModal = (day, e) => {
   selectedDay.value = day
   selectedEvent.value = null
 }
-
+ 
 const closeModals = () => {
   selectedEvent.value = null
   selectedDay.value = null
 }
-
+ 
 // ─── Fetch events ─────────────────────────────────────────────────────────────
 const fetchEvents = async () => {
   loading.value = true
@@ -243,8 +249,11 @@ const fetchEvents = async () => {
     }
     userRole.value = user.role
     currentUser.value = user
-
-    const data = await api.getCalendarEvents(user.role)
+ 
+    // ✅ FIX: pass current year/month so backend generates the right month
+    const calYear  = currentDate.value.getFullYear()
+    const calMonth = currentDate.value.getMonth() + 1  // 1-based
+    const data = await api.getCalendarEvents(user.role, calYear, calMonth)
     events.value = (data.events || []).map((event, index) => ({
       ...event,
       id: `event-${index}-${event.group_id}-${event.date}-${event.start_time}`,
@@ -256,12 +265,12 @@ const fetchEvents = async () => {
     loading.value = false
   }
 }
-
+ 
 onMounted(() => {
   fetchEvents()
 })
 </script>
-
+ 
 <template>
   <div :class="['calendar-container', { dark: darkMode }]">
     <!-- ─── Header ─────────────────────────────────────────────────────────── -->
@@ -275,7 +284,7 @@ onMounted(() => {
           </p>
         </div>
       </div>
-
+ 
       <div class="cal-nav">
         <button @click="previousMonth" class="nav-btn" :title="t('previous')">
           <ChevronLeft :size="18" />
@@ -285,7 +294,7 @@ onMounted(() => {
           <ChevronRight :size="18" />
         </button>
       </div>
-
+ 
       <!-- Legend: only shown for admin/teacher (not student/parent — colors are per-course/child) -->
       <div v-if="['admin', 'teacher'].includes(userRole)" class="cal-legend">
         <span class="legend-label">{{ t('courses') }}</span>
@@ -304,13 +313,13 @@ onMounted(() => {
         <span class="legend-label">{{ t('color_per_course') || 'Couleur par matière' }}</span>
       </div>
     </div>
-
+ 
     <!-- ─── Loading ────────────────────────────────────────────────────────── -->
     <div v-if="loading" class="state-box">
       <AppLoader size="120px" />
       <p class="mt-4 text-gray-500">{{ t('loading_calendar') }}</p>
     </div>
-
+ 
     <!-- ─── Error ──────────────────────────────────────────────────────────── -->
     <div v-else-if="error" class="state-box">
       <AlertCircle :size="44" style="color: #ef4444" />
@@ -319,14 +328,14 @@ onMounted(() => {
         {{ t('retry') }}
       </button>
     </div>
-
+ 
     <!-- ─── Calendar body ──────────────────────────────────────────────────── -->
     <div v-else class="cal-body">
       <!-- Weekday headers -->
       <div class="weekdays-row">
         <div v-for="day in weekDays" :key="day" class="weekday-label">{{ day }}</div>
       </div>
-
+ 
       <!-- Days grid -->
       <div class="days-grid">
         <div
@@ -350,7 +359,7 @@ onMounted(() => {
               <Plus :size="10" />{{ day.events.length }}
             </span>
           </div>
-
+ 
           <!-- Show max 2 events inline, rest hidden behind the modal -->
           <div class="events-stack">
             <div
@@ -369,7 +378,7 @@ onMounted(() => {
                 <template v-else>{{ event.course_title }}</template>
               </span>
             </div>
-
+ 
             <!-- ✅ "+N more" strip — clicking opens the day modal -->
             <div
               v-if="day.events.length > 2"
@@ -382,7 +391,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
+ 
     <!-- ═══════════════════════════════════════════════════════════════════════
          ✅ NEW: Day modal — all events of a day in one scrollable sheet
          ═══════════════════════════════════════════════════════════════════ -->
@@ -402,7 +411,7 @@ onMounted(() => {
                 : t('courses_plural') || 'cours'
             }}
           </p>
-
+ 
           <div class="day-modal-list">
             <div
               v-for="event in selectedDay.events"
@@ -415,7 +424,7 @@ onMounted(() => {
               <div class="dcard-accent" :style="{ background: getEventColor(event).bg }">
                 <BookOpen :size="18" />
               </div>
-
+ 
               <div class="dcard-body">
                 <div class="dcard-title">{{ event.course_title }}</div>
                 <div class="dcard-meta">
@@ -452,7 +461,7 @@ onMounted(() => {
         </div>
       </div>
     </Transition>
-
+ 
     <!-- ═══════════════════════════════════════════════════════════════════════
          Event detail modal
          ═══════════════════════════════════════════════════════════════════ -->
@@ -464,13 +473,13 @@ onMounted(() => {
           :style="{ '--event-color': getEventColor(selectedEvent).solid }"
         >
           <button class="close-btn" @click="closeModals"><X :size="20" /></button>
-
+ 
           <div class="detail-hero" :style="{ background: getEventColor(selectedEvent).bg }">
             <BookOpen :size="28" style="color: white; margin-bottom: 0.5rem" />
             <h2>{{ selectedEvent.course_title }}</h2>
             <p>{{ selectedEvent.group_name }}</p>
           </div>
-
+ 
           <div class="detail-body">
             <div class="detail-row">
               <Clock :size="18" class="detail-icon" />
@@ -483,7 +492,7 @@ onMounted(() => {
                 </p>
               </div>
             </div>
-
+ 
             <div v-if="selectedEvent.teacher_name" class="detail-row">
               <User :size="18" class="detail-icon" />
               <div>
@@ -491,7 +500,7 @@ onMounted(() => {
                 <p>{{ selectedEvent.teacher_name }}</p>
               </div>
             </div>
-
+ 
             <div v-if="selectedEvent.salle" class="detail-row">
               <MapPin :size="18" class="detail-icon" />
               <div>
@@ -499,7 +508,7 @@ onMounted(() => {
                 <p>{{ selectedEvent.salle }}</p>
               </div>
             </div>
-
+ 
             <div class="detail-row">
               <GraduationCap :size="18" class="detail-icon" />
               <div>
@@ -512,7 +521,7 @@ onMounted(() => {
                 </p>
               </div>
             </div>
-
+ 
             <div v-if="userRole === 'Parent' && selectedEvent.student_name" class="detail-row">
               <Users :size="18" class="detail-icon" />
               <div>
@@ -520,7 +529,7 @@ onMounted(() => {
                 <p>{{ selectedEvent.student_name }}</p>
               </div>
             </div>
-
+ 
             <div v-if="['admin', 'teacher'].includes(userRole)" class="detail-row">
               <Users :size="18" class="detail-icon" />
               <div>
@@ -531,7 +540,7 @@ onMounted(() => {
                 </p>
               </div>
             </div>
-
+ 
             <div class="type-pill">
               {{
                 selectedEvent.course_type === 'continuous'
@@ -548,7 +557,7 @@ onMounted(() => {
     </Transition>
   </div>
 </template>
-
+ 
 <style scoped>
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
 .calendar-container {
@@ -567,7 +576,7 @@ onMounted(() => {
   padding: 1rem;
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
-
+ 
 .calendar-container.dark {
   --bg: #0f1117;
   --surface: #1a1d2e;
@@ -577,7 +586,7 @@ onMounted(() => {
   --today-bg: rgba(99, 102, 241, 0.15);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
-
+ 
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .cal-header {
   background: var(--surface);
@@ -591,18 +600,18 @@ onMounted(() => {
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
 }
-
+ 
 .cal-header-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex: 1;
 }
-
+ 
 .cal-icon {
   color: var(--accent);
 }
-
+ 
 .cal-title {
   margin: 0;
   font-size: 1.35rem;
@@ -612,19 +621,19 @@ onMounted(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
+ 
 .cal-subtitle {
   margin: 0;
   font-size: 0.85rem;
   color: var(--muted);
 }
-
+ 
 .cal-nav {
   display: flex;
   align-items: center;
   gap: 0.4rem;
 }
-
+ 
 .nav-btn {
   width: 34px;
   height: 34px;
@@ -643,7 +652,7 @@ onMounted(() => {
   color: white;
   border-color: var(--accent);
 }
-
+ 
 .today-btn {
   padding: 0.4rem 1rem;
   border: none;
@@ -659,7 +668,7 @@ onMounted(() => {
   opacity: 0.9;
   transform: translateY(-1px);
 }
-
+ 
 .cal-legend {
   display: flex;
   align-items: center;
@@ -675,7 +684,7 @@ onMounted(() => {
   height: 12px;
   border-radius: 50%;
 }
-
+ 
 /* ── State boxes ───────────────────────────────────────────────────────────── */
 .state-box {
   display: flex;
@@ -689,7 +698,7 @@ onMounted(() => {
   gap: 0.75rem;
   border: 1px solid var(--border);
 }
-
+ 
 .spinner {
   width: 40px;
   height: 40px;
@@ -703,7 +712,7 @@ onMounted(() => {
     transform: rotate(360deg);
   }
 }
-
+ 
 /* ── Calendar body ─────────────────────────────────────────────────────────── */
 .cal-body {
   background: var(--surface);
@@ -712,7 +721,7 @@ onMounted(() => {
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
 }
-
+ 
 .weekdays-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -728,14 +737,14 @@ onMounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
+ 
 /* ─── Days grid ──────────────────────────────────────────────────────────── */
 .days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.35rem;
 }
-
+ 
 .day-cell {
   min-height: 100px;
   border: 1.5px solid var(--border);
@@ -750,27 +759,27 @@ onMounted(() => {
   overflow: hidden;
   position: relative;
 }
-
+ 
 .day-cell.other-month {
   opacity: 0.35;
   pointer-events: none;
 }
-
+ 
 .day-cell:hover:not(.other-month) {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
   transform: translateY(-1px);
 }
-
+ 
 .day-cell.is-today {
   border-color: var(--accent);
   background: var(--today-bg);
 }
-
+ 
 .day-cell.has-events {
   cursor: pointer;
 }
-
+ 
 /* Day number row */
 .day-top {
   display: flex;
@@ -778,14 +787,14 @@ onMounted(() => {
   justify-content: space-between;
   margin-bottom: 0.25rem;
 }
-
+ 
 .day-num {
   font-size: 0.82rem;
   font-weight: 700;
   color: var(--text);
   line-height: 1;
 }
-
+ 
 .day-cell.is-today .day-num {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   -webkit-background-clip: text;
@@ -793,7 +802,7 @@ onMounted(() => {
   background-clip: text;
   font-size: 0.9rem;
 }
-
+ 
 /* ✅ Plus badge — appears when day has >2 events */
 .plus-badge {
   display: inline-flex;
@@ -807,14 +816,14 @@ onMounted(() => {
   padding: 1px 4px;
   line-height: 1.4;
 }
-
+ 
 /* Events stack — shows 2 pills max */
 .events-stack {
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
 }
-
+ 
 /* Event pill */
 .event-pill {
   border-radius: 5px;
@@ -828,20 +837,20 @@ onMounted(() => {
   flex-direction: column;
   gap: 1px;
 }
-
+ 
 .event-pill:hover {
   transform: scale(1.03);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
   z-index: 1;
 }
-
+ 
 .pill-time {
   font-size: 0.58rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1;
 }
-
+ 
 .pill-title {
   font-size: 0.66rem;
   font-weight: 700;
@@ -851,7 +860,7 @@ onMounted(() => {
   text-overflow: ellipsis;
   line-height: 1.2;
 }
-
+ 
 /* "+N more" strip */
 .more-strip {
   font-size: 0.62rem;
@@ -867,7 +876,7 @@ onMounted(() => {
 .more-strip:hover {
   background: rgba(99, 102, 241, 0.18);
 }
-
+ 
 /* ══════════════════════════════════════════════════════════════════════════════
    Day modal (all events of a day)
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -882,7 +891,7 @@ onMounted(() => {
   padding: 1rem;
   backdrop-filter: blur(4px);
 }
-
+ 
 .day-modal {
   background: white;
   border-radius: 18px;
@@ -901,7 +910,7 @@ onMounted(() => {
   background: #1a1d2e;
   color: #e2e8f0;
 }
-
+ 
 .day-modal-title {
   margin: 0;
   font-size: 1.1rem;
@@ -912,19 +921,19 @@ onMounted(() => {
 .day-modal.dark .day-modal-title {
   color: #e2e8f0;
 }
-
+ 
 .day-modal-count {
   margin: 0;
   font-size: 0.82rem;
   color: #64748b;
 }
-
+ 
 .day-modal-list {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
-
+ 
 /* Each event card inside day modal */
 .day-event-card {
   display: flex;
@@ -945,7 +954,7 @@ onMounted(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   transform: translateY(-1px);
 }
-
+ 
 .dcard-accent {
   width: 44px;
   min-width: 44px;
@@ -954,12 +963,12 @@ onMounted(() => {
   justify-content: center;
   color: white;
 }
-
+ 
 .dcard-body {
   flex: 1;
   padding: 0.55rem 0.7rem;
 }
-
+ 
 .dcard-title {
   font-size: 0.88rem;
   font-weight: 700;
@@ -969,13 +978,13 @@ onMounted(() => {
 .day-modal.dark .dcard-title {
   color: #e2e8f0;
 }
-
+ 
 .dcard-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
 }
-
+ 
 .dcard-tag {
   display: inline-flex;
   align-items: center;
@@ -990,13 +999,13 @@ onMounted(() => {
   background: #2d3448;
   color: #94a3b8;
 }
-
+ 
 .child-tag {
   background: rgba(99, 102, 241, 0.12);
   color: #6366f1;
   font-weight: 700;
 }
-
+ 
 /* ══════════════════════════════════════════════════════════════════════════════
    Event detail modal
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -1014,7 +1023,7 @@ onMounted(() => {
   background: #1a1d2e;
   color: #e2e8f0;
 }
-
+ 
 .detail-hero {
   padding: 1.5rem;
   display: flex;
@@ -1033,14 +1042,14 @@ onMounted(() => {
   font-size: 0.88rem;
   color: rgba(255, 255, 255, 0.8);
 }
-
+ 
 .detail-body {
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
+ 
 .detail-row {
   display: flex;
   gap: 0.75rem;
@@ -1067,7 +1076,7 @@ onMounted(() => {
 .detail-modal.dark .detail-row p {
   color: #e2e8f0;
 }
-
+ 
 .type-pill {
   display: inline-flex;
   align-items: center;
@@ -1079,7 +1088,7 @@ onMounted(() => {
   font-size: 0.82rem;
   font-weight: 700;
 }
-
+ 
 .recurring-tag {
   display: inline-flex;
   align-items: center;
@@ -1089,7 +1098,7 @@ onMounted(() => {
   border-radius: 5px;
   font-size: 0.72rem;
 }
-
+ 
 /* ── Close button (shared) ─────────────────────────────────────────────────── */
 .close-btn {
   position: absolute;
@@ -1111,7 +1120,7 @@ onMounted(() => {
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.45);
 }
-
+ 
 /* For day modal (white bg) */
 .day-modal .close-btn {
   background: #f1f5f9;
@@ -1125,7 +1134,7 @@ onMounted(() => {
   background: #fee2e2;
   color: #dc2626;
 }
-
+ 
 /* ── Transition ────────────────────────────────────────────────────────────── */
 .fade-enter-active,
 .fade-leave-active {
@@ -1145,7 +1154,7 @@ onMounted(() => {
 .fade-leave-to {
   opacity: 0;
 }
-
+ 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .calendar-container {
@@ -1172,7 +1181,7 @@ onMounted(() => {
     font-size: 0.6rem;
   }
 }
-
+ 
 @media (max-width: 480px) {
   .day-cell {
     min-height: 58px;
@@ -1185,3 +1194,5 @@ onMounted(() => {
   }
 }
 </style>
+ 
+ 
