@@ -1,4 +1,5 @@
-
+ 
+ 
  
  
 // backend/routes/calendar.js
@@ -90,7 +91,7 @@ function teacherName(row) {
 // ─── Helper: build events from a DB result row ────────────────────────────────
 // Strategy (in priority order):
 //   1. If group has session_schedule rows in the target month → use those exact dates
-//   2. If course_type = 'continuous' and day_of_week set → generate recurring dates
+//   2. If day_of_week is set → generate recurring weekly dates (course_type check removed — was causing Strategy 4 fallback)
 //   3. If start_date is set → one-time event on that date
 //   4. Fallback: show on the 1st of the month so it's at least visible
 function buildEvents(row, year, month, extraFields = {}) {
@@ -141,7 +142,7 @@ function buildEvents(row, year, month, extraFields = {}) {
   }
  
   // ── Strategy 2: recurring weekly from day_of_week ──────────────────────────
-  if (row.course_type === 'continuous' && row.day_of_week) {
+  if (row.day_of_week) {  // ✅ FIX: any group with day_of_week uses recurring strategy, regardless of course_type
     const dates = generateRecurringDates(
       row.day_of_week,
       row.session_start_time,
@@ -452,7 +453,5 @@ router.get('/student', authMiddleware, async (req, res) => {
 })
  
 export default router
- 
- 
  
  
