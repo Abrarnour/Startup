@@ -5,8 +5,28 @@
  * Requires backend patch: stats_history_patch.js
  */
 import { ref, watch, computed } from 'vue'
-import { searchStudents, getStudentHistory } from '../services/api.js'
+// ─── AFTER ────────────────────────────────────────────
+import { searchStudents, getStudentHistory, deleteEnrollment } from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
+
+// ── Delete enrollment ─────────────────────────────────────────────────────────
+const deletingEnrollmentId = ref(null)
+
+const removeEnrollment = async (enr) => {
+  if (!confirm(`Supprimer l'inscription à "${enr.course_title}" ?`)) return
+  deletingEnrollmentId.value = enr.enrollment_id ?? enr.id
+  try {
+    await deleteEnrollment(enr.group_id, selectedStudent.value.id) // ← uses selectedStudent
+    // remove locally without re-fetching the whole history
+    historyData.value.enrollments = historyData.value.enrollments.filter(
+      (e) => (e.enrollment_id ?? e.id) !== (enr.enrollment_id ?? enr.id),
+    )
+  } catch (e) {
+    alert('❌ ' + e.message)
+  } finally {
+    deletingEnrollmentId.value = null
+  }
+}
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
@@ -411,6 +431,7 @@ watch(
               <div class="shm-overview-grid">
                 <!-- Per-course attendance breakdown -->
                 <div v-for="enr in historyData.enrollments" :key="enr.id" class="shm-course-card">
+                  <!-- ─── AFTER ────────────────────────────────────────── -->
                   <div class="shm-cc-top">
                     <div>
                       <p class="shm-cc-title">{{ enr.course_title }}</p>
@@ -418,12 +439,45 @@ watch(
                         {{ enr.group_name }} · {{ dayMap[enr.day_of_week] ?? enr.day_of_week }}
                       </p>
                     </div>
-                    <span
-                      class="shm-badge"
-                      :class="enr.status === 'active' ? 'shm-badge-green' : 'shm-badge-gray'"
-                    >
-                      {{ enr.status }}
-                    </span>
+
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+                      <!-- status badge — unchanged -->
+                      <span
+                        class="shm-badge"
+                        :class="enr.status === 'active' ? 'shm-badge-green' : 'shm-badge-gray'"
+                      >
+                        {{ enr.status }}
+                      </span>
+
+                      <!-- ✅ DELETE button -->
+                      <button
+                        @click="removeEnrollment(enr)"
+                        :disabled="deletingEnrollmentId === (enr.enrollment_id ?? enr.id)"
+                        style="
+                          background: #fee2e2;
+                          color: #dc2626;
+                          border: none;
+                          border-radius: 8px;
+                          padding: 3px 10px;
+                          font-size: 12px;
+                          font-weight: 600;
+                          cursor: pointer;
+                          transition: opacity 0.2s;
+                        "
+                        :style="
+                          deletingEnrollmentId === (enr.enrollment_id ?? enr.id)
+                            ? 'opacity:.45; cursor:not-allowed'
+                            : 'opacity:1'
+                        "
+                        title="Supprimer cette inscription"
+                      >
+                        {{
+                          deletingEnrollmentId === (enr.enrollment_id ?? enr.id)
+                            ? '…'
+                            : '✕ Supprimer'
+                        }}
+                      </button>
+                    </div>
                   </div>
                   <!-- mini progress bar: sessions_attended / group_total_sessions -->
                   <div class="shm-mini-bar-wrap">
