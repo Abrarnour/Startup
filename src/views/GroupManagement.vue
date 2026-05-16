@@ -750,6 +750,65 @@ const handleUpdatePayment = async () => {
   }
 }
 
+function printGroupStudents() {
+  const date = new Date().toLocaleDateString('fr-DZ', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  const courseTitle = selectedGroup.value?.course_title || selectedGroup.value?.title || 'Matière'
+  const groupName = selectedGroup.value?.group_name || selectedGroup.value?.name || 'Groupe'
+
+  const rows = students.value
+    .map(
+      (s, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${s.last_name ?? ''}</td>
+      <td>${s.name ?? ''}</td>
+    </tr>
+  `,
+    )
+    .join('')
+
+  const win = window.open('', '_blank')
+  win.document.write(`
+    <!DOCTYPE html><html><head><meta charset="utf-8"/>
+    <title>Liste — ${groupName}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box;}
+      body{font-family:Arial,sans-serif;padding:36px;color:#000;}
+      .header{text-align:center;border-bottom:2px solid #000;padding-bottom:14px;margin-bottom:20px;}
+      h1{font-size:22px;font-weight:bold;}
+      h2{font-size:16px;font-weight:normal;margin-top:5px;}
+      p{font-size:12px;color:#555;margin-top:6px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#000;color:#fff;padding:9px 14px;text-align:left;font-size:13px;}
+      td{padding:8px 14px;font-size:13px;border-bottom:1px solid #ddd;}
+      tr:nth-child(even) td{background:#f7f7f7;}
+      .footer{margin-top:18px;font-size:11px;color:#777;text-align:right;}
+      @media print{body{padding:16px;}}
+    </style></head><body>
+    <div class="header">
+      <h1>${courseTitle}</h1>
+      <h2>${groupName}</h2>
+      <p>Liste des étudiants · ${date}</p>
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nom</th><th>Prénom</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">
+      Total : ${students.value.length} étudiant(s) — Belmahi School
+    </div>
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script>
+    </body></html>
+  `)
+  win.document.close()
+}
 // Formatage
 const formatDayOfWeek = (day) => {
   const found = daysOfWeek.find((d) => d.value === day)
@@ -1101,6 +1160,37 @@ onMounted(() => {
               </svg>
               Absents
             </button>
+            <!-- ─── AFTER — add print button RIGHT BEFORE Ajouter étudiant ── -->
+
+            <!-- 🖨️ Print list button -->
+            <button
+              v-if="students.length > 0"
+              @click="printGroupStudents"
+              class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border"
+              :class="
+                darkMode
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+              "
+              title="Imprimer la liste des étudiants"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path
+                  d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              Imprimer
+            </button>
+
             <button
               v-if="isAdmin"
               @click="openAddStudentModal"

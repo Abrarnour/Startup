@@ -1,8 +1,3 @@
- 
- 
- 
- 
- 
 <template>
   <div
     v-if="show"
@@ -42,7 +37,7 @@
             </p>
           </div>
         </div>
- 
+
         <div class="flex items-center gap-2">
           <!-- ── Orange: إلغاء المعلقين ── -->
           <div class="flex items-center gap-1">
@@ -78,7 +73,7 @@
               </div>
             </div>
           </div>
- 
+
           <!-- ── Red: تنظيف (inactive students) ── -->
           <div class="flex items-center gap-1">
             <button
@@ -113,7 +108,7 @@
               </div>
             </div>
           </div>
- 
+
           <button
             @click="$emit('close')"
             class="p-2 rounded-full hover:bg-gray-100 transition-colors"
@@ -123,7 +118,7 @@
           </button>
         </div>
       </div>
- 
+
       <!-- ── Search bar ── -->
       <div class="p-4 border-b" :class="darkMode ? 'border-gray-700' : 'border-gray-200'">
         <div class="relative">
@@ -154,20 +149,20 @@
           />
         </div>
       </div>
- 
+
       <!-- ── Students table ── -->
       <div class="flex-1 overflow-y-auto p-4">
         <div v-if="loading" class="flex flex-col items-center py-12">
           <AppLoader size="80px" color="#9333ea" />
           <p class="mt-4 text-gray-500">{{ t('loading_list') }}</p>
         </div>
- 
+
         <div v-else-if="filteredStudents.length === 0" class="text-center py-12">
           <p :class="darkMode ? 'text-gray-400' : 'text-gray-500'" class="text-lg">
             {{ t('no_students') }}
           </p>
         </div>
- 
+
         <div v-else class="overflow-x-auto">
           <table class="w-full">
             <thead>
@@ -228,7 +223,7 @@
                     class="px-3 py-1.5 bg-green-100 hover:bg-green-500 text-green-600 hover:text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                     title="Imprimer la carte de l'étudiant"
                   >
-                     {{ t('print_card') || 'Imprimer la carte' }}
+                    {{ t('print_card') || 'Imprimer la carte' }}
                   </button>
                   <button
                     @click="initiateDelete(student)"
@@ -243,7 +238,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- ══════════════════════════════════════════════
          CLEANUP DAYS DIALOG  (shared for both buttons)
     ══════════════════════════════════════════════ -->
@@ -279,7 +274,7 @@
             </svg>
           </div>
         </div>
- 
+
         <!-- Title -->
         <h3 class="text-lg font-bold text-center mb-1">
           {{ cleanupDialog.type === 'pending' ? t('cleanup_pending_14d') : t('cleanup_inactive') }}
@@ -287,7 +282,7 @@
         <p class="text-sm text-center mb-5" :class="darkMode ? 'text-gray-400' : 'text-gray-500'">
           {{ cleanupDialog.type === 'pending' ? t('cleanup_pending_14') : t('cleanup_inactiv') }}
         </p>
- 
+
         <!-- Days input -->
         <div class="mb-5">
           <label class="block text-sm font-semibold mb-2 text-center">
@@ -315,7 +310,7 @@
               </button>
             </div>
           </div>
- 
+
           <!-- Manual number input -->
           <div class="mt-3 relative">
             <input
@@ -341,7 +336,7 @@
               {{ t('day') }}
             </span>
           </div>
- 
+
           <!-- Warning when days < 7 -->
           <p
             v-if="cleanupDialog.days && cleanupDialog.days < 7"
@@ -350,7 +345,7 @@
             {{ t('warning_days_low') }}
           </p>
         </div>
- 
+
         <!-- Action buttons -->
         <div class="flex gap-3">
           <button
@@ -396,7 +391,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- ── Delete student confirm dialog ── -->
     <div
       v-if="confirmTarget"
@@ -453,7 +448,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- ── Manage enrollments sub-modal ── -->
     <div
       v-if="managingStudent"
@@ -476,11 +471,11 @@
             <X :size="18" />
           </button>
         </div>
- 
+
         <div v-if="studentEnrollments.length === 0" class="text-center text-gray-500 py-4">
           {{ t('no_enrolled_courses_ar') }}
         </div>
- 
+
         <div
           v-for="enr in studentEnrollments"
           :key="enr.enrollment_id"
@@ -536,7 +531,7 @@
     </div>
   </div>
 </template>
- 
+
 <script setup>
 import { ref, computed, reactive, watch } from 'vue'
 import { X } from 'lucide-vue-next'
@@ -547,16 +542,19 @@ import {
   adminCleanupInactiveStudents,
 } from '../services/api.js'
 import AppLoader from '../components/AppLoader.vue'
- 
+
 const { t } = useLanguage()
- 
+
+// ─── AFTER ──────────────────────────────────
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
+  groupName: { type: String, default: '' }, // e.g. "Groupe A"
+  courseTitle: { type: String, default: '' }, // e.g. "Mathématiques"
 })
- 
+
 const emit = defineEmits(['close', 'student-deleted'])
- 
+
 // ── State ──────────────────────────────────────────────
 const students = ref([])
 const search = ref('')
@@ -565,7 +563,7 @@ const confirmTarget = ref(null)
 const deleting = ref(false)
 const managingStudent = ref(null)
 const studentEnrollments = ref([])
- 
+
 // ── Cleanup dialog state ────────────────────────────────
 const cleanupDialog = reactive({
   open: false,
@@ -573,23 +571,83 @@ const cleanupDialog = reactive({
   days: 14,
   loading: false,
 })
- 
+
 function openCleanupDialog(type) {
   cleanupDialog.type = type
   cleanupDialog.days = type === 'pending' ? 14 : 60
   cleanupDialog.loading = false
   cleanupDialog.open = true
 }
- 
+function printStudentList() {
+  // ✅ FIX: derive title from the students already loaded
+  //    getAdminStudentsList returns students that may have a group/course context
+  //    If not, fall back to a generic title
+  const date = new Date().toLocaleDateString('fr-DZ', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  // grab group/course from first student if available
+  const first = filteredStudents.value[0]
+  const courseTitle = first?.course_title || first?.enrolled_course || 'Liste des étudiants'
+  const groupName = first?.group_name || ''
+
+  const rows = filteredStudents.value
+    .map(
+      (s, i) => `
+    <tr>
+      <td style="padding:7px 12px;border-bottom:1px solid #ccc;">${i + 1}</td>
+      <td style="padding:7px 12px;border-bottom:1px solid #ccc;">${s.last_name}</td>
+      <td style="padding:7px 12px;border-bottom:1px solid #ccc;">${s.name}</td>
+    </tr>
+  `,
+    )
+    .join('')
+
+  const win = window.open('', '_blank')
+  win.document.write(`
+    <!DOCTYPE html><html><head><meta charset="utf-8"/>
+    <title>Liste étudiants</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:32px;color:#000;}
+      .header{text-align:center;margin-bottom:24px;border-bottom:2px solid #000;padding-bottom:12px;}
+      h1{font-size:20px;font-weight:bold;margin:0;}
+      h2{font-size:15px;font-weight:normal;margin:6px 0 0;}
+      p{font-size:12px;color:#555;margin:6px 0 0;}
+      table{width:100%;border-collapse:collapse;margin-top:16px;}
+      th{background:#000;color:#fff;padding:8px 12px;text-align:left;font-size:13px;}
+      tr:nth-child(even) td{background:#f5f5f5;}
+      .footer{margin-top:20px;font-size:11px;color:#666;text-align:right;}
+    </style></head><body>
+    <div class="header">
+      <h1>${courseTitle}</h1>
+      ${groupName ? `<h2>${groupName}</h2>` : ''}
+      <p>Liste des étudiants · ${date}</p>
+    </div>
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nom</th><th>Prénom</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer">
+      Total : ${filteredStudents.value.length} étudiant(s) — Belmahi School
+    </div>
+    <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script>
+    </body></html>
+  `)
+  win.document.close()
+}
 async function executeCleanup() {
   if (!cleanupDialog.days || cleanupDialog.days < 1) return
   cleanupDialog.loading = true
- 
+
   try {
     if (cleanupDialog.type === 'inactive') {
       const result = await adminCleanupInactiveStudents(cleanupDialog.days)
       alert(
-        `✅ ${t('cleanup_success_inactive').replace('{count}', result.count).replace('{days}', cleanupDialog.days)}`,
+        `${t('cleanup_success_inactive').replace('{count}', result.count).replace('{days}', cleanupDialog.days)}`,
       )
       await loadStudents()
     } else {
@@ -601,10 +659,10 @@ async function executeCleanup() {
       if (!res.ok) throw new Error((await res.json()).error || t('server_error'))
       const data = await res.json()
       alert(
-        `✅ ${t('cleanup_success_pending').replace('{count}', data.deleted).replace('{days}', cleanupDialog.days)}`,
+        ` ${t('cleanup_success_pending').replace('{count}', data.deleted).replace('{days}', cleanupDialog.days)}`,
       )
     }
- 
+
     cleanupDialog.open = false
   } catch (e) {
     alert('❌ ' + e.message)
@@ -612,7 +670,7 @@ async function executeCleanup() {
     cleanupDialog.loading = false
   }
 }
- 
+
 // ── Students list ───────────────────────────────────────
 const filteredStudents = computed(() => {
   const q = search.value.toLowerCase().trim()
@@ -623,23 +681,25 @@ const filteredStudents = computed(() => {
       .includes(q),
   )
 })
- 
+
 // ✅ NEW: Print student ID card — exact replica of StudentProfileModal, B&W, credit-card size
 function printStudentCard(student) {
   // Build absolute photo URL if relative
   const rawPhoto = student.photo_url || ''
   const photoUrl = rawPhoto
-    ? rawPhoto.startsWith('http') ? rawPhoto : window.location.origin + rawPhoto
+    ? rawPhoto.startsWith('http')
+      ? rawPhoto
+      : window.location.origin + rawPhoto
     : ''
- 
+
   // Age from birthday
   const age = student.birthday
     ? Math.floor((Date.now() - new Date(student.birthday)) / 31557600000)
     : null
- 
+
   // QR data matches StudentProfileModal format
   const qrData = `BELMAHI_STUDENT:${student.id}:${student.name} ${student.last_name}`
- 
+
   // Gender silhouette SVG (B&W version)
   const silhouetteFemale = `<svg viewBox="0 0 100 120" style="width:60px;height:72px" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="50" cy="30" rx="20" ry="22" fill="#555"/>
@@ -656,17 +716,20 @@ function printStudentCard(student) {
     <polygon points="50,62 44,80 50,76 56,80" fill="#333"/>
     <polygon points="50,76 47,95 50,93 53,95" fill="#444"/>
   </svg>`
- 
+
   const photoBlock = photoUrl
     ? `<img src="${photoUrl}" alt="Photo"
           style="width:100%;height:100%;object-fit:cover;display:block;"
           crossorigin="anonymous"/>`
-    : (student.gender === 'F' ? silhouetteFemale : silhouetteMale)
- 
-  const genderBadge = student.gender === 'F'
-    ? `<div style="background:#eee;color:#333;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:700;margin-top:6px;text-align:center;">♀ Fille</div>`
-    : `<div style="background:#eee;color:#333;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:700;margin-top:6px;text-align:center;">♂ Garçon</div>`
- 
+    : student.gender === 'F'
+      ? silhouetteFemale
+      : silhouetteMale
+
+  const genderBadge =
+    student.gender === 'F'
+      ? `<div style="background:#eee;color:#333;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:700;margin-top:6px;text-align:center;">♀ Fille</div>`
+      : `<div style="background:#eee;color:#333;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:700;margin-top:6px;text-align:center;">♂ Garçon</div>`
+
   const ageBlock = age
     ? `<div style="background:#f4f4f4;border-radius:6px;padding:5px 7px;flex:1;">
         <p style="font-size:7px;color:#555;margin:0 0 1px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">Âge</p>
@@ -685,7 +748,7 @@ function printStudentCard(student) {
         <p style="font-size:9px;font-weight:600;color:#111;margin:0;word-break:break-all;">${student.email}</p>
        </div>`
     : ''
- 
+
   const win = window.open('', '_blank', 'width=900,height=600')
   win.document.write(`<!DOCTYPE html>
 <html lang="fr">
@@ -695,12 +758,12 @@ function printStudentCard(student) {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
     @page {
       size: 85.6mm 53.98mm;
       margin: 0;
     }
- 
+
     html, body {
       width: 85.6mm;
       height: 53.98mm;
@@ -709,7 +772,7 @@ function printStudentCard(student) {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
- 
+
     .card {
       width: 85.6mm;
       height: 53.98mm;
@@ -719,7 +782,7 @@ function printStudentCard(student) {
       overflow: hidden;
       border: 1px solid #bbb;
     }
- 
+
     /* ── Header ── */
     .card-header {
       background: #1a1a1a;
@@ -738,7 +801,7 @@ function printStudentCard(student) {
     }
     .hdr-title { color: #fff; font-size: 8.5px; font-weight: 800; letter-spacing: .3px; }
     .hdr-sub   { color: rgba(255,255,255,.65); font-size: 6.5px; margin-top: 1px; }
- 
+
     /* ── ID strip ── */
     .id-strip {
       background: rgba(255,255,255,.08);
@@ -746,7 +809,7 @@ function printStudentCard(student) {
       display: flex; justify-content: space-between;
       font-size: 6px; color: rgba(255,255,255,.55);
     }
- 
+
     /* ── Body ── */
     .card-body {
       flex: 1;
@@ -755,7 +818,7 @@ function printStudentCard(student) {
       padding: 6px 8px;
       overflow: hidden;
     }
- 
+
     /* Left column: photo */
     .col-photo {
       display: flex; flex-direction: column; align-items: center;
@@ -769,12 +832,12 @@ function printStudentCard(student) {
       background: #e8e8e8;
       display: flex; align-items: center; justify-content: center;
     }
- 
+
     /* Middle column: info */
     .col-info { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .student-name { font-size: 10px; font-weight: 800; color: #111; line-height: 1.15; }
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
- 
+
     /* Right column: QR */
     .col-qr {
       display: flex; flex-direction: column; align-items: center;
@@ -787,7 +850,7 @@ function printStudentCard(student) {
       background: #fff;
     }
     .qr-label { font-size: 5.5px; color: #555; text-align: center; font-weight: 600; line-height: 1.3; }
- 
+
     /* ── Footer ── */
     .card-footer {
       background: #f4f4f4;
@@ -797,7 +860,7 @@ function printStudentCard(student) {
       flex-shrink: 0;
     }
     .card-footer span { font-size: 5.5px; color: #555; }
- 
+
     /* ── Screen preview (before print) ── */
     @media screen {
       html, body { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background: #ddd; }
@@ -807,7 +870,7 @@ function printStudentCard(student) {
 </head>
 <body>
   <div class="card">
- 
+
     <!-- Header -->
     <div class="card-header">
       <div class="hdr-icon">
@@ -821,22 +884,22 @@ function printStudentCard(student) {
         <div class="hdr-sub">Carte d'Identité Étudiant</div>
       </div>
     </div>
- 
+
     <!-- ID strip -->
     <div class="id-strip" style="background:#2a2a2a;">
       <span style="color:rgba(255,255,255,.5);">ID: #${student.id}</span>
       <span style="color:rgba(255,255,255,.5);">${student.email || ''}</span>
     </div>
- 
+
     <!-- Body -->
     <div class="card-body">
- 
+
       <!-- Left: Photo -->
       <div class="col-photo">
         <div class="photo-frame">${photoBlock}</div>
         ${genderBadge}
       </div>
- 
+
       <!-- Middle: Info -->
       <div class="col-info">
         <div>
@@ -850,7 +913,7 @@ function printStudentCard(student) {
           ${emailBlock}
         </div>
       </div>
- 
+
       <!-- Right: QR -->
       <div class="col-qr">
         <div class="qr-frame">
@@ -858,18 +921,18 @@ function printStudentCard(student) {
         </div>
         <p class="qr-label">Scannez<br>pour<br>identifier</p>
       </div>
- 
+
     </div>
- 
+
     <!-- Footer -->
     <div class="card-footer">
       <span>www.ecole-belmahi.dz</span>
       <span>Année scolaire 2025–2026</span>
       <span>Document officiel — ne pas falsifier</span>
     </div>
- 
+
   </div>
- 
+
   <script>
     window.onload = function() {
       // Generate QR code
@@ -883,7 +946,7 @@ function printStudentCard(student) {
           correctLevel: QRCode.CorrectLevel.M
         })
       } catch(e) { console.warn('QR failed', e) }
- 
+
       // Auto print after short delay (let QR render)
       setTimeout(function() { window.print() }, 600)
     }
@@ -892,7 +955,7 @@ function printStudentCard(student) {
 </html>`)
   win.document.close()
 }
- 
+
 async function loadStudents() {
   loading.value = true
   try {
@@ -903,7 +966,7 @@ async function loadStudents() {
     loading.value = false
   }
 }
- 
+
 watch(
   () => props.show,
   async (val) => {
@@ -916,12 +979,12 @@ watch(
     }
   },
 )
- 
+
 // ── Delete student ──────────────────────────────────────
 const initiateDelete = (student) => {
   confirmTarget.value = student
 }
- 
+
 const confirmDelete = async () => {
   if (!confirmTarget.value) return
   deleting.value = true
@@ -936,13 +999,13 @@ const confirmDelete = async () => {
     deleting.value = false
   }
 }
- 
+
 // ── Enrollment management ───────────────────────────────
 const manageStudentEnrollments = async (student) => {
   managingStudent.value = student
   await fetchEnrollments(student.id)
 }
- 
+
 const fetchEnrollments = async (studentId) => {
   try {
     const token = localStorage.getItem('token')
@@ -955,7 +1018,7 @@ const fetchEnrollments = async (studentId) => {
     console.error(e)
   }
 }
- 
+
 const updateEnrollment = async (enr, newStatus, newPayment) => {
   try {
     const token = localStorage.getItem('token')
@@ -972,7 +1035,7 @@ const updateEnrollment = async (enr, newStatus, newPayment) => {
     alert(t('error_update'))
   }
 }
- 
+
 const deleteEnrollment = async (enr) => {
   if (!confirm(t('confirm_unenroll_student'))) return
   try {
@@ -987,6 +1050,3 @@ const deleteEnrollment = async (enr) => {
   }
 }
 </script>
- 
- 
- 
