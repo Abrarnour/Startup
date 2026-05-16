@@ -8,8 +8,25 @@ text
  * Calls GET /api/parents/children/:studentId/history (parent-auth endpoint).
  */
 import { ref, watch, computed } from 'vue'
-import { getChildHistory } from '../services/api.js'
+import { getChildHistory, deleteEnrollment } from '../services/api.js'
 
+const deletingId = ref(null)
+
+const removeEnrollment = async (enrollment) => {
+  if (!confirm(`Supprimer l'inscription à "${enrollment.course_title}" ?`)) return
+  deletingId.value = enrollment.enrollment_id
+  try {
+    await deleteEnrollment(enrollment.group_id, props.child.id)
+    // remove from local list without re-fetch
+    historyData.value.enrollments = historyData.value.enrollments.filter(
+      (e) => e.enrollment_id !== enrollment.enrollment_id,
+    )
+  } catch (e) {
+    alert('❌ ' + e.message)
+  } finally {
+    deletingId.value = null
+  }
+}
 const props = defineProps({
   show: { type: Boolean, default: false },
   darkMode: { type: Boolean, default: false },
@@ -266,6 +283,7 @@ watch(
                   :key="e.enrollment_id"
                   class="chm-course-card"
                 >
+                  <!-- ─── AFTER ────────────────────────────────────────── -->
                   <div class="chm-cc-top">
                     <div>
                       <p class="chm-cc-title">{{ e.course_title }}</p>
@@ -274,14 +292,39 @@ watch(
                         {{ e.session_start_time }}
                       </p>
                     </div>
-                    <span
-                      :class="
-                        e.enrollment_status === 'active' ? 'chm-badge-green' : 'chm-badge-gray'
-                      "
-                      class="chm-badge"
-                    >
-                      {{ e.enrollment_status === 'active' ? 'Actif' : e.enrollment_status }}
-                    </span>
+                    <div style="display: flex; align-items: center; gap: 8px">
+                      <span
+                        :class="
+                          e.enrollment_status === 'active' ? 'chm-badge-green' : 'chm-badge-gray'
+                        "
+                        class="chm-badge"
+                      >
+                        {{ e.enrollment_status === 'active' ? 'Actif' : e.enrollment_status }}
+                      </span>
+                      <!-- ✅ DELETE enrollment button -->
+                      <button
+                        @click="removeEnrollment(e)"
+                        :disabled="deletingId === e.enrollment_id"
+                        style="
+                          background: #fee2e2;
+                          color: #dc2626;
+                          border: none;
+                          border-radius: 8px;
+                          padding: 3px 10px;
+                          font-size: 12px;
+                          font-weight: 600;
+                          cursor: pointer;
+                          opacity: 1;
+                          transition: opacity 0.2s;
+                        "
+                        :style="
+                          deletingId === e.enrollment_id ? 'opacity:.5;cursor:not-allowed' : ''
+                        "
+                        title="Supprimer cette inscription"
+                      >
+                        {{ deletingId === e.enrollment_id ? '...' : '✕ Supprimer' }}
+                      </button>
+                    </div>
                   </div>
                   <div class="chm-cc-meta">
                     <span class="chm-cc-since"

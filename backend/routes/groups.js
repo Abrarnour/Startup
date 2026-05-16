@@ -163,7 +163,7 @@ router.post('/', authMiddleware, async (req, res) => {
         pool,
         courseInfo.teacher_id,
         `group_created_teacher_${newGroup.id}_${ts}`,
-        `📋 تم إنشاء مجموعة جديدة "${group_name}" لمادتك "${courseInfo.title}" ${dayLabel} ${timeLabel}.`,
+        ` تم إنشاء مجموعة جديدة "${group_name}" لمادتك "${courseInfo.title}" ${dayLabel} ${timeLabel}.`,
         'assignment',
       )
     }
@@ -172,7 +172,7 @@ router.post('/', authMiddleware, async (req, res) => {
       await notifyAllAdmins(
         pool,
         `group_created_admin_${newGroup.id}_${ts}`,
-        `📋 الأستاذ ${courseInfo.teacher_name} ${courseInfo.teacher_last_name} أنشأ مجموعة جديدة "${group_name}" لمادة "${courseInfo.title}".`,
+        ` الأستاذ ${courseInfo.teacher_name} ${courseInfo.teacher_last_name} أنشأ مجموعة جديدة "${group_name}" لمادة "${courseInfo.title}".`,
         'info',
       )
     }
@@ -254,7 +254,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
       (salle && salle !== oldInfo.salle)
 
     if (scheduleChanged) {
-      const changedMsg = `📅 تم تعديل جدول المجموعة "${newName}" في مادة "${oldInfo.course_title}": يوم ${newDay} الساعة ${newTime}، ${newSalle ? 'القاعة ' + newSalle : ''}.`
+      const changedMsg = `تم تعديل جدول المجموعة "${newName}" في مادة "${oldInfo.course_title}": يوم ${newDay} الساعة ${newTime}، ${newSalle ? 'القاعة ' + newSalle : ''}.`
 
       if (oldInfo.teacher_id) {
         await sendNotif(
@@ -326,7 +326,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
 
     for (const st of students.rows) {
-      const msg = `⚠️ المجموعة "${gi.group_name}" في مادة "${gi.course_title}" تم حذفها. يرجى التواصل مع الإدارة.`
+      const msg = ` المجموعة "${gi.group_name}" في مادة "${gi.course_title}" تم حذفها. يرجى التواصل مع الإدارة.`
       await sendNotif(
         pool,
         st.student_id,
@@ -366,12 +366,12 @@ router.patch('/:id/toggle-registration', authMiddleware, adminMiddleware, async 
     )
 
     if (info.rows[0]?.teacher_id) {
-      const status = g.registration_open ? 'مفتوحة ✅' : 'مغلقة 🔒'
+      const status = g.registration_open ? 'مفتوحة ' : 'مغلقة '
       await sendNotif(
         pool,
         info.rows[0].teacher_id,
         `reg_toggle_${req.params.id}_${Date.now()}`,
-        `🔔 التسجيلات في مجموعة "${g.group_name}" لمادة "${info.rows[0].title}" أصبحت ${status}.`,
+        ` التسجيلات في مجموعة "${g.group_name}" لمادة "${info.rows[0].title}" أصبحت ${status}.`,
         'info',
       )
     }
@@ -560,7 +560,7 @@ router.delete(
       if (info.rows.length > 0) {
         const gi = info.rows[0]
         const ts = Date.now()
-        const msg = `❌ تم إلغاء تسجيلك في مجموعة "${gi.group_name}" لمادة "${gi.title}". يرجى التواصل مع الإدارة.`
+        const msg = ` تم إلغاء تسجيلك في مجموعة "${gi.group_name}" لمادة "${gi.title}". يرجى التواصل مع الإدارة.`
 
         await sendNotif(
           pool,
@@ -574,7 +574,7 @@ router.delete(
           pool,
           studentId,
           `unenrolled_parent_${studentId}_${groupId}_${ts}`,
-          `❌ تم إلغاء تسجيل ابنك ${gi.student_name} ${gi.student_last_name} من مجموعة "${gi.group_name}" لمادة "${gi.title}".`,
+          ` تم إلغاء تسجيل ابنك ${gi.student_name} ${gi.student_last_name} من مجموعة "${gi.group_name}" لمادة "${gi.title}".`,
           'warning',
         )
 
@@ -583,7 +583,7 @@ router.delete(
             pool,
             gi.teacher_id,
             `unenrolled_teacher_${studentId}_${groupId}_${ts}`,
-            `👤 تم إلغاء تسجيل الطالب "${gi.student_name} ${gi.student_last_name}" من مجموعتك "${gi.group_name}" في مادة "${gi.title}".`,
+            ` تم إلغاء تسجيل الطالب "${gi.student_name} ${gi.student_last_name}" من مجموعتك "${gi.group_name}" في مادة "${gi.title}".`,
             'info',
           )
         }
@@ -627,8 +627,8 @@ router.patch(
 
       if (info.rows.length > 0) {
         const ts = Date.now()
-        const statusAr = payment_status === 'paid' ? 'مدفوع ✅' : 'في الانتظار ⏳'
-        const msg = `💳 تم تحديث حالة دفعتك في مادة "${info.rows[0].title}" (${info.rows[0].group_name}) إلى: ${statusAr}.`
+        const statusAr = payment_status === 'paid' ? 'مدفوع ' : 'في الانتظار '
+        const msg = `تم تحديث حالة دفعتك في مادة "${info.rows[0].title}" (${info.rows[0].group_name}) إلى: ${statusAr}.`
 
         await sendNotif(pool, studentId, `payment_${studentId}_${groupId}_${ts}`, msg, 'info')
 
@@ -636,7 +636,7 @@ router.patch(
           pool,
           studentId,
           `payment_parent_${studentId}_${groupId}_${ts}`,
-          `💳 تم تحديث حالة دفع ابنك في مادة "${info.rows[0].title}" إلى: ${statusAr}.`,
+          ` تم تحديث حالة دفع ابنك في مادة "${info.rows[0].title}" إلى: ${statusAr}.`,
           'info',
         )
       }
@@ -730,13 +730,13 @@ router.post(
         if (info.rows.length > 0) {
           const gi = info.rows[0]
           const ts = Date.now()
-          const importance = is_important ? ' ⚠️ مهم' : ''
+          const importance = is_important ? '  مهم' : ''
 
           await sendNotif(
             pool,
             studentId,
             `note_student_${noteId.rows[0].id}_${ts}`,
-            `📝 أضاف أستاذك ملاحظة جديدة${importance} في مادة "${gi.title}": "${note_text.substring(0, 60)}${note_text.length > 60 ? '...' : ''}"`,
+            ` أضاف أستاذك ملاحظة جديدة${importance} في مادة "${gi.title}": "${note_text.substring(0, 60)}${note_text.length > 60 ? '...' : ''}"`,
             is_important ? 'warning' : 'info',
           )
 
@@ -744,7 +744,7 @@ router.post(
             pool,
             studentId,
             `note_parent_${noteId.rows[0].id}_${ts}`,
-            `📝 ملاحظة جديدة${importance} على سجل ابنك ${gi.sname} ${gi.slast} في مادة "${gi.title}": "${note_text.substring(0, 60)}${note_text.length > 60 ? '...' : ''}"`,
+            ` ملاحظة جديدة${importance} على سجل ابنك ${gi.sname} ${gi.slast} في مادة "${gi.title}": "${note_text.substring(0, 60)}${note_text.length > 60 ? '...' : ''}"`,
             is_important ? 'warning' : 'info',
           )
         }
@@ -829,7 +829,7 @@ router.patch(
         const ts = Date.now()
         const reasonText = reason ? `السبب: ${reason}` : ''
         const dateStr = si.session_date ? new Date(si.session_date).toLocaleDateString('ar-DZ') : ''
-        const cancelMsg = `❌ تم إلغاء الحصة "${si.session_title || si.course_title}" بتاريخ ${dateStr} ${si.start_time || ''} (${si.group_name}). ${reasonText}`
+        const cancelMsg = ` تم إلغاء الحصة "${si.session_title || si.course_title}" بتاريخ ${dateStr} ${si.start_time || ''} (${si.group_name}). ${reasonText}`
 
         const students = await pool.query(
           `SELECT student_id FROM group_students WHERE group_id = $1 AND status = 'active'`,
@@ -857,7 +857,7 @@ router.patch(
             pool,
             si.teacher_id,
             `session_cancel_t${si.teacher_id}_${sessionId}_${ts}`,
-            `❌ تم إلغاء حصتك "${si.session_title || si.course_title}" بتاريخ ${dateStr} من قبل الإدارة. ${reasonText}`,
+            ` تم إلغاء حصتك "${si.session_title || si.course_title}" بتاريخ ${dateStr} من قبل الإدارة. ${reasonText}`,
             'warning',
           )
         }
@@ -866,7 +866,7 @@ router.patch(
           await notifyAllAdmins(
             pool,
             `session_cancel_admin_${sessionId}_${ts}`,
-            `❌ الأستاذ ${si.teacher_name} ${si.teacher_last_name} ألغى الحصة "${si.session_title || si.course_title}" بتاريخ ${dateStr}. ${reasonText}`,
+            ` الأستاذ ${si.teacher_name} ${si.teacher_last_name} ألغى الحصة "${si.session_title || si.course_title}" بتاريخ ${dateStr}. ${reasonText}`,
             'warning',
           )
         }
@@ -1298,7 +1298,7 @@ router.patch(
           pool,
           Number(studentId),
           `paid_cycle_${groupId}_${studentId}_${ts}`,
-          `✅ تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة بدأت — حضورك يُحسب من الجلسة القادمة.`,
+          ` تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة بدأت — حضورك يُحسب من الجلسة القادمة.`,
           'payment',
         )
       }
@@ -1370,7 +1370,7 @@ router.post(
           pool,
           Number(studentId),
           `pay_scan_${groupId}_${studentId}_${ts}`,
-          `✅ تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة — الجلسة 1${cycleStr} سُجّلت اليوم.`,
+          ` تم تسجيل دفعتك لمادة "${si.title}". دورة جديدة — الجلسة 1${cycleStr} سُجّلت اليوم.`,
           'payment',
         )
       }
@@ -1495,7 +1495,7 @@ router.delete(
       // Send notifications
       const ts = Date.now()
       for (const si of infoRes.rows) {
-        const msg = `❌ تم إلغاء تسجيلك في مجموعة "${si.group_name}" لمادة "${si.course_title}". يرجى التواصل مع الإدارة.`
+        const msg = ` تم إلغاء تسجيلك في مجموعة "${si.group_name}" لمادة "${si.course_title}". يرجى التواصل مع الإدارة.`
         await sendNotif(
           pool,
           si.student_id,
@@ -1507,7 +1507,7 @@ router.delete(
           pool,
           si.student_id,
           `bulk_removed_p${si.student_id}_${groupId}_${ts}`,
-          `❌ تم إلغاء تسجيل ابنك ${si.name} ${si.last_name} من مجموعة "${si.group_name}" لمادة "${si.course_title}".`,
+          ` تم إلغاء تسجيل ابنك ${si.name} ${si.last_name} من مجموعة "${si.group_name}" لمادة "${si.course_title}".`,
           'warning',
         )
       }
@@ -1522,5 +1522,41 @@ router.delete(
     }
   },
 )
+// ─── DELETE /:groupId/students/:studentId/enrollment ──────────────────────────
+// Soft-delete an enrollment record from the history view (admin + parent use)
+router.delete('/:groupId/students/:studentId/enrollment', authMiddleware, async (req, res) => {
+  const { groupId, studentId } = req.params
+  const role = req.user.role
 
+  // Only admin or the parent of this student can delete
+  if (role !== 'admin') {
+    // verify parent owns this student
+    const check = await pool.query(
+      `SELECT 1 FROM parent_students WHERE parent_id=$1 AND student_id=$2`,
+      [req.user.id, studentId],
+    )
+    if (check.rows.length === 0) return res.status(403).json({ error: 'Accès refusé' })
+  }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM group_students WHERE group_id=$1 AND student_id=$2 RETURNING *`,
+      [groupId, studentId],
+    )
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Inscription introuvable' })
+
+    // update group counter
+    await pool.query(
+      `UPDATE groups SET current_students = (
+           SELECT COUNT(*) FROM group_students WHERE group_id=$1 AND status='active'
+         ) WHERE id=$1`,
+      [groupId],
+    )
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Delete enrollment error:', err.message)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 export default router

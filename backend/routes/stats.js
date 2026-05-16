@@ -420,7 +420,7 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
       date: profile.created_at,
       label: 'Compte créé',
       detail: `Inscription de ${profile.name} ${profile.last_name}`,
-      icon: '👤',
+      icon: '',
     })
 
     for (const e of enrollments.rows) {
@@ -429,7 +429,7 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
         date: e.enrollment_date,
         label: 'Inscription au cours',
         detail: `${e.course_title} — ${e.group_name}`,
-        icon: '📚',
+        icon: '',
         meta: {
           course_title: e.course_title,
           group_name: e.group_name,
@@ -449,7 +449,7 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
           date: e.last_payment_date,
           label: 'Paiement enregistré',
           detail: `${e.course_title} — ${e.amount_paid} DA`,
-          icon: '💳',
+          icon: '',
           meta: {
             course_title: e.course_title,
             amount_paid: e.amount_paid,
@@ -466,7 +466,7 @@ router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
         date: a.scanned_at,
         label: `Présent — ${a.course_title}`,
         detail: `${a.group_name} · Séance #${a.session_number}`,
-        icon: '✅',
+        icon: '',
         group_id: a.group_id,
         session_number: a.session_number,
       })
