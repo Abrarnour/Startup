@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, defineProps } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 // Removed Calendar since birthday is deleted
 import { UserPlus, Mail, Lock, Phone, User, MapPin } from 'lucide-vue-next'

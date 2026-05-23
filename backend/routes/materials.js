@@ -4,7 +4,6 @@ import express from 'express'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
-import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -70,6 +69,7 @@ const upload = multer({
 // POST - Upload course material
 // =============================================
 router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
+    const pool = req.db
   try {
     const { course_id, title, description } = req.body
     const teacher_id = req.user.id
@@ -142,6 +142,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 // GET - Get all materials for a course
 // =============================================
 router.get('/course/:courseId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const { courseId } = req.params
     if (!courseId || courseId === 'undefined') {
@@ -180,6 +181,7 @@ router.get(
   },
   authMiddleware,
   async (req, res) => {
+    const pool = req.db
     try {
       const { materialId } = req.params
 
@@ -246,6 +248,7 @@ router.get(
 // GET - Download a specific material (non-video files)
 // =============================================
 router.get('/download/:materialId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const { materialId } = req.params
 
@@ -273,6 +276,7 @@ router.get('/download/:materialId', authMiddleware, async (req, res) => {
 // DELETE - Delete a material (teacher/admin only)
 // =============================================
 router.delete('/:materialId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const { materialId } = req.params
     const teacher_id = req.user.id

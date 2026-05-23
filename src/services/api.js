@@ -1,14 +1,20 @@
 // frontend/src/services/api.js
-const API_URL =
-  import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+
+import { tenantSlug } from '../router/index.js'
+
+const API_URL = import.meta.env.VITE_API_URL // http://localhost:3000/api
 
 const getToken = () => localStorage.getItem('token')
 
 const getHeaders = () => {
   const token = getToken()
+  const h = window.location.hostname
+  const p = h.split('.')
+  const slug = p.length >= 2 && p[0] !== 'localhost' && p[0] !== 'admin' ? p[0] : null
   return {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` }),
+    ...(slug && { 'X-Tenant-Slug': slug }),
   }
 }
 
@@ -50,16 +56,6 @@ export const register = async (userData) => {
     localStorage.setItem('user', JSON.stringify(data.user))
   }
   return data
-}
-
-export const logout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('user')
-}
-
-export const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user')
-  return userStr ? JSON.parse(userStr) : null
 }
 
 // ============= COURS =============
@@ -1549,3 +1545,85 @@ export const deleteEnrollment = async (groupId, studentId) => {
   }
   return response.json()
 }
+
+// ── helper عام ────────────────────────────────────────────────
+async function request(method, endpoint, body = null) {
+  const options = {
+    method,
+    headers: getHeaders(),
+    ...(body && { body: JSON.stringify(body) }),
+  }
+  const res = await fetch(`${API_URL}${endpoint}`, options)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+// ── Auth ──────────────────────────────────────────────────────
+
+export const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+}
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user')
+  return user ? JSON.parse(user) : null
+}
+
+// ── باقي الـ functions تبقى كما هي — فقط تستخدم request() ──
+// مثال:
+export const getGroups = () => request('GET', '/groups')
+export const getStudents = () => request('GET', '/students')
+export const getCalendar = () => request('GET', '/calendar')
+export const getMaterials = (id) => request('GET', `/materials/${id}`)
+
+// ... أضف كل الـ functions الحالية هنا مع تحويلها لـ request()
+// لا تغيير في المنطق، فقط توحيد الـ headers
+
+// ── Platform API (للـ Super Admin فقط) ───────────────────────
+const getPlatformToken = () => localStorage.getItem('platform_token')
+const platformHeaders = () => ({
+  'Content-Type': 'application/json',
+  ...(getPlatformToken() && { Authorization: `Bearer ${getPlatformToken()}` }),
+})
+
+const PLATFORM_URL = import.meta.env.VITE_API_URL?.replace('/api', '') + '/api/platform'
+
+export const platformLogin = async (email, password) => {
+  const res = await fetch(`${PLATFORM_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error)
+  localStorage.setItem('platform_token', data.token)
+  localStorage.setItem('platform_admin', JSON.stringify(data.admin))
+  return data
+}
+
+export const platformGetTenants = (params = '') =>
+  fetch(`${PLATFORM_URL}/tenants?${params}`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformGetStats = () =>
+  fetch(`${PLATFORM_URL}/stats`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformSetStatus = (id, status) =>
+  fetch(`${PLATFORM_URL}/tenants/${id}/status`, {
+    method: 'PATCH',
+    headers: platformHeaders(),
+    body: JSON.stringify({ status }),
+  }).then((r) => r.json())
+
+export const platformGetInvoices = () =>
+  fetch(`${PLATFORM_URL}/invoices`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformCreateInvoice = (data) =>
+  fetch(`${PLATFORM_URL}/invoices`, {
+    method: 'POST',
+    headers: platformHeaders(),
+    body: JSON.stringify(data),
+  }).then((r) => r.json())

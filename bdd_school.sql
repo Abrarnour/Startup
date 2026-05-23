@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
+\restrict cyvYpOSlKo6wjRunURwFhxRfowxDZaknR57Q1ugVIwSW47ODA9XpHIPHUu0nfuE
 
--- Dumped from database version 15.16 (Debian 15.16-0+deb12u1)
--- Dumped by pg_dump version 15.16 (Debian 15.16-0+deb12u1)
+-- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
+-- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -392,6 +392,44 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: attendance_log; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.attendance_log (
+    id integer NOT NULL,
+    group_id integer NOT NULL,
+    student_id integer NOT NULL,
+    scanned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    session_number integer NOT NULL,
+    scanned_by integer
+);
+
+
+ALTER TABLE public.attendance_log OWNER TO postgres;
+
+--
+-- Name: attendance_log_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.attendance_log_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.attendance_log_id_seq OWNER TO postgres;
+
+--
+-- Name: attendance_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.attendance_log_id_seq OWNED BY public.attendance_log.id;
+
+
+--
 -- Name: course_materials; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -545,6 +583,8 @@ CREATE TABLE public.group_students (
     payment_due numeric(10,2),
     payment_deadline date,
     last_payment_date date,
+    sessions_attended integer DEFAULT 0 NOT NULL,
+    cycle_start_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT group_students_enrollment_type_check CHECK (((enrollment_type)::text = ANY ((ARRAY['direct'::character varying, 'parent_request'::character varying, 'admin_assigned'::character varying])::text[]))),
     CONSTRAINT group_students_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'completed'::character varying, 'dropped'::character varying])::text[])))
 );
@@ -630,6 +670,45 @@ ALTER TABLE public.groups_id_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.groups_id_seq OWNED BY public.groups.id;
+
+
+--
+-- Name: notifications; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.notifications (
+    id integer NOT NULL,
+    user_id integer,
+    notif_key character varying(200) NOT NULL,
+    message text NOT NULL,
+    type character varying(30) DEFAULT 'upcoming_session'::character varying,
+    is_read boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.notifications OWNER TO postgres;
+
+--
+-- Name: notifications_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.notifications_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.notifications_id_seq OWNER TO postgres;
+
+--
+-- Name: notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.notifications_id_seq OWNED BY public.notifications.id;
 
 
 --
@@ -790,6 +869,7 @@ CREATE TABLE public.users (
     role character varying(20) DEFAULT 'student'::character varying,
     parent_phone character varying(20),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    photo_url character varying(255),
     CONSTRAINT users_gender_check CHECK ((gender = ANY (ARRAY['M'::bpchar, 'F'::bpchar]))),
     CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['student'::character varying, 'admin'::character varying, 'Parent'::character varying, 'teacher'::character varying])::text[])))
 );
@@ -1074,6 +1154,13 @@ CREATE VIEW public.v_student_notes_full AS
 ALTER TABLE public.v_student_notes_full OWNER TO postgres;
 
 --
+-- Name: attendance_log id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.attendance_log ALTER COLUMN id SET DEFAULT nextval('public.attendance_log_id_seq'::regclass);
+
+
+--
 -- Name: course_materials id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1109,6 +1196,13 @@ ALTER TABLE ONLY public.groups ALTER COLUMN id SET DEFAULT nextval('public.group
 
 
 --
+-- Name: notifications id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
+
+
+--
 -- Name: parent_students id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1137,14 +1231,18 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Data for Name: attendance_log; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.attendance_log (id, group_id, student_id, scanned_at, session_number, scanned_by) FROM stdin;
+\.
+
+
+--
 -- Data for Name: course_materials; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.course_materials (id, course_id, teacher_id, title, description, file_name, file_path, file_type, file_size, uploaded_at) FROM stdin;
-1	5	2	k	k	1770740697549-164501080-ss.jpg	/uploads/1770740697549-164501080-ss.jpg	image/jpeg	39099	2026-02-10 17:24:57.622619
-15	5	2	f	f	1771243020009-576701460-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	/uploads/1771243020009-576701460-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	application/pdf	880765	2026-02-16 12:57:00.06313
-16	7	16	exemple	ex	1771245048830-430400902-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	/uploads/1771245048830-430400902-Liste-des-Enseignants-avec-Ã©mail_250126_163235-1.pdf	application/pdf	880765	2026-02-16 13:30:48.899888
-17	12	16	fdgfhg	dgfhgjhk	1774536137525-272604347-Screenshot 2026-03-26 15.42.02.png	/uploads/1774536137525-272604347-Screenshot 2026-03-26 15.42.02.png	image/png	237362	2026-03-26 15:42:17.575354
 \.
 
 
@@ -1153,14 +1251,7 @@ COPY public.course_materials (id, course_id, teacher_id, title, description, fil
 --
 
 COPY public.courses (id, title, teacher_id, description, education_level, year_level, branch, course_type, sessions_per_month, duration_hours, max_students_per_group, price, salle, is_active, created_at, updated_at) FROM stdin;
-3	Physique - 2ème Année Secondaire	3	Cours de physique sciences expérimentales	secondaire	2	\N	continuous	6	\N	20	8000.00	Salle C	t	2026-02-01 17:15:50.763523	2026-02-01 17:15:50.763523
-5	jjj	2	jjjj	primaire	1	\N	continuous	1	\N	30	0.01	jjjj	t	2026-02-06 23:29:36.726937	2026-02-06 23:29:36.726937
-6	Mathématiques Primaire	15	Cours de mathématiques pour le primaire avec exercices pratiques	primaire	5	\N	continuous	8	\N	25	3000.00	Salle A1	t	2026-02-13 19:12:45.981305	2026-02-13 19:12:45.981305
-7	Sciences Physiques	16	Cours de physique-chimie pour le moyen	moyen	2	\N	continuous	8	\N	30	3500.00	Labo B2	t	2026-02-13 19:12:45.988976	2026-02-13 19:12:45.988976
-8	Anglais Avancé	17	Cours d'anglais niveau avancé pour lycéens	secondaire	2	Sciences	continuous	8	\N	20	4000.00	Salle C3	t	2026-02-13 19:12:45.99382	2026-02-13 19:12:45.99382
-11	Initiation Informatique	15	Cours d'informatique pour débutants	moyen	1	\N	continuous	4	\N	15	3200.00	Salle Info E5	t	2026-02-13 19:12:46.008199	2026-02-13 19:12:46.008199
-10	Révision Intensive BAC Math	19	Stage intensif de révision pour le BA\n	secondaire	3	Mathématiques	one_time	\N	30	15	8000.00	Grande Salle	t	2026-02-13 19:12:46.003315	2026-02-23 12:49:13.919355
-12	mat	16	duk	primaire	1	\N	continuous	1	\N	30	2500.00	A	t	2026-02-23 14:46:33.766411	2026-02-24 13:04:47.829797
+22	jj	2	j	primaire	1	\N	continuous	1	\N	30	0.00	\N	t	2026-05-20 18:43:31.839885	2026-05-20 18:43:31.839885
 \.
 
 
@@ -1169,7 +1260,6 @@ COPY public.courses (id, title, teacher_id, description, education_level, year_l
 --
 
 COPY public.favorites (id, user_id, course_id, created_at) FROM stdin;
-9	1	10	2026-02-23 13:39:24.981081
 \.
 
 
@@ -1177,20 +1267,7 @@ COPY public.favorites (id, user_id, course_id, created_at) FROM stdin;
 -- Data for Name: group_students; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.group_students (id, group_id, student_id, status, payment_status, amount_paid, enrollment_date, enrollment_type, requested_by, request_date, payment_due, payment_deadline, last_payment_date) FROM stdin;
-16	6	3	active	pending	0.00	2026-02-10 21:13:04.62262	direct	\N	\N	\N	\N	\N
-17	7	3	active	pending	0.00	2026-02-10 21:13:04.62262	direct	\N	\N	\N	\N	\N
-21	13	22	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-28	14	25	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-30	15	5	active	pending	0.00	2026-02-23 17:39:05.461433	direct	1	\N	0.01	\N	\N
-25	13	24	active	pending	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	\N
-18	8	21	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-20	9	22	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-22	10	23	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-23	11	23	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-24	8	24	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-27	10	25	active	paid	0.00	2026-02-13 19:12:46.054215	direct	\N	\N	\N	\N	2026-02-13
-31	10	13	active	paid	0.00	2026-02-25 14:48:41.270239	parent_request	9	2026-02-25 14:48:41.270239	\N	\N	2026-02-25
+COPY public.group_students (id, group_id, student_id, status, payment_status, amount_paid, enrollment_date, enrollment_type, requested_by, request_date, payment_due, payment_deadline, last_payment_date, sessions_attended, cycle_start_date) FROM stdin;
 \.
 
 
@@ -1199,18 +1276,65 @@ COPY public.group_students (id, group_id, student_id, status, payment_status, am
 --
 
 COPY public.groups (id, course_id, group_name, start_date, start_time, end_time, day_of_week, session_start_time, session_end_time, registration_open, current_students, is_active, created_at, updated_at, salle, calendar_type, total_weeks, repeat_calendar, current_cycle, total_sessions, sessions_per_week, has_next_cycle_modifications, next_cycle_modifications, return_to_normal_after_cycle, modified_cycle_count) FROM stdin;
-10	7	Groupe Unique	\N	\N	\N	monday	15:00:00	17:00:00	t	3	t	2026-02-13 19:12:46.029044	2026-02-13 19:12:46.029044	Labo B2	manual	4	f	1	\N	1	f	\N	t	0
-6	5	Groupe A	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-10 21:12:38.05828	2026-02-10 21:12:38.05828	\N	manual	4	f	1	\N	1	f	\N	t	0
-7	3	Groupe A	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-10 21:12:54.625998	2026-02-10 21:12:54.625998	\N	manual	4	f	1	\N	1	f	\N	t	0
-8	6	Groupe A - Dimanche Matin	\N	\N	\N	sunday	09:00:00	11:00:00	t	2	t	2026-02-13 19:12:46.01334	2026-02-13 19:12:46.01334	Salle A1	manual	4	f	1	\N	1	f	\N	t	0
-9	6	Groupe B - Mercredi Après-midi	\N	\N	\N	wednesday	14:00:00	16:00:00	t	1	t	2026-02-13 19:12:46.023829	2026-02-13 19:12:46.023829	Salle A1	manual	4	f	1	\N	1	f	\N	t	0
-11	8	Groupe Sciences	\N	\N	\N	tuesday	17:30:00	19:30:00	t	1	t	2026-02-13 19:12:46.033624	2026-02-13 19:12:46.033624	Salle C3	manual	4	f	1	\N	1	f	\N	t	0
-13	11	Groupe Débutants	\N	\N	\N	saturday	09:00:00	11:00:00	t	2	t	2026-02-13 19:12:46.043779	2026-02-13 19:12:46.043779	Salle Info E5	manual	4	f	1	\N	1	f	\N	t	0
-14	10	Stage Février 2026	2026-02-17	09:00:00	17:00:00	\N	\N	\N	t	1	t	2026-02-13 19:12:46.04955	2026-02-13 19:12:46.04955	Grande Salle	manual	4	f	1	\N	1	f	\N	t	0
-17	12	111	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 16:25:36.480374	2026-02-23 16:25:36.480374	A	weekly_fixed	4	f	1	4	1	f	\N	t	0
-18	12	jjkj	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 16:34:14.462836	2026-02-23 16:34:14.462836	jkjjjj	weekly_fixed	4	f	1	4	1	f	\N	t	0
-19	12	A	\N	\N	\N	\N	\N	\N	t	0	t	2026-02-23 17:38:02.971887	2026-02-23 17:38:02.971887	AA	weekly_fixed	4	f	1	4	1	f	\N	t	0
-15	12	1	\N	\N	\N	\N	\N	\N	t	1	t	2026-02-23 14:58:50.099734	2026-02-23 14:58:50.099734	A	weekly_fixed	4	f	1	4	1	f	\N	t	0
+38	22	a	\N	\N	\N	thursday	09:00:00	11:00:00	t	0	t	2026-05-20 21:10:59.02833	2026-05-20 21:10:59.02833	A	weekly_fixed	4	f	1	4	1	f	\N	t	0
+\.
+
+
+--
+-- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.notifications (id, user_id, notif_key, message, type, is_read, created_at) FROM stdin;
+2	2	welcome_teacher_2	مرحباً أستاذ محمد بنعلي! تم تعيينك في 3 مواد: رياضيات.	welcome	f	2026-04-25 18:34:54.086817
+3	3	welcome_teacher_3	مرحباً أستاذة فاطمة حداد! تم تعيينك في مادتي العربية والفلسفة.	welcome	f	2026-04-25 18:34:54.086817
+5	5	welcome_teacher_5	مرحباً أستاذة سميرة والي! تم تعيينك في مادة الإنجليزية.	welcome	f	2026-04-25 18:34:54.086817
+6	10	welcome_student_10	مرحباً أمين! أنت مسجّل في رياضيات 4 ابتدائي. حصتك كل سبت 9:00.	welcome	f	2026-04-25 18:34:54.086817
+7	11	welcome_student_11	مرحباً رانيا! أنت مسجّلة في رياضيات 4 ابتدائي.	welcome	f	2026-04-25 18:34:54.086817
+8	14	notif_overdue_14	⚠️ لم يتم تسديد قسط شهر أبريل لمادة الرياضيات. يرجى التواصل مع الإدارة.	warning	f	2026-04-25 18:34:54.086817
+9	18	welcome_student_18	مرحباً خالد! أنت مسجّل في مادتين هذا الموسم.	welcome	f	2026-04-25 18:34:54.086817
+10	29	notif_suspended_29	⚠️ تم تعليق تسجيلك في مادة اللغة العربية بسبب التأخر في الدفع. تواصل مع الإدارة.	warning	f	2026-04-25 18:34:54.086817
+11	50	welcome_parent_50	مرحباً! يمكنك متابعة أبنائك أمين وإلياس من خلال لوحة الأولياء.	welcome	f	2026-04-25 18:34:54.086817
+12	51	welcome_parent_51	مرحباً! يمكنك متابعة ابنتك رانيا من خلال لوحة الأولياء.	welcome	f	2026-04-25 18:34:54.086817
+14	3	course_assigned_21_1779212459518	<i class="fa-solid fa-book"></i> تم تعيينك كأستاذ لمادة جديدة: "hhh" — يمكنك الآن رؤيتها في لوحة القيادة.	assignment	f	2026-05-19 18:40:59.519271
+16	3	group_created_teacher_31_1779214596047	 تم إنشاء مجموعة جديدة "hhh" لمادتك "hhh"  .	assignment	f	2026-05-19 19:16:36.048775
+17	16	enrolled_student_31_16_1779214611899	🎓 تم تسجيلك في مادة "hhh" — يوم saturday الساعة 09:00:00، القاعة: hhh. أستاذك: أ. Fatima Haddad.	assignment	f	2026-05-19 19:16:51.899741
+18	3	enrolled_teacher_31_16_1779214611899	👤 انضم طالب جديد "Hamza Bentoumi" إلى مجموعتك "hhh" في مادة "hhh".	info	f	2026-05-19 19:16:51.913487
+19	3	course_deleted_21_1779298974149	🗑️ تم حذف المادة "hhh" من قبل الإدارة.	warning	f	2026-05-20 18:42:54.15032
+20	16	course_deleted_student_21_16_1779298974149	⚠️ المادة "hhh" التي كنت مسجلاً فيها تم حذفها من قبل الإدارة.	warning	f	2026-05-20 18:42:54.26012
+21	2	course_assigned_22_1779299011850	<i class="fa-solid fa-book"></i> تم تعيينك كأستاذ لمادة جديدة: "jj" — يمكنك الآن رؤيتها في لوحة القيادة.	assignment	f	2026-05-20 18:43:31.851403
+23	2	group_created_teacher_32_1779299036090	 تم إنشاء مجموعة جديدة "A" لمادتك "jj"  .	assignment	f	2026-05-20 18:43:56.091144
+24	10	enrolled_student_32_10_1779299042293	🎓 تم تسجيلك في مادة "jj" — يوم monday الساعة 09:00:00، القاعة: A. أستاذك: أ. Mohamed Benali.	assignment	f	2026-05-20 18:44:02.293598
+25	50	enrolled_parent_32_10_1779299042293_p50	🎓 تم تسجيل ابنك Amine Bekkouche في مادة "jj" — يوم monday الساعة 09:00:00، القاعة: A. الأستاذ: أ. Mohamed Benali.	assignment	f	2026-05-20 18:44:02.301931
+26	2	enrolled_teacher_32_10_1779299042293	👤 انضم طالب جديد "Amine Bekkouche" إلى مجموعتك "A" في مادة "jj".	info	f	2026-05-20 18:44:02.308041
+27	2	group_deleted_teacher_32_1779299893098	🗑️ تم حذف المجموعة "A" من مادة "jj".	warning	f	2026-05-20 18:58:13.102142
+28	10	group_deleted_s10_32_1779299893098	 المجموعة "A" في مادة "jj" تم حذفها. يرجى التواصل مع الإدارة.	warning	f	2026-05-20 18:58:13.119472
+29	50	group_deleted_p10_32_1779299893098_p50	 المجموعة "A" في مادة "jj" تم حذفها. يرجى التواصل مع الإدارة.	warning	f	2026-05-20 18:58:13.135346
+30	2	group_created_teacher_33_1779300403897	 تم إنشاء مجموعة جديدة "A" لمادتك "jj"  .	assignment	f	2026-05-20 19:06:43.898482
+31	10	enrolled_student_33_10_1779300636926	🎓 تم تسجيلك في مادة "jj" — يوم monday,wednesday ، القاعة: A. أستاذك: أ. Mohamed Benali.	assignment	f	2026-05-20 19:10:36.926939
+32	50	enrolled_parent_33_10_1779300636926_p50	🎓 تم تسجيل ابنك Amine Bekkouche في مادة "jj" — يوم monday,wednesday ، القاعة: A. الأستاذ: أ. Mohamed Benali.	assignment	f	2026-05-20 19:10:36.933772
+33	2	enrolled_teacher_33_10_1779300636926	👤 انضم طالب جديد "Amine Bekkouche" إلى مجموعتك "A" في مادة "jj".	info	f	2026-05-20 19:10:36.937905
+34	10	unenrolled_s10_33_1779304895441	 تم إلغاء تسجيلك في مجموعة "A" لمادة "jj". يرجى التواصل مع الإدارة.	warning	f	2026-05-20 20:21:35.442786
+35	50	unenrolled_parent_10_33_1779304895441_p50	 تم إلغاء تسجيل ابنك Amine Bekkouche من مجموعة "A" لمادة "jj".	warning	f	2026-05-20 20:21:35.457425
+36	2	unenrolled_teacher_10_33_1779304895441	 تم إلغاء تسجيل الطالب "Amine Bekkouche" من مجموعتك "A" في مادة "jj".	info	f	2026-05-20 20:21:35.48906
+37	10	enrolled_student_33_10_1779304922178	🎓 تم تسجيلك في مادة "jj" — يوم monday,wednesday ، القاعة: A. أستاذك: أ. Mohamed Benali.	assignment	f	2026-05-20 20:22:02.178864
+38	50	enrolled_parent_33_10_1779304922178_p50	🎓 تم تسجيل ابنك Amine Bekkouche في مادة "jj" — يوم monday,wednesday ، القاعة: A. الأستاذ: أ. Mohamed Benali.	assignment	f	2026-05-20 20:22:02.186728
+39	2	enrolled_teacher_33_10_1779304922178	👤 انضم طالب جديد "Amine Bekkouche" إلى مجموعتك "A" في مادة "jj".	info	f	2026-05-20 20:22:02.192336
+40	10	pay_scan_33_10_1779304941561	 تم تسجيل دفعتك لمادة "jj". دورة جديدة — الجلسة 1/8 سُجّلت اليوم.	payment	f	2026-05-20 20:22:21.594041
+41	2	group_created_teacher_34_1779306951508	 تم إنشاء مجموعة جديدة "A" لمادتك "jj"  .	assignment	f	2026-05-20 20:55:51.509202
+42	2	group_created_teacher_35_1779306970088	 تم إنشاء مجموعة جديدة "B" لمادتك "jj"  .	assignment	f	2026-05-20 20:56:10.089251
+43	2	group_deleted_teacher_34_1779307318663	🗑️ تم حذف المجموعة "A" من مادة "jj".	warning	f	2026-05-20 21:01:58.664675
+44	2	group_deleted_teacher_33_1779307320568	🗑️ تم حذف المجموعة "A" من مادة "jj".	warning	f	2026-05-20 21:02:00.570303
+45	10	group_deleted_s10_33_1779307320568	 المجموعة "A" في مادة "jj" تم حذفها. يرجى التواصل مع الإدارة.	warning	f	2026-05-20 21:02:00.580171
+46	50	group_deleted_p10_33_1779307320568_p50	 المجموعة "A" في مادة "jj" تم حذفها. يرجى التواصل مع الإدارة.	warning	f	2026-05-20 21:02:00.592681
+47	2	group_deleted_teacher_35_1779307323030	🗑️ تم حذف المجموعة "B" من مادة "jj".	warning	f	2026-05-20 21:02:03.030941
+48	2	group_created_teacher_36_1779307338038	 تم إنشاء مجموعة جديدة "a" لمادتك "jj"  .	assignment	f	2026-05-20 21:02:18.039249
+49	2	group_created_teacher_37_1779307356621	 تم إنشاء مجموعة جديدة "b" لمادتك "jj"  .	assignment	f	2026-05-20 21:02:36.622354
+50	2	group_deleted_teacher_37_1779307821978	🗑️ تم حذف المجموعة "b" من مادة "jj".	warning	f	2026-05-20 21:10:21.994515
+51	2	group_deleted_teacher_36_1779307824050	🗑️ تم حذف المجموعة "a" من مادة "jj".	warning	f	2026-05-20 21:10:24.05171
+52	2	group_created_teacher_38_1779307859058	 تم إنشاء مجموعة جديدة "a" لمادتك "jj"  .	assignment	f	2026-05-20 21:10:59.058907
+53	10	welcome_10_2026-05-20	 مرحباً Amine! ستصلك تذكيرات دروسك قبل 15 دقيقة. يمكنك رؤية إشعاراتك هنا.	welcome	f	2026-05-20 23:03:57.213612
+55	50	welcome_50_2026-05-20	 مرحباً! ستصلك إشعارات مواعيد دروس أبنائك قبل 15 دقيقة.	welcome	f	2026-05-20 23:05:13.412951
+56	1	welcome_1_2026-05-20	مرحباً بك في لوحة الإدارة! يمكنك الآن رؤية إشعاراتك هنا وعلى جهازك.	welcome	f	2026-05-20 23:50:48.433402
 \.
 
 
@@ -1219,10 +1343,12 @@ COPY public.groups (id, course_id, group_name, start_date, start_time, end_time,
 --
 
 COPY public.parent_students (id, parent_id, student_id, relationship, is_primary, created_at) FROM stdin;
-1	9	13	parent	t	2026-02-07 18:52:21.252639
-2	9	14	parent	t	2026-02-07 18:52:21.252639
-3	20	21	parent	t	2026-02-13 19:12:45.955529
-4	20	22	parent	t	2026-02-13 19:12:45.955529
+5	50	10	parent	t	2026-04-25 18:34:54.07831
+6	51	11	parent	t	2026-04-25 18:34:54.07831
+7	52	14	parent	t	2026-04-25 18:34:54.07831
+8	53	17	parent	t	2026-04-25 18:34:54.07831
+9	54	18	parent	t	2026-04-25 18:34:54.07831
+10	50	12	parent	t	2026-04-25 18:34:54.07831
 \.
 
 
@@ -1231,6 +1357,10 @@ COPY public.parent_students (id, parent_id, student_id, relationship, is_primary
 --
 
 COPY public.session_schedule (id, group_id, session_number, session_title, session_date, status, notes, created_at, week_number, start_time, end_time, actual_date, is_modified, is_cancelled, cancellation_reason) FROM stdin;
+46	38	1	\N	2026-05-21	scheduled	\N	2026-05-20 21:10:59.034959	1	09:00:00	11:00:00	\N	f	f	\N
+47	38	2	\N	2026-05-28	scheduled	\N	2026-05-20 21:10:59.04067	2	09:00:00	11:00:00	\N	f	f	\N
+48	38	3	\N	2026-06-04	scheduled	\N	2026-05-20 21:10:59.045106	3	09:00:00	11:00:00	\N	f	f	\N
+49	38	4	\N	2026-06-11	scheduled	\N	2026-05-20 21:10:59.050166	4	09:00:00	11:00:00	\N	f	f	\N
 \.
 
 
@@ -1239,7 +1369,6 @@ COPY public.session_schedule (id, group_id, session_number, session_title, sessi
 --
 
 COPY public.student_notes (id, group_student_id, author_id, note_text, created_at, note_type, is_important, is_private) FROM stdin;
-5	31	16	fchgjvhkjk	2026-02-25 14:49:21.737177	general	t	f
 \.
 
 
@@ -1247,30 +1376,44 @@ COPY public.student_notes (id, group_student_id, author_id, note_text, created_a
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, name, last_name, birthday, city, email, password, phone, gender, role, parent_phone, created_at) FROM stdin;
-1	Admin	Belmahi	1990-01-01	Oran	admin@belmahi.dz	pass	0555000001	M	admin	\N	2026-02-01 17:15:50.752859
-2	Mohammed	Benali	1985-05-15	Oran	benali@belmahi.dz	pass	0555000002	M	teacher	\N	2026-02-01 17:15:50.752859
-3	Fatima	Khadri	1988-08-20	Oran	khadri@belmahi.dz	pass	0555000003	F	teacher	\N	2026-02-01 17:15:50.752859
-8	karim	bnziane	1991-12-29	Oran	karimbn@gmail.com	pass	\N	\N	Parent	\N	2026-02-01 18:39:45.25055
-9	amina	bouzidi	2026-02-26	Oran	amina.bouzidi@parent.dz	pass	\N	\N	Parent	\N	2026-02-06 21:14:41.836624
-10	nour	bouzidi	2019-06-11	Oran	nourbouzidi@gmail.com	pass	\N	F	student	\N	2026-02-06 21:55:11.458914
-4	Ahmed	Meziane	2010-09-01	Oran	ahmed@student.dz	pass	0555000010	M	student	0666111222	2026-02-01 17:15:50.752859
-5	Yasmine	Boudiaf	2011-03-15	Oran	yasmine@student.dz	pass	0555000011	F	student	0666111222	2026-02-01 17:15:50.752859
-6	Karim	Hamadi	2012-07-20	Oran	karim@student.dz	pass	0555000012	M	student	0666111222	2026-02-01 17:15:50.752859
-13	Sara	Bouzidi	2012-03-10	Oran	sara.bouzidi@student.dz	pass	\N	F	student	0777888999	2026-02-07 18:52:21.240027
-14	Yacine	Bouzidi	2014-08-15	Oran	yacine.bouzidi@student.dz	pass	\N	M	student	0777888999	2026-02-07 18:52:21.240027
-15	Ahmed	Benali	1985-03-15	Oran	ahmed.benali@teacher.dz	pass123	0770123456	M	teacher	\N	2026-02-13 19:12:45.903417
-16	Fatima	Khelifi	1988-07-22	Oran	fatima.khelifi@teacher.dz	pass123	0771234567	F	teacher	\N	2026-02-13 19:12:45.903417
-17	Karim	Meziane	1982-11-10	Oran	karim.meziane@teacher.dz	pass123	0772345678	M	teacher	\N	2026-02-13 19:12:45.903417
-19	Youcef	Mansouri	1987-09-25	Oran	youcef.mansouri@teacher.dz	pass123	0774567890	M	teacher	\N	2026-02-13 19:12:45.903417
-20	Leila	Hamidi	1980-08-12	Oran	leila.hamidi@parent.dz	pass123	0660111222	F	Parent	\N	2026-02-13 19:12:45.946428
-21	Rania	Hamidi	2013-04-20	Oran	rania.hamidi@student.dz	pass123	\N	F	student	0660111222	2026-02-13 19:12:45.951045
-22	Mehdi	Hamidi	2015-09-15	Oran	mehdi.hamidi@student.dz	pass123	\N	M	student	0660111222	2026-02-13 19:12:45.951045
-23	Sarah	Benali	2012-06-10	Oran	sarah.benali@student.dz	pass123	\N	F	student	\N	2026-02-13 19:12:45.951045
-24	Amine	Khelifi	2014-02-28	Oran	amine.khelifi@student.dz	pass123	\N	M	student	\N	2026-02-13 19:12:45.951045
-25	Yasmine	Meziane	2013-11-05	Oran	yasmine.meziane@student.dz	pass123	\N	F	student	\N	2026-02-13 19:12:45.951045
-26	Admin	System	1990-01-01	Oran	admin@school.dz	admin123	0555000000	M	admin	\N	2026-02-13 19:12:46.11247
+COPY public.users (id, name, last_name, birthday, city, email, password, phone, gender, role, parent_phone, created_at, photo_url) FROM stdin;
+1	Karim	Belmahi	1980-03-15	Oran	admin@belmahi.dz	Admin@1234	0550000001	M	admin	\N	2026-04-25 18:34:54.043273	\N
+2	Mohamed	Benali	1985-06-20	Oran	benali@belmahi.dz	Teacher@1234	0550000002	M	teacher	\N	2026-04-25 18:34:54.043273	\N
+3	Fatima	Haddad	1990-09-10	Oran	haddad@belmahi.dz	Teacher@1234	0550000003	F	teacher	\N	2026-04-25 18:34:54.043273	\N
+5	Samira	Ouali	1992-11-05	Oran	ouali@belmahi.dz	Teacher@1234	0550000005	F	teacher	\N	2026-04-25 18:34:54.043273	\N
+10	Amine	Bekkouche	2012-04-01	Oran	amine.bek@gmail.com	Pass@1234	0660000010	M	student	\N	2026-04-25 18:34:54.043273	\N
+11	Rania	Zaoui	2011-07-15	Oran	rania.z@gmail.com	Pass@1234	0660000011	F	student	\N	2026-04-25 18:34:54.043273	\N
+12	Ilyas	Bouchenak	2013-02-20	Oran	ilyas.b@gmail.com	Pass@1234	0660000012	M	student	\N	2026-04-25 18:34:54.043273	\N
+13	Nour	Khelifi	2010-09-30	Mostaganem	nour.kh@gmail.com	Pass@1234	0660000013	F	student	\N	2026-04-25 18:34:54.043273	\N
+14	Sami	Reghioua	2012-12-05	Oran	sami.r@gmail.com	Pass@1234	0660000014	M	student	\N	2026-04-25 18:34:54.043273	\N
+15	Yasmine	Derbal	2011-03-18	Oran	yasmine.d@gmail.com	Pass@1234	0660000015	F	student	\N	2026-04-25 18:34:54.043273	\N
+16	Hamza	Bentoumi	2010-06-22	Sidi Bel Abbes	hamza.bt@gmail.com	Pass@1234	0660000016	M	student	\N	2026-04-25 18:34:54.043273	\N
+17	Lina	Mansouri	2013-01-11	Oran	lina.m@gmail.com	Pass@1234	0660000017	F	student	\N	2026-04-25 18:34:54.043273	\N
+18	Khaled	Aissaoui	2009-08-09	Oran	khaled.a@gmail.com	Pass@1234	0660000018	M	student	\N	2026-04-25 18:34:54.043273	\N
+19	Meriem	Taleb	2010-05-27	Arzew	meriem.t@gmail.com	Pass@1234	0660000019	F	student	\N	2026-04-25 18:34:54.043273	\N
+20	Bilal	Ferroudj	2012-10-03	Oran	bilal.f@gmail.com	Pass@1234	0660000020	M	student	\N	2026-04-25 18:34:54.043273	\N
+21	Sara	Boudia	2011-11-14	Oran	sara.bd@gmail.com	Pass@1234	0660000021	F	student	\N	2026-04-25 18:34:54.043273	\N
+22	Adel	Chouaib	2009-03-07	Tlemcen	adel.ch@gmail.com	Pass@1234	0660000022	M	student	\N	2026-04-25 18:34:54.043273	\N
+23	Hana	Meziane	2013-07-19	Oran	hana.mz@gmail.com	Pass@1234	0660000023	F	student	\N	2026-04-25 18:34:54.043273	\N
+24	Yassine	Bouabdallah	2010-04-28	Oran	yassine.bo@gmail.com	Pass@1234	0660000024	M	student	\N	2026-04-25 18:34:54.043273	\N
+25	Amira	Kaddour	2012-09-16	Oran	amira.k@gmail.com	Pass@1234	0660000025	F	student	\N	2026-04-25 18:34:54.043273	\N
+26	Rayan	Boudjelal	2011-02-03	Oran	rayan.bj@gmail.com	Pass@1234	0660000026	M	student	\N	2026-04-25 18:34:54.043273	\N
+27	Ghania	Sebaa	2010-12-21	Mascara	ghania.s@gmail.com	Pass@1234	0660000027	F	student	\N	2026-04-25 18:34:54.043273	\N
+28	Omar	Ladj	2013-06-08	Oran	omar.l@gmail.com	Pass@1234	0660000028	M	student	\N	2026-04-25 18:34:54.043273	\N
+29	Dounia	Benhamed	2009-10-30	Oran	dounia.bh@gmail.com	Pass@1234	0660000029	F	student	\N	2026-04-25 18:34:54.043273	\N
+50	Abdelkader	Bekkouche	1975-04-01	Oran	parent.bek@gmail.com	Parent@1234	0770000050	M	Parent	\N	2026-04-25 18:34:54.043273	\N
+51	Houria	Zaoui	1978-07-15	Oran	parent.zaoui@gmail.com	Parent@1234	0770000051	F	Parent	\N	2026-04-25 18:34:54.043273	\N
+52	Rachid	Reghioua	1972-12-05	Oran	parent.reg@gmail.com	Parent@1234	0770000052	M	Parent	\N	2026-04-25 18:34:54.043273	\N
+53	Nadia	Mansouri	1980-01-11	Oran	parent.man@gmail.com	Parent@1234	0770000053	F	Parent	\N	2026-04-25 18:34:54.043273	\N
+54	Salim	Aissaoui	1970-08-09	Oran	parent.ais@gmail.com	Parent@1234	0770000054	M	Parent	\N	2026-04-25 18:34:54.043273	\N
 \.
+
+
+--
+-- Name: attendance_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.attendance_log_id_seq', 1, true);
 
 
 --
@@ -1284,42 +1427,49 @@ SELECT pg_catalog.setval('public.course_materials_id_seq', 17, true);
 -- Name: courses_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.courses_id_seq', 12, true);
+SELECT pg_catalog.setval('public.courses_id_seq', 22, true);
 
 
 --
 -- Name: favorites_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.favorites_id_seq', 9, true);
+SELECT pg_catalog.setval('public.favorites_id_seq', 13, true);
 
 
 --
 -- Name: group_students_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.group_students_id_seq', 31, true);
+SELECT pg_catalog.setval('public.group_students_id_seq', 48, true);
 
 
 --
 -- Name: groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.groups_id_seq', 19, true);
+SELECT pg_catalog.setval('public.groups_id_seq', 38, true);
+
+
+--
+-- Name: notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.notifications_id_seq', 56, true);
 
 
 --
 -- Name: parent_students_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.parent_students_id_seq', 4, true);
+SELECT pg_catalog.setval('public.parent_students_id_seq', 10, true);
 
 
 --
 -- Name: session_schedule_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.session_schedule_id_seq', 7, true);
+SELECT pg_catalog.setval('public.session_schedule_id_seq', 49, true);
 
 
 --
@@ -1333,7 +1483,15 @@ SELECT pg_catalog.setval('public.student_notes_id_seq', 5, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 26, true);
+SELECT pg_catalog.setval('public.users_id_seq', 100, true);
+
+
+--
+-- Name: attendance_log attendance_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.attendance_log
+    ADD CONSTRAINT attendance_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -1363,7 +1521,6 @@ ALTER TABLE ONLY public.favorites
 --
 -- Name: favorites favorites_user_id_course_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
-ALTER TABLE users ADD COLUMN photo_url VARCHAR(255);
 
 ALTER TABLE ONLY public.favorites
     ADD CONSTRAINT favorites_user_id_course_id_key UNIQUE (user_id, course_id);
@@ -1391,6 +1548,38 @@ ALTER TABLE ONLY public.group_students
 
 ALTER TABLE ONLY public.groups
     ADD CONSTRAINT groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notifications notifications_notif_key_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: notifications notifications_user_id_notif_key_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_notif_key_key UNIQUE (user_id, notif_key);
+
+
+--
+-- Name: notifications notifications_user_notif_key_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_notif_key_unique UNIQUE (user_id, notif_key);
 
 
 --
@@ -1458,6 +1647,27 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: idx_att_date; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_att_date ON public.attendance_log USING btree (group_id, ((scanned_at)::date));
+
+
+--
+-- Name: idx_att_group_student; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_att_group_student ON public.attendance_log USING btree (group_id, student_id);
+
+
+--
+-- Name: idx_att_no_double_scan; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX idx_att_no_double_scan ON public.attendance_log USING btree (group_id, student_id, ((scanned_at)::date));
+
+
+--
 -- Name: idx_course_materials_course; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1521,6 +1731,34 @@ CREATE INDEX idx_groups_cycle_modifications ON public.groups USING btree (has_ne
 
 
 --
+-- Name: idx_gs_sessions_attended; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_gs_sessions_attended ON public.group_students USING btree (group_id, sessions_attended);
+
+
+--
+-- Name: idx_notifications_created; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_notifications_created ON public.notifications USING btree (created_at DESC);
+
+
+--
+-- Name: idx_notifications_read; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_notifications_read ON public.notifications USING btree (user_id, is_read);
+
+
+--
+-- Name: idx_notifications_user; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_notifications_user ON public.notifications USING btree (user_id);
+
+
+--
 -- Name: idx_parent_students_parent; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1560,6 +1798,30 @@ CREATE INDEX idx_session_schedule_session_number ON public.session_schedule USIN
 --
 
 CREATE INDEX idx_session_schedule_week ON public.session_schedule USING btree (week_number);
+
+
+--
+-- Name: attendance_log attendance_log_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.attendance_log
+    ADD CONSTRAINT attendance_log_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: attendance_log attendance_log_scanned_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.attendance_log
+    ADD CONSTRAINT attendance_log_scanned_by_fkey FOREIGN KEY (scanned_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: attendance_log attendance_log_student_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.attendance_log
+    ADD CONSTRAINT attendance_log_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -1635,6 +1897,14 @@ ALTER TABLE ONLY public.groups
 
 
 --
+-- Name: notifications notifications_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: parent_students parent_students_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1678,155 +1948,5 @@ ALTER TABLE ONLY public.student_notes
 -- PostgreSQL database dump complete
 --
 
-CREATE TABLE IF NOT EXISTS notifications (
-  id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-  notif_key VARCHAR(200) NOT NULL,
-  message TEXT NOT NULL,
-  type VARCHAR(30) DEFAULT 'upcoming_session',
-  is_read BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, notif_key)
-);
+\unrestrict cyvYpOSlKo6wjRunURwFhxRfowxDZaknR57Q1ugVIwSW47ODA9XpHIPHUu0nfuE
 
-ALTER TABLE notifications ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
-
--- migration_fix_notifications.sql
--- Run this once on your PostgreSQL database to fix the conflicting UNIQUE constraints
--- on the notifications table.
---
--- THE PROBLEM:
---   You have TWO unique constraints that conflict with each other:
---     1. UNIQUE(user_id, notif_key)  — pair must be unique
---     2. UNIQUE(notif_key)           — notif_key alone must be globally unique
---
---   The server.js cron was using ON CONFLICT (notif_key) DO NOTHING, which only
---   works if notif_key is globally unique — but the same notif_key was being reused
---   for different users (e.g. student_15min_group5_2026-04-22 for BOTH student and teacher).
---   This caused silent insert failures.
---
--- THE FIX:
---   1. Drop the global notif_key unique constraint (keep only user_id + notif_key pair)
---   2. The new server.js now generates per-user notif_keys (e.g. _s42, _t7, _a1 suffix)
---      so ON CONFLICT (notif_key) works correctly with the global unique constraint.
---
--- ─────────────────────────────────────────────────────────────────────────────
-
--- Step 1: Drop the problematic global unique constraint on notif_key alone
--- (The constraint name from your bdd.sql is notifications_notif_key_unique)
-ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_notif_key_unique;
-
--- Step 2: Ensure the composite unique constraint exists (user_id + notif_key pair)
--- This was already defined in CREATE TABLE as UNIQUE(user_id, notif_key)
--- We just make sure it exists with a known name:
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'notifications_user_notif_key_unique'
-    AND conrelid = 'notifications'::regclass
-  ) THEN
-    ALTER TABLE notifications
-      ADD CONSTRAINT notifications_user_notif_key_unique UNIQUE (user_id, notif_key);
-  END IF;
-END $$;
-
--- Step 3: Add the global notif_key unique constraint BACK
--- Now it works because server.js generates user-specific keys (suffix _s{id}, _t{id} etc.)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'notifications_notif_key_unique'
-    AND conrelid = 'notifications'::regclass
-  ) THEN
-    ALTER TABLE notifications
-      ADD CONSTRAINT notifications_notif_key_unique UNIQUE (notif_key);
-  END IF;
-END $$;
-
--- Step 4: Add the 'type' column default for 'reminder' (in case it's missing)
-ALTER TABLE notifications
-  ALTER COLUMN type SET DEFAULT 'upcoming_session';
-
--- Step 5: Verify indexes exist
-CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, is_read);
-CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
-ALTER TABLE group_students ADD COLUMN status VARCHAR(20) DEFAULT 'active';
--- Done!
-SELECT 'Migration complete. Notification constraints are now correct.' AS status;
-\unrestrict RBwvEQnDrfbdBGhIRWaV2s0VWCM1I65aT5brdGAerP1i1aWvNFH6eu4aJEDfR8K
-
--- ═══════════════════════════════════════════════════════════════════════════════
--- MIGRATION: Individualized Ticket / Attendance System
--- Project : Belmahi School
--- Purpose : Replace calendar-based monthly reset with per-student scan-driven
---           billing cycles. A student's session counter only increments when
---           their physical QR code is scanned. Paying resets the counter to 0.
--- Apply   : psql -d <your_db> -f migration_ticket_system.sql
--- Safe    : All statements are idempotent (IF NOT EXISTS / IF EXISTS guards).
--- ═══════════════════════════════════════════════════════════════════════════════
-
--- ─── 1. Extend group_students ─────────────────────────────────────────────────
--- sessions_attended : number of scans in the CURRENT billing cycle (resets on payment)
--- cycle_start_date  : timestamp when the current billing cycle began
-ALTER TABLE group_students
-  ADD COLUMN IF NOT EXISTS sessions_attended INTEGER NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS cycle_start_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
--- Index to quickly find students by sessions attended (for admin dashboards)
-CREATE INDEX IF NOT EXISTS idx_gs_sessions_attended
-  ON group_students (group_id, sessions_attended);
-
--- ─── 2. attendance_log table ──────────────────────────────────────────────────
--- Full, permanent audit trail: one row per physical scan per student per group.
--- This is NEVER reset — it is the true history.
-CREATE TABLE IF NOT EXISTS attendance_log (
-  id               SERIAL PRIMARY KEY,
-  group_id         INTEGER NOT NULL REFERENCES groups(id)  ON DELETE CASCADE,
-  student_id       INTEGER NOT NULL REFERENCES users(id)   ON DELETE CASCADE,
-  scanned_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  -- Snapshot of the session number AT THE TIME OF SCAN for this billing cycle
-  session_number   INTEGER NOT NULL,
-  -- Who performed the scan (admin or teacher user id)
-  scanned_by       INTEGER REFERENCES users(id) ON DELETE SET NULL
-);
-
--- Fast look-up by group / student / date
-CREATE INDEX IF NOT EXISTS idx_att_group_student
-  ON attendance_log (group_id, student_id);
-CREATE INDEX IF NOT EXISTS idx_att_date
-  ON attendance_log (group_id, (scanned_at::date));
-
--- ── Prevent double-scanning the SAME student in the SAME group on the SAME day ──
--- If a student is accidentally scanned twice in one day, the second scan is
--- silently ignored by the backend (INSERT … ON CONFLICT DO NOTHING).
-CREATE UNIQUE INDEX IF NOT EXISTS idx_att_no_double_scan
-  ON attendance_log (group_id, student_id, (scanned_at::date));
-
--- ─── 3. Drop the old monthly-reset cron logic artefact ───────────────────────
--- The server.js cron that reset payment_status → 'pending' on the 1st of each
--- month is now DISABLED in favour of per-student mark-paid flows.
--- No schema change needed — just remove the scheduleCircleReset() call from
--- server.js (see server_circle_reset_removal.md).
-
--- ─── 4. Backfill existing rows ───────────────────────────────────────────────
--- Existing enrollments get sessions_attended = 0 and cycle_start_date = now.
-UPDATE group_students
-SET
-  sessions_attended = 0,
-  cycle_start_date  = CURRENT_TIMESTAMP
-WHERE sessions_attended IS NULL OR cycle_start_date IS NULL;
-
--- ─── 5. Verification query (run manually to confirm) ─────────────────────────
--- SELECT column_name, data_type
--- FROM information_schema.columns
--- WHERE table_name = 'group_students'
---   AND column_name IN ('sessions_attended','cycle_start_date');
---
--- SELECT COUNT(*) FROM attendance_log;
-
-SELECT 'Ticket system migration complete.' AS status;

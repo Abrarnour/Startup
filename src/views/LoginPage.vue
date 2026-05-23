@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, defineProps, defineEmits } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   User,
@@ -185,11 +185,7 @@ const handleRegister = async () => {
   loading.value = true
   try {
     // إرسال البيانات للـ Backend (تأكد من أن المسار صحيح في الـ API الخاص بك)
-    await axios.post(
-      'https://belmahi-school-production.up.railway.app/api/auth/register',
-      registerData,
-    )
-
+    await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, registerData)
     successMessage.value = t('registration_success')
 
     // الانتظار قليلاً ثم العودة لصفحة الدخول بالأنيميشن

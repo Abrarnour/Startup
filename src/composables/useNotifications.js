@@ -21,8 +21,7 @@ async function syncTokenToSW(token) {
   if (!('serviceWorker' in navigator)) return
   try {
     const reg = await navigator.serviceWorker.ready
-    const apiUrl =
-      import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+    const apiUrl = import.meta.env.VITE_API_URL
 
     // Use MessageChannel for a clean request/response
     const channel = new MessageChannel()

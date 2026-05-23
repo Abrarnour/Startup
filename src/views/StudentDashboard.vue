@@ -44,15 +44,12 @@ const loadCourses = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await fetch(
-      'https://belmahi-school-production.up.railway.app/api/students/my-courses',
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/students/my-courses`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
-    )
+    })
     if (!response.ok) throw new Error('Erreur lors du chargement des cours')
     enrolledCourses.value = await response.json()
   } catch (err) {

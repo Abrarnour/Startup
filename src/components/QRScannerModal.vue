@@ -464,7 +464,7 @@ const props = defineProps({
   groupName: { type: String, default: '' },
   darkMode: { type: Boolean, default: false },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'student-enrolled'])
 
 // ── State ───────────────────────────────────────────────────────────
 const scanState = ref('idle') // idle | loading | scanning | error
@@ -617,11 +617,13 @@ const handleEnroll = async () => {
   try {
     await api.addStudentToGroup(props.groupId, { student_id: scanResult.value.id })
     enrollDone.value = true
+    emit('student-enrolled')
     scanResult.value = {
       ...scanResult.value,
       enrollment_status: 'active',
       payment_status: 'pending',
     }
+    emit('student-enrolled')
   } catch (err) {
     console.error('Enroll error:', err)
     alert(err.message || 'حدث خطأ أثناء التسجيل')

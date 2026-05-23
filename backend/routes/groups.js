@@ -1,6 +1,5 @@
 // backend/routes/groups.js
 import express from 'express'
-import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 
 import { sendNotif, notifyAllAdmins, notifyParentsOf } from '../notifHelper.js'
@@ -21,6 +20,7 @@ const adminOrTeacherMiddleware = (req, res, next) => {
 
 // ─── GET groups of a course ───────────────────────────────────────────────────
 router.get('/course/:courseId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT g.*,
@@ -36,6 +36,7 @@ router.get('/course/:courseId', authMiddleware, async (req, res) => {
 
 // ─── GET one group ────────────────────────────────────────────────────────────
 router.get('/:id', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT g.*, c.title as course_title, c.course_type, c.max_students_per_group,
@@ -52,6 +53,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // ─── CREATE GROUP ─────────────────────────────────────────────────────────────
 router.post('/', authMiddleware, async (req, res) => {
+    const pool = req.db
   if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
     return res.status(403).json({ error: 'Accès refusé' })
   }
@@ -86,15 +88,22 @@ router.post('/', authMiddleware, async (req, res) => {
   let effective_session_start = session_start_time || null
   let effective_session_end = session_end_time || null
 
+  // For weekly_fixed, times live in weekly_schedule[] not as top-level fields.
+  // Resolve them here so the DB columns are NOT NULL and the conflict check works.
   if (
     calendar_type === 'weekly_fixed' &&
     Array.isArray(weekly_schedule) &&
     weekly_schedule.length > 0
   ) {
-    const first = weekly_schedule[0]
-    effective_day_of_week = first.day_of_week || effective_day_of_week
-    effective_session_start = first.start_time || effective_session_start
-    effective_session_end = first.end_time || effective_session_end
+    const firstSlot = weekly_schedule.find((s) => s.start_time && s.end_time)
+    if (firstSlot) {
+      effective_session_start = firstSlot.start_time
+      effective_session_end = firstSlot.end_time
+    }
+    if (!effective_day_of_week) {
+      const firstDay = weekly_schedule.find((s) => s.day_of_week)
+      if (firstDay) effective_day_of_week = firstDay.day_of_week
+    }
   }
 
   try {
@@ -111,6 +120,63 @@ router.post('/', authMiddleware, async (req, res) => {
     if (courseCheck.rows.length === 0) return res.status(404).json({ error: 'Cours non trouvé' })
 
     const courseInfo = courseCheck.rows[0]
+
+    // ─── Salle conflict check ──────────────────────────────────────────────────
+    if (salle) {
+      const requestedSlots = []
+
+      if (
+        calendar_type === 'weekly_fixed' &&
+        Array.isArray(weekly_schedule) &&
+        weekly_schedule.length > 0
+      ) {
+        for (const slot of weekly_schedule) {
+          if (slot.start_time && slot.end_time) {
+            requestedSlots.push({ start: slot.start_time, end: slot.end_time })
+          }
+        }
+      } else if (calendar_type === 'manual' && Array.isArray(sessions) && sessions.length > 0) {
+        for (const s of sessions) {
+          if (s.start_time && s.end_time) {
+            requestedSlots.push({ start: s.start_time, end: s.end_time })
+            break
+          }
+        }
+      }
+
+      // Fallback: covers one_time courses and any edge case
+      if (requestedSlots.length === 0 && effective_session_start && effective_session_end) {
+        requestedSlots.push({ start: effective_session_start, end: effective_session_end })
+      }
+
+      // Deduplicate identical start+end pairs
+      const uniqueSlots = requestedSlots.filter(
+        (slot, i, arr) => arr.findIndex((s) => s.start === slot.start && s.end === slot.end) === i,
+      )
+
+      for (const slot of uniqueSlots) {
+        const conflict = await pool.query(
+          `SELECT g.group_name, c.title AS course_title,
+                  g.session_start_time::text, g.session_end_time::text, g.day_of_week
+           FROM groups g
+           JOIN courses c ON c.id = g.course_id
+           WHERE LOWER(TRIM(g.salle)) = LOWER(TRIM($1))
+             AND g.is_active = true
+             AND g.session_start_time IS NOT NULL
+             AND g.session_end_time   IS NOT NULL
+             AND g.session_start_time < $3::time
+             AND g.session_end_time   > $2::time
+           LIMIT 1`,
+          [salle, slot.start, slot.end],
+        )
+        if (conflict.rows.length > 0) {
+          const c = conflict.rows[0]
+          return res.status(409).json({
+            error: `لا يمكنك إنشاء مجموعة في الصالة "${salle}" — توجد حصة في مادة "${c.course_title}" (${c.group_name}) من ${c.session_start_time} إلى ${c.session_end_time}${c.day_of_week ? ' يوم ' + c.day_of_week : ''}, تتقاطع مع الوقت المطلوب ${slot.start}–${slot.end}.`,
+          })
+        }
+      }
+    }
 
     const result = await pool.query(
       `INSERT INTO groups (
@@ -141,6 +207,58 @@ router.post('/', authMiddleware, async (req, res) => {
     )
 
     const newGroup = result.rows[0]
+
+    // ── Generate session_schedule for ALL days when calendar is weekly_fixed ──
+    if (
+      calendar_type === 'weekly_fixed' &&
+      Array.isArray(weekly_schedule) &&
+      weekly_schedule.length > 0
+    ) {
+      const dayNames = [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ]
+      const baseDate = new Date(start_date || new Date())
+      const totalWeeks = total_weeks || 4
+      let sessionNumber = 1
+      for (let week = 0; week < totalWeeks; week++) {
+        for (const slot of weekly_schedule) {
+          if (!slot.day_of_week) continue
+          const targetDay = dayNames.indexOf(slot.day_of_week.toLowerCase())
+          if (targetDay === -1) continue
+          const weekStart = new Date(baseDate)
+          weekStart.setDate(baseDate.getDate() + week * 7)
+          const diff = (targetDay - weekStart.getDay() + 7) % 7
+          const sessionDate = new Date(weekStart)
+          sessionDate.setDate(weekStart.getDate() + diff)
+          const yyyy = sessionDate.getFullYear()
+          const mm = String(sessionDate.getMonth() + 1).padStart(2, '0')
+          const dd = String(sessionDate.getDate()).padStart(2, '0')
+          await pool.query(
+            `INSERT INTO session_schedule (group_id, session_number, session_date, start_time, end_time, week_number, status) VALUES ($1, $2, $3, $4, $5, $6, 'scheduled')`,
+            [
+              newGroup.id,
+              sessionNumber,
+              `${yyyy}-${mm}-${dd}`,
+              slot.start_time,
+              slot.end_time,
+              week + 1,
+            ],
+          )
+          sessionNumber++
+        }
+      }
+      const allDays = weekly_schedule
+        .map((s) => s.day_of_week)
+        .filter(Boolean)
+        .join(',')
+      await pool.query(`UPDATE groups SET day_of_week = $1 WHERE id = $2`, [allDays, newGroup.id])
+    }
 
     if (sessions && Array.isArray(sessions) && sessions.length > 0) {
       const validSessions = sessions.filter(
@@ -189,6 +307,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
 // ─── UPDATE GROUP ─────────────────────────────────────────────────────────────
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   const {
     group_name,
     salle,
@@ -297,6 +416,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 
 // ─── DELETE GROUP ─────────────────────────────────────────────────────────────
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const info = await pool.query(
       `SELECT g.group_name, c.title as course_title, c.teacher_id
@@ -351,6 +471,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 
 // ─── TOGGLE REGISTRATION ──────────────────────────────────────────────────────
 router.patch('/:id/toggle-registration', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `UPDATE groups SET registration_open = NOT registration_open, updated_at=CURRENT_TIMESTAMP
@@ -384,6 +505,7 @@ router.patch('/:id/toggle-registration', authMiddleware, adminMiddleware, async 
 
 // ─── GET STUDENTS IN GROUP ────────────────────────────────────────────────────
 router.get('/:groupId/students', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT * FROM v_group_students_detailed WHERE group_id = $1 ORDER BY last_name, name`,
@@ -397,6 +519,7 @@ router.get('/:groupId/students', authMiddleware, async (req, res) => {
 
 // ─── ADD STUDENT TO GROUP ─────────────────────────────────────────────────────
 router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   const { groupId } = req.params
   const {
     student_id,
@@ -467,7 +590,7 @@ router.post('/:groupId/students', authMiddleware, adminOrTeacherMiddleware, asyn
       `INSERT INTO group_students
          (group_id, student_id, status, payment_status, amount_paid, payment_due,
           enrollment_type, requested_by, last_payment_date, sessions_attended, cycle_start_date)
-       VALUES ($1,$2,'active','paid',0,$3,'direct',$4,CURRENT_DATE,0,NOW()) RETURNING *`,
+          VALUES ($1,$2,'active','pending',0,$3,'direct',$4,CURRENT_DATE,0,NOW()) RETURNING *`,
       [groupId, studentId, info.price, req.user.id],
     )
 
@@ -532,6 +655,7 @@ router.delete(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
     try {
       const info = await pool.query(
@@ -603,6 +727,7 @@ router.patch(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
     const { payment_status } = req.body
 
@@ -650,6 +775,7 @@ router.patch(
 
 // ─── NOTES ────────────────────────────────────────────────────────────────────
 router.get('/:groupId/students/:studentId/notes', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const { groupId, studentId } = req.params
     const userRole = req.user.role
@@ -691,6 +817,7 @@ router.post(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
     const { note_text, note_type, is_important, is_private } = req.body
 
@@ -759,6 +886,7 @@ router.post(
 
 // ─── DELETE NOTE ──────────────────────────────────────────────────────────────
 router.delete('/:groupId/students/:studentId/notes/:noteId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const noteCheck = await pool.query('SELECT author_id FROM student_notes WHERE id = $1', [
       req.params.noteId,
@@ -776,6 +904,7 @@ router.delete('/:groupId/students/:studentId/notes/:noteId', authMiddleware, asy
 
 // ─── CALENDAR / SESSIONS ──────────────────────────────────────────────────────
 router.get('/:groupId/calendar', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query('SELECT * FROM get_group_calendar($1)', [req.params.groupId])
     res.json(result.rows)
@@ -785,6 +914,7 @@ router.get('/:groupId/calendar', authMiddleware, async (req, res) => {
 })
 
 router.post('/:groupId/calendar', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   const { sessions } = req.body
   try {
     if (!sessions || !Array.isArray(sessions))
@@ -806,6 +936,7 @@ router.patch(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { sessionId } = req.params
     const { reason } = req.body
     try {
@@ -882,6 +1013,7 @@ router.patch(
 )
 
 router.patch('/sessions/:sessionId', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   const { sessionId } = req.params
   const { actual_date, start_time, end_time, session_title } = req.body
   try {
@@ -900,6 +1032,7 @@ router.patch('/sessions/:sessionId', authMiddleware, adminOrTeacherMiddleware, a
 })
 
 router.get('/students/available', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT id, name, last_name, email, parent_phone, gender, birthday FROM users WHERE role = 'student' ORDER BY last_name, name`,
@@ -911,6 +1044,7 @@ router.get('/students/available', authMiddleware, adminOrTeacherMiddleware, asyn
 })
 
 router.patch('/:id/sessions-config', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   const { total_sessions, total_weeks, sessions_per_week } = req.body
   try {
     const result = await pool.query(
@@ -927,6 +1061,7 @@ router.patch('/:id/sessions-config', authMiddleware, adminMiddleware, async (req
 })
 
 router.patch('/:id/max-students', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   const { max_students } = req.body
   try {
     const currentCount = await pool.query(
@@ -954,6 +1089,7 @@ router.post(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { reason, total_weeks, total_sessions, sessions, return_to_normal } = req.body
     try {
       if (!reason || !total_weeks || !total_sessions || !sessions) {
@@ -978,6 +1114,7 @@ router.post(
 )
 
 router.post('/:id/apply-next-cycle', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const check = await pool.query(
       'SELECT has_next_cycle_modifications FROM groups WHERE id = $1',
@@ -1000,6 +1137,7 @@ router.delete(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     try {
       const result = await pool.query(
         `UPDATE groups SET has_next_cycle_modifications=false, next_cycle_modifications=NULL,
@@ -1014,6 +1152,7 @@ router.delete(
 )
 
 router.post('/:id/return-to-normal', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     await pool.query('SELECT return_to_normal_cycle($1)', [req.params.id])
     const result = await pool.query('SELECT * FROM v_groups_with_cycles WHERE id = $1', [
@@ -1026,6 +1165,7 @@ router.post('/:id/return-to-normal', authMiddleware, adminOrTeacherMiddleware, a
 })
 
 router.get('/:id/cycle-info', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT g.*, (SELECT COUNT(*) FROM session_schedule WHERE group_id=g.id) as current_sessions_count,
@@ -1042,6 +1182,7 @@ router.get('/:id/cycle-info', authMiddleware, async (req, res) => {
 })
 
 router.patch('/:id/sessions', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   const { sessions } = req.body
   try {
     if (!sessions || !Array.isArray(sessions))
@@ -1061,6 +1202,7 @@ router.patch('/:id/sessions', authMiddleware, adminOrTeacherMiddleware, async (r
 })
 
 router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, res) => {
+    const pool = req.db
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
   const { groupId, studentId } = req.params
   const { status, payment_status } = req.body
@@ -1081,6 +1223,7 @@ router.patch('/:groupId/students/:studentId/state', authMiddleware, async (req, 
 })
 
 router.delete('/cleanup/pending-enrollments', authMiddleware, async (req, res) => {
+    const pool = req.db
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
 
   const rawDays = parseInt(req.query.days, 10)
@@ -1118,6 +1261,7 @@ router.post(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
 
     try {
@@ -1152,7 +1296,11 @@ router.post(
       if (data.day_of_week) {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
         const todayDay = days[new Date().getDay()]
-        if (todayDay !== data.day_of_week) {
+
+        // ✅ Support multiple days (stored as "lundi,vendredi" or single "lundi")
+        const scheduledDays = data.day_of_week.split(',').map((d) => d.trim().toLowerCase())
+
+        if (!scheduledDays.includes(todayDay)) {
           return res.json({
             ...data,
             access: 'WRONG_DAY',
@@ -1263,6 +1411,7 @@ router.patch(
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
 
     try {
@@ -1324,6 +1473,7 @@ router.post(
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId, studentId } = req.params
     const ts = Date.now()
 
@@ -1392,6 +1542,7 @@ router.post(
 // Returns all active students in the group who have NOT been scanned today.
 // Used by the AbsentStudentsModal in GroupManagement.vue.
 router.get('/:groupId/absent-today', authMiddleware, adminOrTeacherMiddleware, async (req, res) => {
+    const pool = req.db
   const { groupId } = req.params
   const today = new Date().toISOString().split('T')[0]
 
@@ -1445,6 +1596,7 @@ router.delete(
   authMiddleware,
   adminOrTeacherMiddleware,
   async (req, res) => {
+    const pool = req.db
     const { groupId } = req.params
     const { student_ids } = req.body
 
@@ -1525,6 +1677,7 @@ router.delete(
 // ─── DELETE /:groupId/students/:studentId/enrollment ──────────────────────────
 // Soft-delete an enrollment record from the history view (admin + parent use)
 router.delete('/:groupId/students/:studentId/enrollment', authMiddleware, async (req, res) => {
+    const pool = req.db
   const { groupId, studentId } = req.params
   const role = req.user.role
 

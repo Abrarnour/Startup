@@ -40,8 +40,7 @@ if ('serviceWorker' in navigator) {
 // immediately so background polling starts right away.
 async function syncTokenToSW(registration) {
   const token = localStorage.getItem('token')
-  const apiUrl =
-    import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+  const apiUrl = import.meta.env.VITE_API_URL
 
   if (token && registration?.active) {
     registration.active.postMessage({

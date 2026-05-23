@@ -715,8 +715,7 @@ const savePhoto = async () => {
   try {
     const formData = new FormData()
     formData.append('photo', pendingPhoto.value)
-    const API_URL =
-      import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+    const API_URL = import.meta.env.VITE_API_URL
     const res = await fetch(`${API_URL}/students/upload-photo`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },

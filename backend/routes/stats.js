@@ -1,12 +1,12 @@
 // backend/routes/stats.js
 import express from 'express'
-import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 
 const router = express.Router()
 
 // ── GET /api/stats ────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
+    const pool = req.db
   try {
     const totalUsers = await pool.query('SELECT COUNT(*) FROM users')
     const usersByRole = await pool.query('SELECT role, COUNT(*) as count FROM users GROUP BY role')
@@ -38,6 +38,7 @@ router.get('/', async (req, res) => {
 // ⚠️ IMPORTANT: PostgreSQL does NOT allow SELECT aliases in GROUP BY.
 //    All GROUP BY clauses must repeat the full expression.
 router.get('/dashboard', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
 
@@ -202,6 +203,7 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
 
 // ── GET /api/stats/teacher ────────────────────────────────────────────────────
 router.get('/teacher', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const tid = req.user.id
     if (req.user.role !== 'teacher' && req.user.role !== 'admin')
@@ -261,6 +263,7 @@ router.get('/teacher', authMiddleware, async (req, res) => {
 // ── GET /api/stats/search-students?q=xxx ──────────────────────────────────
 // Admin-only: search students by name / email for the history modal
 router.get('/search-students', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
     const q = `%${(req.query.q || '').trim()}%`
@@ -283,6 +286,7 @@ router.get('/search-students', authMiddleware, async (req, res) => {
 // ── GET /api/stats/student-history/:studentId ──────────────────────────────
 // Admin-only: full history — enrollments, payments, attendance scans, absences
 router.get('/student-history/:studentId', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
 

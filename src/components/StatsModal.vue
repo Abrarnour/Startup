@@ -19,8 +19,7 @@ const fetchDash = async () => {
   error.value = null
   try {
     const token = localStorage.getItem('token')
-    const API =
-      import.meta.env.VITE_API_URL || 'https://belmahi-school-production.up.railway.app/api'
+    const API = import.meta.env.VITE_API_URL
     const res = await fetch(`${API}/stats/dashboard`, {
       headers: { Authorization: `Bearer ${token}` },
     })

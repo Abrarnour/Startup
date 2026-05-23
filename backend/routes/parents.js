@@ -1,7 +1,6 @@
 // backend/routes/parents.js
 import express from 'express'
 import jwt from 'jsonwebtoken'
-import pool from '../db.js'
 import { sendNotif, notifyAllAdmins, notifyParentsOf } from '../notifHelper.js'
 
 const router = express.Router()
@@ -26,6 +25,7 @@ const parentMiddleware = (req, res, next) => {
 
 // ─── GET CHILDREN ─────────────────────────────────────────────────────────────
 router.get('/children', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT u.id, u.name, u.last_name, u.email, u.birthday, u.city, u.gender,
@@ -42,6 +42,7 @@ router.get('/children', authMiddleware, parentMiddleware, async (req, res) => {
 
 // ─── GET CHILD COURSES ────────────────────────────────────────────────────────
 router.get('/children/:studentId/courses', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const checkChild = await pool.query(
       'SELECT id FROM parent_students WHERE parent_id=$1 AND student_id=$2',
@@ -72,6 +73,7 @@ router.get('/children/:studentId/courses', authMiddleware, parentMiddleware, asy
 
 // ─── CHECK STUDENT ────────────────────────────────────────────────────────────
 router.get('/check-student/:email', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT id, name, last_name, email, birthday, city, gender FROM users WHERE email=$1 AND role='student'`,
@@ -90,6 +92,7 @@ router.get('/check-student/:email', authMiddleware, parentMiddleware, async (req
 //   → Parent: "Your child account is ready"
 //   → Admins: "New student registered by parent"
 router.post('/register-child', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   const { name, last_name, email, password, birthday, city, gender } = req.body
   const parentId = req.user.id
   try {
@@ -152,6 +155,7 @@ router.post('/register-child', authMiddleware, parentMiddleware, async (req, res
 //   → Student: "A parent linked to your account"
 //   → Parent: confirmation
 router.post('/link-child', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   const { student_email } = req.body
   const parentId = req.user.id
   try {
@@ -208,6 +212,7 @@ router.post('/link-child', authMiddleware, parentMiddleware, async (req, res) =>
 //   → Teacher: "New student in your group"
 //   → Admins: "Parent enrolled a child"
 router.post('/enroll-child', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   const { student_id, group_id } = req.body
   const parentId = req.user.id
   try {
@@ -313,6 +318,7 @@ router.delete(
   authMiddleware,
   parentMiddleware,
   async (req, res) => {
+    const pool = req.db
     try {
       const parentId = req.user.id
       const { studentId, enrollmentId } = req.params
@@ -383,6 +389,7 @@ router.delete(
 
 // ─── UNLINK CHILD ─────────────────────────────────────────────────────────────
 router.delete('/unlink-child/:studentId', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       'DELETE FROM parent_students WHERE parent_id=$1 AND student_id=$2 RETURNING *',
@@ -397,6 +404,7 @@ router.delete('/unlink-child/:studentId', authMiddleware, parentMiddleware, asyn
 
 // ─── GET CHILD HISTORY ────────────────────────────────────────────────────────
 router.get('/children/:studentId/history', authMiddleware, parentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const { studentId } = req.params
 

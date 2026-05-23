@@ -653,7 +653,7 @@ async function executeCleanup() {
     } else {
       const token = localStorage.getItem('token')
       const res = await fetch(
-        `https://belmahi-school-production.up.railway.app/api/groups/cleanup/pending-enrollments?days=${cleanupDialog.days}`,
+        `${import.meta.env.VITE_API_URL}/groups/cleanup/pending-enrollments?days=${cleanupDialog.days}`,
         { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
       )
       if (!res.ok) throw new Error((await res.json()).error || t('server_error'))
@@ -1006,16 +1006,23 @@ const manageStudentEnrollments = async (student) => {
   await fetchEnrollments(student.id)
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
 const fetchEnrollments = async (studentId) => {
   try {
     const token = localStorage.getItem('token')
-    const res = await fetch(
-      `https://belmahi-school-production.up.railway.app/api/students/${studentId}/admin-enrollments`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-    studentEnrollments.value = await res.json()
+    const res = await fetch(`${API_URL}/students/${studentId}/admin-enrollments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      studentEnrollments.value = []
+      return
+    }
+    const data = await res.json()
+    studentEnrollments.value = Array.isArray(data) ? data : []
   } catch (e) {
     console.error(e)
+    studentEnrollments.value = []
   }
 }
 
@@ -1023,7 +1030,8 @@ const updateEnrollment = async (enr, newStatus, newPayment) => {
   try {
     const token = localStorage.getItem('token')
     await fetch(
-      `https://belmahi-school-production.up.railway.app/api/groups/${enr.group_id}/students/${enr.student_id}/state`,
+      // ✅ After
+      `${API_URL}/groups/${enr.group_id}/students/${enr.student_id}/state`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -1040,10 +1048,10 @@ const deleteEnrollment = async (enr) => {
   if (!confirm(t('confirm_unenroll_student'))) return
   try {
     const token = localStorage.getItem('token')
-    await fetch(
-      `https://belmahi-school-production.up.railway.app/api/groups/${enr.group_id}/students/${enr.student_id}`,
-      { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
-    )
+    await fetch(`${API_URL}/groups/${enr.group_id}/students/${enr.student_id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
     await fetchEnrollments(managingStudent.value.id)
   } catch (e) {
     alert(t('error_delete'))

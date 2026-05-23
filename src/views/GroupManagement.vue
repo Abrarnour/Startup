@@ -54,6 +54,7 @@ const successMessage = ref('')
 
 // Modals
 const showAddGroupModal = ref(false)
+const modalError = ref('')
 const showAddStudentModal = ref(false)
 const showNoteModal = ref(false)
 const showPaymentModal = ref(false)
@@ -354,6 +355,7 @@ const openAddGroupModal = () => {
 
   if (course.value.course_type === 'continuous') {
     initializeManualSessions()
+    initializeWeeklySchedule()
   } else {
     // For one-time, initialize with 1 session
     groupForm.weekly_schedule = [
@@ -364,8 +366,10 @@ const openAddGroupModal = () => {
         end_time: '11:00',
       },
     ]
+    // For one-time, initialize with 1 session
   }
 
+  modalError.value = ''
   showAddGroupModal.value = true
 }
 
@@ -438,7 +442,8 @@ const handleAddGroup = async () => {
     setTimeout(() => (successMessage.value = ''), 3000)
     await loadGroups()
   } catch (err) {
-    alert(t('error') + ': ' + err.message)
+    modalError.value = err.message
+    setTimeout(() => (modalError.value = ''), 8000)
   }
 }
 const handleDeleteGroup = async (groupId) => {
@@ -1883,6 +1888,20 @@ onMounted(() => {
               </div>
             </div>
 
+            <!-- Conflict / error message inside the modal -->
+            <div
+              v-if="modalError"
+              class="flex items-start gap-3 p-4 rounded-xl border-2 border-red-300 bg-red-50 text-red-800 text-sm"
+              :class="
+                darkMode
+                  ? 'border-red-700 bg-red-900/30 text-red-300'
+                  : 'border-red-300 bg-red-50 text-red-800'
+              "
+            >
+              <span class="text-lg leading-none flex-shrink-0">⚠️</span>
+              <p class="leading-relaxed" dir="rtl">{{ modalError }}</p>
+            </div>
+
             <div class="flex gap-4 pt-4">
               <button
                 type="submit"
@@ -2890,6 +2909,7 @@ onMounted(() => {
       :groupId="selectedGroup?.id"
       :groupName="selectedGroup?.group_name"
       :darkMode="darkMode"
+      @student-enrolled="selectedGroup && loadStudents(selectedGroup.id)"
     />
 
     <!-- Absent Students Modal (new) -->

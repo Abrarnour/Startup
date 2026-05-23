@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
 import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
@@ -176,7 +176,6 @@ onUnmounted(() => clearInterval(tInterval))
         <h1 class="hero-heading">
           <span class="h-top">{{ t('hero_h_top') }}</span>
           <span class="h-main">{{ t('hero_h_main') }}</span>
-          <span class="h-arabic">{{ t('hero_h_arabic') }}</span>
         </h1>
 
         <p class="hero-body">

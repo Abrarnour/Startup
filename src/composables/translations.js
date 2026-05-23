@@ -221,8 +221,8 @@ export const translations = {
     // ── HOME PAGE EXTRA TRANSLATIONS ──
     hero_eyebrow: 'Oran, Algérie  ·  École Privée',
     hero_h_top: 'PORTAIL DE',
-    hero_h_main: 'BELMAHI',
-    hero_h_arabic: 'Belmahi School',
+    hero_h_main: 'BELMAHI SCHOOL',
+
     hero_body:
       "Une plateforme moderne pour suivre, gérer et accéder à vos Matiére — du primaire jusqu'au baccalauréat.",
     explore_courses: 'Explorer les Matiéres ',
@@ -1200,7 +1200,7 @@ export const translations = {
     seen_check: '✓ شوهد',
     watch: 'مشاهدة',
     browser_no_video: 'متصفحك لا يدعم تشغيل الفيديو.',
-
+    hero_h_main: 'مدرسة بلماحي',
     confirm_password: 'تأكيد كلمة المرور',
     passwords_not_match: 'كلمتا المرور غير متطابقتين',
     same_password_error: 'كلمة المرور الجديدة يجب أن تختلف عن القديمة',
@@ -1293,7 +1293,7 @@ export const translations = {
     contact_us: 'اتصل بنا',
     opening_hours: 'ساعات العمل',
     administration: 'الإدارة',
-    school_address: 'Belmahi School _ وهران / بئر الجير',
+    school_address: 'Belmahi School _ وهران /  ',
     schedule_1: 'الأحد - الخميس: 8:00 - 17:00',
     schedule_2: 'السبت: 8:00 - 12:00',
     closed_friday: 'مغلق يوم الجمعة',
@@ -1469,8 +1469,7 @@ export const translations = {
     // ── HOME PAGE EXTRA TRANSLATIONS ──
     hero_eyebrow: 'وهران، الجزائر · مدرسة خاصة',
     hero_h_top: 'بوابة',
-    hero_h_main: 'بلماحي',
-    hero_h_arabic: 'Belmahi School',
+
     hero_body: 'منصة حديثة لمتابعة وإدارة والوصول إلى دروسك — من الابتدائي إلى البكالوريا.',
     explore_courses: 'استكشاف الدروس',
     hero_glass_txt: 'طلاب تم تدريبهم بنجاح',

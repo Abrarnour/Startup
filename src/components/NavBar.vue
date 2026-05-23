@@ -258,7 +258,7 @@ const roleBadgeClass = computed(() => {
             @click="$emit('toggle-lang')"
             class="px-2.5 py-1.5 rounded-full border border-white/30 hover:bg-white/20 transition-all text-white text-xs font-bold"
           >
-            {{ currentLang === 'fr' ? 'FR' : 'AR' }}
+            {{ currentLang === 'fr' ? 'AR' : 'FR' }}
           </button>
 
           <!-- Notification bell (always visible when logged in) -->

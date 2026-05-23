@@ -1,60 +1,73 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import NavBar from './components/NavBar.vue'
-import { getCurrentUser, logout as apiLogout } from './services/api.js' // ✅ Import API
+import { getCurrentUser, logout as apiLogout } from './services/api.js'
 import { useLanguage } from './composables/useLanguage.js'
 
-import { useTenant } from './composables/useTenant.js'
-import { isSchool } from './router/index.js'
+// ── تحديد نوع الـ hostname ─────────────────────────────────────
+const hostname = window.location.hostname.replace(':5173', '')
+const parts = hostname.split('.')
+const isPlatform = parts[0] === 'admin'
+const isSchool = parts.length >= 2 && parts[0] !== 'admin' && parts[0] !== 'localhost'
 
-const { loading, error, loadTenant } = useTenant()
-
+// ── Tenant theming (للمدارس فقط) ──────────────────────────────
 onMounted(async () => {
-  if (isSchool) {
-    await loadTenant() // جلب ألوان + اسم + شعار المدرسة
-  } else {
-    loading.value = false
+  if (!isSchool) return
+  const slug = parts[0]
+  try {
+    const res = await fetch('/api/tenant-config', {
+      headers: { 'X-Tenant-Slug': slug },
+    })
+    const data = await res.json()
+    const root = document.documentElement
+    root.style.setProperty('--color-primary', data.primary_color || '#1a73e8')
+    root.style.setProperty('--color-secondary', data.secondary_color || '#f0f4ff')
+    document.title = data.school_name_ar || data.school_name || 'School'
+  } catch (e) {
+    console.warn('tenant config not loaded')
   }
 })
-const { t, currentLang, toggleLang, initLang, isRTL } = useLanguage()
 
-// Initialiser la langue au démarrage
-onMounted(() => {
-  user.value = getCurrentUser()
-  initLang() // ⬅️ AJOUTER CETTE LIGNE
-})
+// ── School app logic (NavBar, user, darkMode) ──────────────────
+const { t, currentLang, toggleLang, initLang } = useLanguage()
 const router = useRouter()
 const user = ref(null)
-// État global
 const darkMode = ref(false)
 
-// ✅ Charger l'utilisateur depuis localStorage au démarrage
 onMounted(() => {
   user.value = getCurrentUser()
+  initLang()
 })
 
-// Gérer la connexion
 const handleLogin = (loggedInUser) => {
   user.value = loggedInUser
   router.push('/courses')
 }
 
-// Gérer la déconnexion
 const handleLogout = () => {
-  apiLogout() // ✅ Utiliser la fonction logout de l'API
+  apiLogout()
   user.value = null
   router.push('/login')
 }
 
-// Basculer le mode sombre
 const toggleDarkMode = () => {
   darkMode.value = !darkMode.value
 }
+
+// Toast
+const toastMessage = ref(null)
 </script>
 
 <template>
+  <!-- ── Platform Admin: بدون NavBar ولا Footer ──────────────── -->
+  <div v-if="isPlatform">
+    <RouterView />
+  </div>
+
+  <!-- ── School App + Landing: مع NavBar وFooter ─────────────── -->
   <div
+    v-else
     class="min-h-screen transition-colors duration-300"
     :class="darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50'"
   >
@@ -76,19 +89,14 @@ const toggleDarkMode = () => {
 
     <footer :class="darkMode ? 'bg-gray-800' : 'bg-gray-900'" class="text-white mt-12" dir="ltr">
       <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Section principale -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
-          <!-- À propos -->
           <div>
             <h3 class="text-lg font-bold mb-3 text-blue-400">À Propos</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">Belahi School _ Oran <br /></p>
+            <p class="text-gray-400 text-sm leading-relaxed">Belahi School _ Oran</p>
           </div>
-
-          <!-- Contact -->
           <div>
             <h3 class="text-lg font-bold mb-3 text-blue-400">Nous Contacter</h3>
             <div class="space-y-2 text-sm">
-              <!-- Email -->
               <a
                 href="mailto:belmahi@gmail.com"
                 class="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors"
@@ -109,8 +117,6 @@ const toggleDarkMode = () => {
                 </svg>
                 belmahi@gmail.com
               </a>
-
-              <!-- Téléphone -->
               <a
                 href="tel:+213555123456"
                 class="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors"
@@ -131,8 +137,6 @@ const toggleDarkMode = () => {
                 </svg>
                 +213 555 123 456
               </a>
-
-              <!-- Instagram -->
               <a
                 href="https://www.instagram.com/belmahi_school/"
                 target="_blank"
@@ -152,8 +156,6 @@ const toggleDarkMode = () => {
               </a>
             </div>
           </div>
-
-          <!-- Horaires d'administration -->
           <div>
             <h3 class="text-lg font-bold mb-3 text-blue-400">Administration</h3>
             <div class="text-sm text-gray-400 space-y-1">
@@ -164,35 +166,28 @@ const toggleDarkMode = () => {
             </div>
           </div>
         </div>
-
-        <!-- Séparateur -->
         <div class="border-t border-gray-700 pt-6">
-          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <p class="text-gray-400 text-sm">
-              &copy; 2025–2026 <br />
-              <br />developed for BELMAHI SCHOOL.Unauthorized Reproduction, Distribution,or
-              Commercial Use Prohibited <br />
-              DEVELOPED by
-              <a
-                href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
-                style="text-decoration: underline !important; color: pink !important"
-                ><u>Abrar Nour LACIDA</u></a
-              >
-              <br />
-              MANEGMENT BY :
-              <a
-                href="https://www.linkedin.com/in/hamza-zineb-052071390"
-                style="text-decoration: underline !important; color: pink !important"
-                ><u>Zineb HAMZA</u></a
-              >
-            </p>
-
-            <p class="text-sm text-gray-500"></p>
-          </div>
+          <p class="text-gray-400 text-sm">
+            &copy; 2025–2026 — developed for BELMAHI SCHOOL.<br />
+            Unauthorized Reproduction, Distribution, or Commercial Use Prohibited<br />
+            DEVELOPED by
+            <a
+              href="https://www.linkedin.com/in/abrar-nour-lacida-96574239b"
+              style="text-decoration: underline; color: pink"
+              >Abrar Nour LACIDA</a
+            ><br />
+            MANAGEMENT BY:
+            <a
+              href="https://www.linkedin.com/in/hamza-zineb-052071390"
+              style="text-decoration: underline; color: pink"
+              >Zineb HAMZA</a
+            >
+          </p>
         </div>
       </div>
     </footer>
-    <!-- Toast notifications — DANS App.vue -->
+
+    <!-- Toast -->
     <Transition name="slide-up">
       <div
         v-if="toastMessage"
@@ -209,22 +204,16 @@ const toggleDarkMode = () => {
       </div>
     </Transition>
   </div>
-  <!-- Loading screen أثناء جلب config المدرسة -->
-  <div v-if="loading" class="app-loading">
-    <div class="loader-ring"></div>
-    <p>جاري التحميل...</p>
-  </div>
-
-  <!-- School not found -->
-  <div v-else-if="error && isSchool" class="app-error">
-    <h2>❌ المدرسة غير موجودة</h2>
-    <p>تأكد من الرابط أو تواصل مع الدعم</p>
-  </div>
-
-  <!-- App العادي -->
-  <RouterView v-else />
 </template>
+
 <style>
+:root {
+  --color-primary: #1a73e8;
+  --color-primary-dark: #1557b0;
+  --color-primary-light: #e8f0fe;
+  --color-secondary: #f0f4ff;
+}
+
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.4s ease;
@@ -236,50 +225,5 @@ const toggleDarkMode = () => {
 .slide-up-leave-to {
   opacity: 0;
   transform: translateY(20px);
-}
-
-/* CSS Variables تُطبَّق من useTenant.js */
-:root {
-  --color-primary: #1a73e8;
-  --color-primary-dark: #1557b0;
-  --color-primary-light: #e8f0fe;
-  --color-secondary: #f0f4ff;
-}
-
-/* كل المكونات تستخدم هذه المتغيرات بدل القيم الثابتة */
-
-.app-loading {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  background: var(--color-secondary);
-}
-
-.loader-ring {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e0e0e0;
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.app-error {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #e53935;
 }
 </style>

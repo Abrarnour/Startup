@@ -1,6 +1,5 @@
 // backend/routes/students.js
 import express from 'express'
-import pool from '../db.js'
 import { authMiddleware } from './auth.js'
 import multer from 'multer'
 import path from 'path'
@@ -35,6 +34,7 @@ const studentMiddleware = (req, res, next) => {
 
 // GET /api/students/my-courses - جلب دروس الطالب
 router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const studentId = req.user.id
 
@@ -85,6 +85,7 @@ router.get('/my-courses', authMiddleware, studentMiddleware, async (req, res) =>
 
 // GET /api/students/my-groups
 router.get('/my-groups', authMiddleware, studentMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const studentId = req.user.id
 
@@ -108,6 +109,7 @@ router.get('/my-groups', authMiddleware, studentMiddleware, async (req, res) => 
 })
 
 router.get('/:id/admin-enrollments', authMiddleware, async (req, res) => {
+    const pool = req.db
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Accès refusé' })
   try {
     const result = await pool.query(
@@ -128,6 +130,7 @@ router.get('/:id/admin-enrollments', authMiddleware, async (req, res) => {
 
 // Add inside backend/routes/students.js
 router.get('/profile', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT id, name, last_name, email, birthday, gender, city, phone, photo_url
@@ -153,6 +156,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 })
 
 router.post('/upload-photo', authMiddleware, upload.single('photo'), async (req, res) => {
+    const pool = req.db
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
 

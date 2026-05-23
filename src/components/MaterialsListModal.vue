@@ -452,7 +452,7 @@ import { useLanguage } from '../composables/useLanguage.js'
 
 const { t } = useLanguage()
 
-const API_URL = 'https://belmahi-school-production.up.railway.app/api'
+const API_URL = import.meta.env.VITE_API_URL
 
 const props = defineProps({
   isOpen: Boolean,

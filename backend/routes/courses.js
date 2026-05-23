@@ -1,7 +1,6 @@
 // backend/routes/courses.js
 import express from 'express'
 import jwt from 'jsonwebtoken'
-import pool from '../db.js'
 import { sendNotif, notifyAllAdmins } from '../notifHelper.js'
 
 const router = express.Router()
@@ -27,6 +26,7 @@ const adminMiddleware = (req, res, next) => {
 
 // ===== GET ALL COURSES =====
 router.get('/', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const userId = req.user.id
     const userRole = req.user.role
@@ -80,6 +80,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // ===== GET ONE COURSE =====
 router.get('/:id', authMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT c.*, u.name as teacher_name, u.last_name as teacher_last_name, u.gender as teacher_gender
@@ -95,6 +96,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
 // ===== GET TEACHERS LIST =====
 router.get('/teachers/list', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     const result = await pool.query(
       `SELECT id, name, last_name, gender, email FROM users WHERE role = 'teacher' ORDER BY last_name, name`,
@@ -110,6 +112,7 @@ router.get('/teachers/list', authMiddleware, adminMiddleware, async (req, res) =
 //   → Teacher assigned: "Admin assigned you to a new course"
 //   → All admins:       "New course created"
 router.post('/', authMiddleware, async (req, res) => {
+    const pool = req.db
   if (req.user.role !== 'admin' && req.user.role !== 'teacher') {
     return res.status(403).json({ error: 'Accès refusé' })
   }
@@ -212,6 +215,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // 🔔 NOTIFICATIONS:
 //   → Teacher: "Your course details were updated"
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   const { title, description, salle, price } = req.body
 
   try {
@@ -255,6 +259,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 // 🔔 NOTIFICATIONS:
 //   → Teacher: "Your course was removed"
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const pool = req.db
   try {
     // Get course info before deleting
     const info = await pool.query('SELECT id, title, teacher_id FROM courses WHERE id = $1', [
@@ -322,6 +327,7 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 
 // ===== TOGGLE FAVORITE =====
 router.post('/:id/favorite', authMiddleware, async (req, res) => {
+    const pool = req.db
   const courseId = req.params.id
   const userId = req.user.id
   try {
