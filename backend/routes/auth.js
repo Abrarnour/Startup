@@ -25,7 +25,7 @@ const adminMiddleware = (req, res, next) => {
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
-    const pool = req.db
+  const pool = req.db // BUG 5 FIX
   const { name, last_name, email, password, role, birthday, city } = req.body
   try {
     if (!name || !last_name || !email || !password || !role) {
@@ -46,20 +46,18 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' },
     )
 
-    // 🔔 Welcome notification for new user
     await sendNotif(
       pool,
       newUser.rows[0].id,
       `welcome_register_${newUser.rows[0].id}`,
-      ` مرحباً بك ${name}! تم إنشاء حسابك في مدرسة بلماحي بنجاح. يمكنك الآن تسجيل الدخول والاطلاع على إشعاراتك.`,
+      `مرحباً بك ${name}! تم إنشاء حسابك بنجاح.`,
       'welcome',
     )
 
-    // 🔔 Notify admins of new registration
     await notifyAllAdmins(
       pool,
       `new_register_${newUser.rows[0].id}_${Date.now()}`,
-      ` مستخدم جديد سجّل: ${name} ${last_name} (${role}) — ${email}.`,
+      `مستخدم جديد سجّل: ${name} ${last_name} (${role}) — ${email}.`,
       'info',
     )
 
@@ -72,7 +70,7 @@ router.post('/register', async (req, res) => {
 
 // ─── LOGIN ─────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const { email, password } = req.body
   try {
     if (!email || !password) {
@@ -127,7 +125,7 @@ router.post('/login', async (req, res) => {
 //   → New teacher: "Your account has been created"
 //   → All admins:  "New teacher was added"
 router.post('/register-teacher', authMiddleware, adminMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const { name, last_name, email, password, phone, gender, birthday, city } = req.body
   try {
     if (!name || !last_name || !email || !password || !phone || !gender) {
@@ -177,7 +175,7 @@ router.post('/register-teacher', authMiddleware, adminMiddleware, async (req, re
 
 // ─── DELETE USER ──────────────────────────────────────────────────────────────
 router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const userId = parseInt(req.params.id)
   if (userId === req.user.id) {
     return res.status(400).json({ error: 'Vous ne pouvez pas supprimer votre propre compte' })
@@ -228,7 +226,7 @@ router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) =>
 
 // ─── LIST TEACHERS (admin) ─────────────────────────────────────────────────────
 router.get('/users/teachers', authMiddleware, adminMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   try {
     const result = await pool.query(`
       SELECT u.id, u.name, u.last_name, u.email, u.phone, u.city, u.gender, u.birthday, u.created_at,
@@ -249,7 +247,7 @@ router.get('/users/teachers', authMiddleware, adminMiddleware, async (req, res) 
 
 // ─── LIST STUDENTS (admin) ────────────────────────────────────────────────────
 router.get('/users/students', authMiddleware, adminMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   try {
     const result = await pool.query(`
       SELECT u.id, u.name, u.last_name, u.email, u.phone, u.city, u.gender, u.birthday,
@@ -304,7 +302,7 @@ router.delete(
 
 // ─── SET / RESET TEACHER PASSWORD (admin only) ──────────────────────────────
 router.patch('/teacher/:id/set-password', authMiddleware, adminMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const teacherId = parseInt(req.params.id)
   const { new_password } = req.body
   if (!new_password || new_password.length < 8) {
@@ -334,7 +332,7 @@ router.patch('/teacher/:id/set-password', authMiddleware, adminMiddleware, async
 
 // ─── ADMIN CHANGES OWN PASSWORD ──────────────────────────────────────────────
 router.patch('/change-my-password', authMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const { old_password, new_password } = req.body
   if (!old_password || !new_password || new_password.length < 8) {
     return res.status(400).json({ error: 'Champs manquants ou mot de passe trop court (min 8)' })
@@ -358,7 +356,7 @@ router.patch('/change-my-password', authMiddleware, async (req, res) => {
 
 // ─── CHANGE OWN PASSWORD (teacher, admin, parent, student) ───────────────────
 router.patch('/change-my-password', authMiddleware, async (req, res) => {
-    const pool = req.db
+  const pool = req.db
   const { old_password, new_password } = req.body
   if (!old_password || !new_password || new_password.length < 8) {
     return res.status(400).json({ error: 'Champs manquants ou mot de passe trop court (min 8)' })

@@ -209,6 +209,7 @@ const toggleDarkMode = () => {
       </div>
     </Transition>
   </div>
+
   <!-- Loading screen أثناء جلب config المدرسة -->
   <div v-if="loading" class="app-loading">
     <div class="loader-ring"></div>
@@ -216,7 +217,11 @@ const toggleDarkMode = () => {
   </div>
 
   <!-- School not found -->
-  <div v-else-if="error && isSchool" class="app-error">
+  <div
+    v-else-if="!$route.meta.isPublicRegistration"
+    class="min-h-screen transition-colors duration-300"
+    :class="darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50'"
+  >
     <h2>❌ المدرسة غير موجودة</h2>
     <p>تأكد من الرابط أو تواصل مع الدعم</p>
   </div>

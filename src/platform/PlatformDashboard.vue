@@ -3,13 +3,9 @@
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <span class="brand-icon">🏛️</span>
-        <div>
-          <p class="brand-name">المنصة</p>
-          <p class="brand-sub">لوحة الإدارة العليا</p>
-        </div>
+        <span class="brand-icon">🏫</span>
+        <span class="brand-name">Platform Admin</span>
       </div>
-
       <nav class="sidebar-nav">
         <button
           v-for="item in navItems"
@@ -19,94 +15,93 @@
           @click="activeTab = item.key"
         >
           <span class="nav-icon">{{ item.icon }}</span>
-          {{ item.label }}
+          <span>{{ item.label }}</span>
         </button>
       </nav>
-
       <div class="sidebar-footer">
-        <p>{{ adminName }}</p>
-        <button @click="handleLogout" class="logout-btn">تسجيل الخروج</button>
+        <div class="admin-badge">{{ adminName }}</div>
+        <button class="logout-btn" @click="handleLogout">تسجيل الخروج</button>
       </div>
     </aside>
 
-    <!-- Main -->
     <main class="main-content">
-      <!-- ── Dashboard Stats ─────────────────────────── -->
-      <div v-if="activeTab === 'dashboard'">
-        <h1 class="page-title">الإحصائيات العامة</h1>
 
-        <div v-if="statsLoading" class="loading-state">جاري التحميل...</div>
+      <!-- ── Stats ─────────────────────────────────────── -->
+      <div v-if="activeTab === 'dashboard'">
+        <div class="page-header">
+          <h1 class="page-title">إحصائيات المنصة</h1>
+          <button class="btn-primary" @click="loadStats">🔄 تحديث</button>
+        </div>
+
+        <div v-if="statsLoading" class="loading-state">
+          <div class="spinner"></div>
+          <span>تحميل الإحصائيات...</span>
+        </div>
+
         <div v-else class="stats-grid">
-          <div class="stat-card blue">
-            <span class="stat-icon">🏫</span>
-            <div>
-              <p class="stat-value">{{ stats.total_schools }}</p>
-              <p class="stat-label">إجمالي المدارس</p>
-            </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ stats.total_schools || 0 }}</div>
+            <div class="stat-label">إجمالي المدارس</div>
           </div>
-          <div class="stat-card green">
-            <span class="stat-icon">✅</span>
-            <div>
-              <p class="stat-value">{{ stats.active_schools }}</p>
-              <p class="stat-label">مدارس نشطة</p>
-            </div>
+          <div class="stat-card active">
+            <div class="stat-value">{{ stats.active_schools || 0 }}</div>
+            <div class="stat-label">نشطة</div>
           </div>
-          <div class="stat-card orange">
-            <span class="stat-icon">⏳</span>
-            <div>
-              <p class="stat-value">{{ stats.trial_schools }}</p>
-              <p class="stat-label">في فترة التجربة</p>
-            </div>
+          <div class="stat-card trial">
+            <div class="stat-value">{{ stats.trial_schools || 0 }}</div>
+            <div class="stat-label">تجريبية</div>
           </div>
-          <div class="stat-card red">
-            <span class="stat-icon">⛔</span>
-            <div>
-              <p class="stat-value">{{ stats.suspended_schools }}</p>
-              <p class="stat-label">موقوفة</p>
-            </div>
+          <div class="stat-card pending">
+            <div class="stat-value">{{ stats.pending_schools || 0 }}</div>
+            <div class="stat-label">بانتظار الموافقة</div>
           </div>
-          <div class="stat-card purple" style="grid-column: span 2">
-            <span class="stat-icon">💰</span>
-            <div>
-              <p class="stat-value">
-                {{ Number(stats.total_revenue || 0).toLocaleString('ar-DZ') }} دج
-              </p>
-              <p class="stat-label">إجمالي الإيرادات</p>
+          <div class="stat-card revenue">
+            <div class="stat-value">
+              {{ Number(stats.total_revenue || 0).toLocaleString('ar-DZ') }} دج
             </div>
+            <div class="stat-label">الإيرادات الإجمالية</div>
           </div>
         </div>
       </div>
 
-      <!-- ── Tenants List ────────────────────────────── -->
+      <!-- ── Tenants ─────────────────────────────────────── -->
       <div v-if="activeTab === 'tenants'">
         <div class="page-header">
           <h1 class="page-title">إدارة المدارس</h1>
           <div class="header-actions">
             <input
               v-model="search"
-              placeholder="بحث..."
+              placeholder="بحث باسم المدرسة أو البريد..."
               class="search-input"
               @input="loadTenants"
             />
-            <select v-model="filterStatus" class="filter-select" @change="loadTenants">
+            <select v-model="filterStatus" class="search-input" style="min-width:130px" @change="loadTenants">
               <option value="">كل الحالات</option>
-              <option value="active">نشطة</option>
+              <option value="pending">بانتظار الموافقة</option>
               <option value="trial">تجريبية</option>
+              <option value="active">نشطة</option>
               <option value="suspended">موقوفة</option>
-              <option value="cancelled">ملغاة</option>
             </select>
           </div>
         </div>
 
-        <div v-if="tenantsLoading" class="loading-state">جاري التحميل...</div>
+        <div v-if="tenantsLoading" class="loading-state">
+          <div class="spinner"></div>
+          <span>تحميل قائمة المدارس...</span>
+        </div>
+
+        <div v-else-if="tenants.length === 0" class="loading-state" style="color:#888">
+          لا توجد مدارس مطابقة للبحث
+        </div>
 
         <div v-else class="tenants-table-wrap">
           <table class="tenants-table">
             <thead>
               <tr>
                 <th>المدرسة</th>
+                <th>الشعار</th>
                 <th>المسؤول</th>
-                <th>المدينة</th>
+                <th>الولاية</th>
                 <th>الباقة</th>
                 <th>الحالة</th>
                 <th>تاريخ التسجيل</th>
@@ -120,42 +115,55 @@
                     <div class="school-color-dot" :style="{ background: t.primary_color }"></div>
                     <div>
                       <p class="school-name">{{ t.school_name }}</p>
-                      <p class="school-slug">{{ t.slug }}.yourdomain.dz</p>
+                      <p class="school-slug">{{ t.slug }}.plateforme.dz</p>
                     </div>
                   </div>
                 </td>
-                <td>{{ t.admin_email }}</td>
+                <td>
+                  <img
+                    v-if="t.logo_url"
+                    :src="t.logo_url"
+                    alt="Logo"
+                    style="height:32px;width:32px;border-radius:50%;object-fit:cover;border:2px solid #eee"
+                  />
+                  <span v-else style="color:#ccc;font-size:1.4rem">🏫</span>
+                </td>
+                <td>
+                  <div>
+                    <p style="font-size:0.85rem">{{ t.admin_email }}</p>
+                    <p v-if="t.admin_phone" style="font-size:0.75rem;color:#888">{{ t.admin_phone }}</p>
+                  </div>
+                </td>
                 <td>{{ t.city || '—' }}</td>
-                <td>
-                  <span class="badge plan">{{ t.plan_name }}</span>
-                </td>
-                <td>
-                  <span class="badge" :class="t.status">{{ statusLabel(t.status) }}</span>
-                </td>
+                <td><span class="badge plan">{{ t.plan_name || '—' }}</span></td>
+                <td><span class="badge" :class="t.status">{{ statusLabel(t.status) }}</span></td>
                 <td>{{ formatDate(t.created_at) }}</td>
                 <td>
                   <div class="actions-cell">
                     <button
-                      v-if="t.status !== 'active'"
+                      v-if="t.status === 'pending'"
+                      class="action-btn approve"
+                      :disabled="approvingId === t.id"
+                      @click="approveSchool(t)"
+                    >
+                      {{ approvingId === t.id ? '⏳ جاري الإنشاء...' : 'موافقة وإنشاء 🛠️' }}
+                    </button>
+                    <button
+                      v-if="t.status !== 'active' && t.status !== 'pending'"
                       class="action-btn activate"
                       @click="changeStatus(t, 'active')"
-                    >
-                      تفعيل
-                    </button>
+                    >تفعيل</button>
                     <button
                       v-if="t.status === 'active'"
                       class="action-btn suspend"
                       @click="changeStatus(t, 'suspended')"
-                    >
-                      إيقاف
-                    </button>
+                    >إيقاف</button>
                     <a
-                      :href="`https://${t.slug}.yourdomain.dz`"
+                      v-if="t.status !== 'pending'"
+                      :href="`http://${t.slug}.localhost:5173`"
                       target="_blank"
                       class="action-btn view"
-                    >
-                      فتح ↗
-                    </a>
+                    >فتح ↗</a>
                   </div>
                 </td>
               </tr>
@@ -164,14 +172,18 @@
         </div>
       </div>
 
-      <!-- ── Invoices ────────────────────────────────── -->
+      <!-- ── Invoices ─────────────────────────────────────── -->
       <div v-if="activeTab === 'invoices'">
         <div class="page-header">
           <h1 class="page-title">الفواتير</h1>
           <button class="btn-primary" @click="showInvoiceModal = true">+ إنشاء فاتورة</button>
         </div>
 
-        <div v-if="invoicesLoading" class="loading-state">جاري التحميل...</div>
+        <div v-if="invoicesLoading" class="loading-state">
+          <div class="spinner"></div>
+          <span>تحميل الفواتير...</span>
+        </div>
+
         <div v-else class="tenants-table-wrap">
           <table class="tenants-table">
             <thead>
@@ -189,13 +201,12 @@
                 <td>{{ inv.school_name }}</td>
                 <td>{{ Number(inv.amount_dzd).toLocaleString('ar-DZ') }} دج</td>
                 <td>{{ inv.plan_name }}</td>
-                <td>
-                  <span class="badge" :class="inv.status">{{
-                    invoiceStatusLabel(inv.status)
-                  }}</span>
-                </td>
+                <td><span class="badge" :class="inv.status">{{ invoiceStatusLabel(inv.status) }}</span></td>
                 <td>{{ formatDate(inv.due_date) }}</td>
                 <td>{{ inv.paid_at ? formatDate(inv.paid_at) : '—' }}</td>
+              </tr>
+              <tr v-if="invoices.length === 0">
+                <td colspan="6" style="text-align:center;color:#888;padding:2rem">لا توجد فواتير</td>
               </tr>
             </tbody>
           </table>
@@ -210,7 +221,7 @@
         <div class="field">
           <label>المدرسة</label>
           <select v-model="newInvoice.tenantId">
-            <option v-for="t in tenants" :key="t.id" :value="t.id">{{ t.school_name }}</option>
+            <option v-for="ten in tenants" :key="ten.id" :value="ten.id">{{ ten.school_name }}</option>
           </select>
         </div>
         <div class="field">
@@ -231,6 +242,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast -->
+    <div v-if="toastMessage" class="toast-notification" :class="toastType">
+      <p>{{ toastMessage }}</p>
+      <button @click="toastMessage = null" class="toast-close">×</button>
+    </div>
   </div>
 </template>
 
@@ -243,11 +260,11 @@ import {
   platformSetStatus,
   platformGetInvoices,
   platformCreateInvoice,
-} from '../../services/api.js'
+  platformApproveTenant,
+} from '../services/api.js'
 
 const router = useRouter()
 const activeTab = ref('dashboard')
-
 const adminName = JSON.parse(localStorage.getItem('platform_admin') || '{}')?.email || 'Admin'
 
 const navItems = [
@@ -256,17 +273,18 @@ const navItems = [
   { key: 'invoices', label: 'الفواتير', icon: '🧾' },
 ]
 
-// Stats
+const toastMessage = ref(null)
+const toastType = ref('success')
+
 const stats = ref({})
 const statsLoading = ref(false)
 
-// Tenants
 const tenants = ref([])
 const tenantsLoading = ref(false)
 const search = ref('')
 const filterStatus = ref('')
+const approvingId = ref(null)  // track which tenant is being approved
 
-// Invoices
 const invoices = ref([])
 const invoicesLoading = ref(false)
 const showInvoiceModal = ref(false)
@@ -280,427 +298,190 @@ onMounted(() => {
 
 async function loadStats() {
   statsLoading.value = true
-  stats.value = await platformGetStats().catch(() => ({}))
-  statsLoading.value = false
+  try {
+    stats.value = await platformGetStats()
+  } catch {
+    stats.value = {}
+  } finally {
+    statsLoading.value = false
+  }
 }
 
 async function loadTenants() {
   tenantsLoading.value = true
-  const params = new URLSearchParams()
-  if (search.value) params.set('search', search.value)
-  if (filterStatus.value) params.set('status', filterStatus.value)
-  const data = await platformGetTenants(params.toString()).catch(() => ({ tenants: [] }))
-  tenants.value = data.tenants || []
-  tenantsLoading.value = false
+  try {
+    const params = new URLSearchParams()
+    if (search.value) params.set('search', search.value)
+    if (filterStatus.value) params.set('status', filterStatus.value)
+    const data = await platformGetTenants(params.toString())
+    tenants.value = data.tenants || []
+  } catch {
+    tenants.value = []
+  } finally {
+    tenantsLoading.value = false
+  }
 }
 
 async function loadInvoices() {
   invoicesLoading.value = true
-  invoices.value = await platformGetInvoices().catch(() => [])
-  invoicesLoading.value = false
+  try {
+    invoices.value = await platformGetInvoices()
+  } catch {
+    invoices.value = []
+  } finally {
+    invoicesLoading.value = false
+  }
+}
+
+async function approveSchool(tenant) {
+  if (!confirm(`هل تريد الموافقة على "${tenant.school_name}" وإنشاء قاعدة البيانات الخاصة بها؟\nهذه العملية قد تستغرق 30 ثانية.`)) return
+
+  approvingId.value = tenant.id
+  try {
+    const result = await platformApproveTenant(tenant.id)
+    if (result.success) {
+      showToast(`✅ تمت الموافقة على "${tenant.school_name}" — قاعدة البيانات جاهزة!`, 'success')
+    } else {
+      showToast(`❌ ${result.error || 'حدث خطأ'}`, 'error')
+    }
+    await loadTenants()
+    await loadStats()
+  } catch (e) {
+    showToast(`❌ ${e.message || 'حدث خطأ أثناء الإنشاء'}`, 'error')
+  } finally {
+    approvingId.value = null
+  }
 }
 
 async function changeStatus(tenant, status) {
   const label = statusLabel(status)
   if (!confirm(`تغيير حالة "${tenant.school_name}" إلى: ${label}؟`)) return
-  await platformSetStatus(tenant.id, status)
-  loadTenants()
-  loadStats()
+  try {
+    await platformSetStatus(tenant.id, status)
+    showToast(`تم تغيير الحالة إلى: ${label}`, 'success')
+    await loadTenants()
+    await loadStats()
+  } catch (e) {
+    showToast('خطأ: ' + e.message, 'error')
+  }
 }
 
 async function createInvoice() {
-  await platformCreateInvoice(newInvoice.value)
-  showInvoiceModal.value = false
-  newInvoice.value = { tenantId: '', amountDzd: '', dueDate: '', note: '' }
-  loadInvoices()
+  try {
+    await platformCreateInvoice(newInvoice.value)
+    showInvoiceModal.value = false
+    newInvoice.value = { tenantId: '', amountDzd: '', dueDate: '', note: '' }
+    await loadInvoices()
+    showToast('✅ تم إنشاء الفاتورة', 'success')
+  } catch (e) {
+    showToast('خطأ: ' + e.message, 'error')
+  }
 }
 
 function handleLogout() {
   localStorage.removeItem('platform_token')
   localStorage.removeItem('platform_admin')
-  router.push('/login')
+  router.push('/platform/login')
 }
 
-const statusLabel = (s) =>
-  ({ active: 'نشطة', trial: 'تجريبية', suspended: 'موقوفة', cancelled: 'ملغاة' })[s] || s
+function showToast(msg, type = 'success') {
+  toastMessage.value = msg
+  toastType.value = type
+  setTimeout(() => { toastMessage.value = null }, 5000)
+}
+
+const statusLabel = (s) => ({
+  active: 'نشطة', trial: 'تجريبية', suspended: 'موقوفة',
+  cancelled: 'ملغاة', pending: 'بانتظار الموافقة',
+})[s] || s
+
 const invoiceStatusLabel = (s) => ({ pending: 'معلقة', paid: 'مدفوعة', overdue: 'متأخرة' })[s] || s
 const formatDate = (d) => (d ? new Date(d).toLocaleDateString('ar-DZ') : '—')
 </script>
 
 <style scoped>
-.platform-shell {
-  display: flex;
-  min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  direction: rtl;
-  background: #f4f6fb;
-}
+.platform-shell { display: flex; min-height: 100vh; background: #f0f2f5; }
 
 /* Sidebar */
-.sidebar {
-  width: 240px;
-  background: #1a1a2e;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 0;
-  flex-shrink: 0;
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-.brand-icon {
-  font-size: 2rem;
-}
-.brand-name {
-  font-weight: bold;
-  font-size: 1rem;
-  margin: 0;
-}
-.brand-sub {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 20px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  cursor: pointer;
-  font-size: 0.95rem;
-  text-align: right;
-  transition: all 0.2s;
-}
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-}
-.nav-item.active {
-  background: #1a73e8;
-  color: white;
-}
-.nav-icon {
-  font-size: 1.1rem;
-}
-
-.sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-.sidebar-footer p {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 8px;
-}
-.logout-btn {
-  width: 100%;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
+.sidebar { width: 220px; background: #1a1a2e; color: #fff; display: flex; flex-direction: column; padding: 1.5rem 1rem; }
+.sidebar-brand { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 700; margin-bottom: 2rem; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px; border: none; background: transparent; color: #aaa; cursor: pointer; text-align: right; font-size: 0.9rem; transition: all 0.2s; }
+.nav-item.active, .nav-item:hover { background: #16213e; color: #fff; }
+.sidebar-footer { border-top: 1px solid #333; padding-top: 1rem; }
+.admin-badge { font-size: 0.78rem; color: #aaa; margin-bottom: 0.5rem; word-break: break-all; }
+.logout-btn { width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #555; background: transparent; color: #aaa; cursor: pointer; }
 
 /* Main */
-.main-content {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
-}
+.main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+.page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.page-title { font-size: 1.5rem; font-weight: 700; }
+.header-actions { display: flex; gap: 0.75rem; align-items: center; }
+.search-input { padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
 
-.page-title {
-  font-size: 1.6rem;
-  color: #1a1a2e;
-  margin: 0 0 24px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.page-header .page-title {
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-.search-input {
-  padding: 10px 14px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  outline: none;
-  font-size: 0.9rem;
-  width: 200px;
-}
-.filter-select {
-  padding: 10px 14px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  outline: none;
-  font-size: 0.9rem;
-}
+/* Loading */
+.loading-state { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 3rem; color: #666; background: white; border-radius: 12px; }
+.spinner { width: 24px; height: 24px; border: 3px solid #e0e0e0; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* Stats */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-}
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-.stat-icon {
-  font-size: 2rem;
-}
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #1a1a2e;
-  margin: 0;
-}
-.stat-label {
-  font-size: 0.8rem;
-  color: #888;
-  margin: 0;
-}
-.stat-card.blue {
-  border-right: 4px solid #1a73e8;
-}
-.stat-card.green {
-  border-right: 4px solid #34a853;
-}
-.stat-card.orange {
-  border-right: 4px solid #f9a825;
-}
-.stat-card.red {
-  border-right: 4px solid #e53935;
-}
-.stat-card.purple {
-  border-right: 4px solid #8e24aa;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+.stat-card { background: #fff; border-radius: 12px; padding: 1.5rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.stat-value { font-size: 2rem; font-weight: 700; }
+.stat-label { font-size: 0.85rem; color: #666; margin-top: 0.25rem; }
+.stat-card.active .stat-value { color: #34a853; }
+.stat-card.trial .stat-value { color: #fbbc04; }
+.stat-card.pending .stat-value { color: #ea4335; }
+.stat-card.revenue .stat-value { color: #1a73e8; }
 
 /* Table */
-.tenants-table-wrap {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-}
-.tenants-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.tenants-table th {
-  background: #f8f9fa;
-  padding: 14px 16px;
-  font-size: 0.85rem;
-  color: #555;
-  font-weight: 600;
-  text-align: right;
-}
-.tenants-table td {
-  padding: 14px 16px;
-  border-top: 1px solid #f0f0f0;
-  font-size: 0.9rem;
-  color: #333;
-}
-.tenants-table tr:hover td {
-  background: #fafafa;
-}
+.tenants-table-wrap { background: #fff; border-radius: 12px; overflow: auto; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.tenants-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.tenants-table th { background: #f8f9fa; padding: 0.875rem 1rem; text-align: right; font-weight: 600; border-bottom: 1px solid #eee; }
+.tenants-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.school-cell { display: flex; align-items: center; gap: 0.75rem; }
+.school-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.school-name { font-weight: 600; }
+.school-slug { font-size: 0.72rem; color: #888; }
 
-.school-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.school-color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.school-name {
-  font-weight: 600;
-  margin: 0;
-}
-.school-slug {
-  font-size: 0.75rem;
-  color: #888;
-  margin: 0;
-  direction: ltr;
-}
+/* Badges */
+.badge { padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem; font-weight: 500; }
+.badge.active { background: #e8f5e9; color: #2e7d32; }
+.badge.trial { background: #fff8e1; color: #f57c00; }
+.badge.pending { background: #fce4ec; color: #c62828; }
+.badge.suspended { background: #ffebee; color: #b71c1c; }
+.badge.cancelled { background: #f5f5f5; color: #616161; }
+.badge.plan { background: #e3f2fd; color: #1565c0; }
+.badge.paid { background: #e8f5e9; color: #2e7d32; }
+.badge.overdue { background: #ffebee; color: #b71c1c; }
 
-.badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.badge.active {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.badge.trial {
-  background: #fff8e1;
-  color: #f57f17;
-}
-.badge.suspended {
-  background: #ffebee;
-  color: #c62828;
-}
-.badge.cancelled {
-  background: #f5f5f5;
-  color: #757575;
-}
-.badge.paid {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.badge.pending {
-  background: #fff8e1;
-  color: #f57f17;
-}
-.badge.overdue {
-  background: #ffebee;
-  color: #c62828;
-}
-.badge.plan {
-  background: #e3f2fd;
-  color: #1565c0;
-}
+/* Actions */
+.actions-cell { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.action-btn { padding: 0.3rem 0.65rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.78rem; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+.action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.action-btn.approve { background: #e8f5e9; color: #2e7d32; }
+.action-btn.activate { background: #e3f2fd; color: #1565c0; }
+.action-btn.suspend { background: #ffebee; color: #b71c1c; }
+.action-btn.view { background: #f3e5f5; color: #6a1b9a; }
 
-.actions-cell {
-  display: flex;
-  gap: 6px;
-}
-.action-btn {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-block;
-  transition: opacity 0.2s;
-}
-.action-btn:hover {
-  opacity: 0.8;
-}
-.action-btn.activate {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-.action-btn.suspend {
-  background: #ffebee;
-  color: #c62828;
-}
-.action-btn.view {
-  background: #e3f2fd;
-  color: #1565c0;
-}
+/* Buttons */
+.btn-primary { padding: 0.5rem 1.25rem; background: #1a73e8; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: opacity 0.2s; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-cancel { padding: 0.5rem 1.25rem; background: #f5f5f5; color: #333; border: none; border-radius: 8px; cursor: pointer; }
 
 /* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-card {
-  background: white;
-  border-radius: 20px;
-  padding: 32px;
-  width: 100%;
-  max-width: 420px;
-}
-.modal-card h3 {
-  margin: 0 0 24px;
-  font-size: 1.2rem;
-}
-.field {
-  margin-bottom: 16px;
-}
-.field label {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  margin-bottom: 6px;
-}
-.field input,
-.field select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  outline: none;
-  box-sizing: border-box;
-}
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-.btn-primary {
-  padding: 10px 20px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.btn-cancel {
-  padding: 10px 20px;
-  background: #f5f5f5;
-  color: #333;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-card { background: #fff; border-radius: 12px; padding: 2rem; width: 400px; max-width: 90vw; display: flex; flex-direction: column; gap: 1rem; }
+.modal-card h3 { font-size: 1.1rem; font-weight: 700; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+.field label { font-size: 0.83rem; color: #555; }
+.field input, .field select { padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
 
-.loading-state {
-  text-align: center;
-  padding: 48px;
-  color: #888;
-}
+/* Toast */
+.toast-notification { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #323232; color: #fff; padding: 1rem 1.5rem; border-radius: 10px; display: flex; align-items: center; gap: 1rem; z-index: 9999; font-size: 0.9rem; max-width: 380px; }
+.toast-notification.error { background: #c62828; }
+.toast-notification.success { background: #2e7d32; }
+.toast-close { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; opacity: 0.7; }
+.toast-close:hover { opacity: 1; }
 </style>

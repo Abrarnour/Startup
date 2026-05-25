@@ -38,7 +38,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { platformLogin } from '../../services/api.js'
+import { platformLogin } from '../services/api.js'
 
 const router = useRouter()
 const email = ref('')
@@ -55,7 +55,7 @@ async function handleLogin() {
   error.value = ''
   try {
     await platformLogin(email.value, password.value)
-    router.push('/dashboard')
+    router.push('/platform/dashboard')
   } catch (err) {
     error.value = 'بيانات خاطئة'
   } finally {

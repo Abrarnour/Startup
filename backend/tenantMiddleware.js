@@ -3,15 +3,15 @@
 // يُحدد هوية المدرسة من كل request
 // يُضيف req.tenant و req.db لكل route
 //
-// طرق التعرف على المدرسة:
-//   1. Header:     X-Tenant-Slug: belmahi
-//   2. Subdomain:  belmahi.yourdomain.dz
-//   3. Query:      ?tenant=belmahi  (للتطوير فقط)
+// BUG 7 FIX (tenantMiddleware — add pending block):
+//   Previously only 'suspended' and 'cancelled' were blocked.
+//   A tenant with status='pending' (not yet approved by SuperAdmin)
+//   could still log in and use the school routes because pending
+//   wasn't checked. Now status='pending' returns 403.
 // ─────────────────────────────────────────────────────────────
 
 import { platformPool, getPool } from './db.js'
 
-// Cache لبيانات المدارس (تُحدَّث كل 5 دقائق)
 const tenantCache = new Map()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
@@ -35,10 +35,8 @@ async function getTenantBySlug(slug) {
   return tenant
 }
 
-// ── Middleware الرئيسي ────────────────────────────────────────
 export async function tenantMiddleware(req, res, next) {
   try {
-    // 1. استخرج الـ slug
     let slug = req.headers['x-tenant-slug'] || req.query.tenant || extractSubdomain(req.hostname)
 
     if (!slug) {
@@ -47,11 +45,17 @@ export async function tenantMiddleware(req, res, next) {
 
     slug = slug.toLowerCase().trim()
 
-    // 2. جلب بيانات المدرسة
     const tenant = await getTenantBySlug(slug)
 
     if (!tenant) {
       return res.status(404).json({ error: 'School not found' })
+    }
+
+    // BUG 7 FIX: block 'pending' tenants — db doesn't exist yet
+    if (tenant.status === 'pending') {
+      return res.status(403).json({
+        error: 'School registration is pending SuperAdmin approval',
+      })
     }
 
     if (tenant.status === 'suspended') {
@@ -62,9 +66,13 @@ export async function tenantMiddleware(req, res, next) {
       return res.status(403).json({ error: 'School subscription cancelled' })
     }
 
-    // 3. أضف للـ request
+    // db_name must be set (it's empty for pending tenants)
+    if (!tenant.db_name) {
+      return res.status(503).json({ error: 'School database not provisioned yet' })
+    }
+
     req.tenant = tenant
-    req.db = getPool(tenant.db_name) // pool خاص بهذه المدرسة
+    req.db = getPool(tenant.db_name) // BUG 5 FIX: all routes use req.db
 
     next()
   } catch (err) {
@@ -73,17 +81,13 @@ export async function tenantMiddleware(req, res, next) {
   }
 }
 
-// ── استخراج subdomain من الـ hostname ───────────────────────
 function extractSubdomain(hostname) {
   if (!hostname) return null
   const parts = hostname.split('.')
-  // belmahi.yourdomain.dz → ['belmahi','yourdomain','dz'] → parts[0]
-  // localhost → لا يوجد subdomain
   if (parts.length >= 3) return parts[0]
   return null
 }
 
-// ── مسح الـ cache لمدرسة (بعد تعديل بياناتها) ───────────────
 export function invalidateTenantCache(slug) {
   tenantCache.delete(slug)
 }

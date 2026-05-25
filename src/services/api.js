@@ -3,19 +3,89 @@
 import { tenantSlug } from '../router/index.js'
 
 const API_URL = import.meta.env.VITE_API_URL // http://localhost:3000/api
+// BUG 6 FIX: define PLATFORM_URL once, at the top
+const PLATFORM_URL = `${import.meta.env.VITE_API_URL?.replace('/api', '')}/api/platform`
 
 const getToken = () => localStorage.getItem('token')
+const getPlatformToken = () => localStorage.getItem('platform_token')
 
-const getHeaders = () => {
+// ── School request headers (includes tenant slug) ──────────────
+const getHeaders = (includeAuth = true) => {
   const token = getToken()
   const h = window.location.hostname
-  const p = h.split('.')
-  const slug = p.length >= 2 && p[0] !== 'localhost' && p[0] !== 'admin' ? p[0] : null
+  const parts = h.split('.')
+  const subdomainSlug = parts.length >= 3 && parts[0] !== 'www' ? parts[0] : null
+  const slug = tenantSlug || subdomainSlug
+
   return {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...(slug && { 'X-Tenant-Slug': slug }),
+    ...(includeAuth && token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(slug ? { 'X-Tenant-Slug': slug } : {}),
   }
+}
+
+// ── Platform admin headers (separate JWT) ──────────────────────
+const platformHeaders = () => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${getPlatformToken()}`,
+})
+
+// ── Platform admin functions ───────────────────────────────────
+export const platformLogin = async (email, password) => {
+  const res = await fetch(`${PLATFORM_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Platform login failed')
+  localStorage.setItem('platform_token', data.token)
+  localStorage.setItem('platform_admin', JSON.stringify(data.admin))
+  return data
+}
+
+export const platformGetStats = () =>
+  fetch(`${PLATFORM_URL}/stats`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformGetTenants = (params = '') =>
+  fetch(`${PLATFORM_URL}/tenants?${params}`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformSetStatus = (id, status) =>
+  fetch(`${PLATFORM_URL}/tenants/${id}/status`, {
+    method: 'PATCH',
+    headers: platformHeaders(),
+    body: JSON.stringify({ status }),
+  }).then((r) => r.json())
+
+// BUG 6 FIX: was referencing PLATFORM_URL before it was defined
+export const platformApproveTenant = (id) =>
+  fetch(`${PLATFORM_URL}/tenants/${id}/approve`, {
+    method: 'POST',
+    headers: platformHeaders(),
+  }).then((r) => r.json())
+
+export const platformGetInvoices = () =>
+  fetch(`${PLATFORM_URL}/invoices`, { headers: platformHeaders() }).then((r) => r.json())
+
+export const platformCreateInvoice = (data) =>
+  fetch(`${PLATFORM_URL}/invoices`, {
+    method: 'POST',
+    headers: platformHeaders(),
+    body: JSON.stringify(data),
+  }).then((r) => r.json())
+
+// ── School registration (onboarding) ──────────────────────────
+export const registerSchool = async (schoolData) => {
+  const response = await fetch(`${API_URL}/onboarding/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(schoolData),
+  })
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || "Erreur lors de la demande d'inscription")
+  }
+  return response.json()
 }
 
 // ============= AUTHENTIFICATION =============
@@ -1582,48 +1652,3 @@ export const getMaterials = (id) => request('GET', `/materials/${id}`)
 
 // ... أضف كل الـ functions الحالية هنا مع تحويلها لـ request()
 // لا تغيير في المنطق، فقط توحيد الـ headers
-
-// ── Platform API (للـ Super Admin فقط) ───────────────────────
-const getPlatformToken = () => localStorage.getItem('platform_token')
-const platformHeaders = () => ({
-  'Content-Type': 'application/json',
-  ...(getPlatformToken() && { Authorization: `Bearer ${getPlatformToken()}` }),
-})
-
-const PLATFORM_URL = import.meta.env.VITE_API_URL?.replace('/api', '') + '/api/platform'
-
-export const platformLogin = async (email, password) => {
-  const res = await fetch(`${PLATFORM_URL}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error)
-  localStorage.setItem('platform_token', data.token)
-  localStorage.setItem('platform_admin', JSON.stringify(data.admin))
-  return data
-}
-
-export const platformGetTenants = (params = '') =>
-  fetch(`${PLATFORM_URL}/tenants?${params}`, { headers: platformHeaders() }).then((r) => r.json())
-
-export const platformGetStats = () =>
-  fetch(`${PLATFORM_URL}/stats`, { headers: platformHeaders() }).then((r) => r.json())
-
-export const platformSetStatus = (id, status) =>
-  fetch(`${PLATFORM_URL}/tenants/${id}/status`, {
-    method: 'PATCH',
-    headers: platformHeaders(),
-    body: JSON.stringify({ status }),
-  }).then((r) => r.json())
-
-export const platformGetInvoices = () =>
-  fetch(`${PLATFORM_URL}/invoices`, { headers: platformHeaders() }).then((r) => r.json())
-
-export const platformCreateInvoice = (data) =>
-  fetch(`${PLATFORM_URL}/invoices`, {
-    method: 'POST',
-    headers: platformHeaders(),
-    body: JSON.stringify(data),
-  }).then((r) => r.json())
