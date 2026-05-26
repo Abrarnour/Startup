@@ -1,25 +1,3 @@
-// backend/routes/platform.js
-// ─────────────────────────────────────────────────────────────
-// Super-Admin API — لوحة تحكم المنصة فقط
-//
-// POST   /api/platform/login             → تسجيل دخول SuperAdmin
-// GET    /api/platform/stats             → إحصائيات عامة
-// GET    /api/platform/tenants           → قائمة كل المدارس
-// PATCH  /api/platform/tenants/:id/status→ تفعيل/تعليق
-// POST   /api/platform/tenants/:id/approve → الموافقة + إنشاء DB
-// GET    /api/platform/invoices          → كل الفواتير
-// POST   /api/platform/invoices          → إنشاء فاتورة
-//
-// BUG 4 FIX: approve endpoint now reads pending_hash from tenant.details
-//            column (which is where onboarding.js saves it). Previously
-//            it read tenant.details.pending_hash but "details" column
-//            didn't exist → crash with "column details does not exist".
-//
-// BUG 6 FIX: platformAuth uses PLATFORM_JWT_SECRET (not JWT_SECRET).
-//            The original .env was missing PLATFORM_JWT_SECRET entirely,
-//            so every SuperAdmin request returned 401. Now fixed in .env too.
-// ─────────────────────────────────────────────────────────────
-
 import express from 'express'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
@@ -71,11 +49,11 @@ router.get('/stats', platformAuth, async (req, res) => {
   try {
     const stats = await platformPool.query(`
       SELECT
-        COUNT(*)                                          AS total_schools,
-        COUNT(*) FILTER (WHERE status = 'active')        AS active_schools,
-        COUNT(*) FILTER (WHERE status = 'trial')         AS trial_schools,
-        COUNT(*) FILTER (WHERE status = 'suspended')     AS suspended_schools,
-        COUNT(*) FILTER (WHERE status = 'pending')       AS pending_schools,
+        COUNT(DISTINCT t.id)                                 AS total_schools,
+        COUNT(DISTINCT t.id) FILTER (WHERE t.status = 'active')    AS active_schools,
+        COUNT(DISTINCT t.id) FILTER (WHERE t.status = 'trial')     AS trial_schools,
+        COUNT(DISTINCT t.id) FILTER (WHERE t.status = 'suspended') AS suspended_schools,
+        COUNT(DISTINCT t.id) FILTER (WHERE t.status = 'pending')   AS pending_schools,
         COALESCE(SUM(i.amount_dzd) FILTER (WHERE i.status = 'paid'), 0) AS total_revenue
       FROM tenants t
       LEFT JOIN invoices i ON i.tenant_id = t.id
@@ -85,7 +63,6 @@ router.get('/stats', platformAuth, async (req, res) => {
     res.status(500).json({ error: err.message })
   }
 })
-
 // ── GET /api/platform/tenants ─────────────────────────────────
 router.get('/tenants', platformAuth, async (req, res) => {
   const { status, search, page = 1, limit = 20 } = req.query

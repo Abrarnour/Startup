@@ -20,7 +20,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const logoUrl = req.file ? `/uploads/logos/${req.file.filename}` : null
+
 const logoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, '../uploads/logos')
@@ -75,7 +75,7 @@ router.post('/register', logoUpload.single('logo'), async (req, res) => {
     secondaryColor,
     planId,
   } = req.body
-
+  const logoUrl = req.file ? `/uploads/logos/${req.file.filename}` : null
   // Validation أساسي
   if (!schoolName || !slug || !adminEmail || !adminPassword) {
     return res.status(400).json({ error: 'Missing required fields' })
@@ -109,12 +109,12 @@ router.post('/register', logoUpload.single('logo'), async (req, res) => {
         cleanSlug,
         schoolName,
         schoolNameAr || schoolName,
-        logoUrl,
+
         '', // db_name empty until approved
         planId || 1,
         adminEmail,
         adminPhone || null,
-        wilaya || city || null,
+
         city || null,
         primaryColor || '#1a73e8',
         secondaryColor || '#f5f5f5',
@@ -122,6 +122,8 @@ router.post('/register', logoUpload.single('logo'), async (req, res) => {
           pending_hash: pendingHash,
           admin_first_name: firstName || '', // ← ADD
           admin_last_name: lastName || '',
+          logo_url: logoUrl,
+          wilaya: wilaya || null,
         }),
       ],
     )

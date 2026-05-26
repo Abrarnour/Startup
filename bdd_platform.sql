@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 96XH3khhjLpHXfNHd8OVm6QddabIr8SqI7RbrKjlSwO0pLztH5tqqYUfl6ODGSt
+\restrict AwBfaIJDSwCnQsXFvfSbh9cVQfR5hMiku4kcdq66RBt16RJY3Rmat5KwdFt11P9
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -479,5 +479,5 @@ ALTER TABLE ONLY public.tenants
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 96XH3khhjLpHXfNHd8OVm6QddabIr8SqI7RbrKjlSwO0pLztH5tqqYUfl6ODGSt
+\unrestrict AwBfaIJDSwCnQsXFvfSbh9cVQfR5hMiku4kcdq66RBt16RJY3Rmat5KwdFt11P9
 

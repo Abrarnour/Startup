@@ -1,8 +1,8 @@
---
 -- PostgreSQL database dump
 --
 
-\restrict 6I28pWHr7AvxnwZR5evJ8Ix3qlxl9GXC29QlG58rHPbKZI7rjuTbeyx8cj62CER
+-- Removed invalid backslash restriction directive to support node-pg execution
+-- \restrict 6I28pWHr7AvxnwZR5evJ8Ix3qlxl9GXC29QlG58rHPbKZI7rjuTbeyx8cj62CER
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)

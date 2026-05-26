@@ -10,24 +10,32 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // ── Detect tenant slug ────────────────────────────────────────
 // Priority: subdomain > ?tenant= query param > localStorage (dev)
-export const tenantSlug = (() => {
+function detectTenantSlug() {
+  // 1. Subdomain (production)
   const h = window.location.hostname
   const parts = h.split('.')
-  if (parts.length >= 3 && parts[0] !== 'www') return parts[0].toLowerCase()
+  if (parts.length >= 2 && parts[0] !== 'localhost' && parts[0] !== 'www')
+    return parts[0].toLowerCase()
+
+  // 2. Path-based /school/:slug (dev & fallback)
+  const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)(\/|$)/i)
+  if (pathMatch) return pathMatch[1].toLowerCase()
+
+  // 3. Query param
   const params = new URLSearchParams(window.location.search)
   const q = params.get('tenant')
   if (q) return q.toLowerCase()
+
   return null
-})()
+}
+
+export const tenantSlug = detectTenantSlug()
 
 // ── Platform (SuperAdmin) views ───────────────────────────────
 import PlatformLogin from '../platform/PlatformLogin.vue'
 import PlatformLayout from '../platform/PlatformLayout.vue'
 import PlatformDashboard from '../platform/PlatformDashboard.vue'
 import OnboardingWizard from '../platform/OnboarDingwizard.vue'
-
-// ── Public (no tenant) ────────────────────────────────────────
-import SchoolRegister from '../platform/SchoolRegister.vue'
 
 // ── School app views ──────────────────────────────────────────
 import HomeView from '../views/HomeView.vue'
@@ -40,15 +48,77 @@ import StudentDashboard from '../views/StudentDashboard.vue'
 import TeacherDashboard from '../views/TeacherDashboard.vue'
 import ParentDashboard from '../views/ParentDashboard.vue'
 import PublicCourses from '../views/PublicCourses.vue'
+
 export const isSchool = !!tenantSlug
+const schoolChildren = [
+  { path: '', name: 'Home', component: HomeView },
+  { path: 'login', name: 'Login', component: LoginPage, meta: { requiresTenant: true } },
+  {
+    path: 'courses',
+    name: 'Courses',
+    component: CourseList,
+    meta: { requiresAuth: true, requiresTenant: true },
+  },
+  {
+    path: 'calendar',
+    name: 'Calendar',
+    component: AppCalendar,
+    meta: { requiresAuth: true, requiresTenant: true },
+  },
+  {
+    path: 'groups',
+    name: 'Groups',
+    component: GroupManagement,
+    meta: { requiresAuth: true, requiresTenant: true, roles: ['admin', 'teacher'] },
+  },
+  {
+    path: 'add-teacher',
+    name: 'AddTeacher',
+    component: AddTeacher,
+    meta: { requiresAuth: true, requiresTenant: true, roles: ['admin'] },
+  },
+  {
+    path: 'student-dashboard',
+    name: 'StudentDashboard',
+    component: StudentDashboard,
+    meta: { requiresAuth: true, requiresTenant: true, roles: ['student'] },
+  },
+  {
+    path: 'teacher-dashboard',
+    name: 'TeacherDashboard',
+    component: TeacherDashboard,
+    meta: { requiresAuth: true, requiresTenant: true, roles: ['teacher'] },
+  },
+  {
+    path: 'parent-dashboard',
+    name: 'ParentDashboard',
+    component: ParentDashboard,
+    meta: { requiresAuth: true, requiresTenant: true, roles: ['parent'] },
+  },
+  { path: 'public-courses', name: 'PublicCourses', component: PublicCourses },
+]
 const routes = [
-  // ── 1. SuperAdmin Platform ──────────────────────────────────
+  // ── 0. School Self-Registration (SaaS onboarding) ──────────
+  {
+    path: '/register-school',
+    name: 'RegisterSchool',
+    component: OnboardingWizard,
+    meta: { isPublicRegistration: true },
+  },
   {
     path: '/platform/login',
     name: 'PlatformLogin',
     component: PlatformLogin,
     meta: { requiresNoAuth: true, isPlatform: true },
   },
+  // ── 0b. Post-approval onboarding (admin activates tenant) ──
+  {
+    path: '/onboarding/:tenantId',
+    name: 'OnboardingWizard',
+    component: OnboardingWizard,
+    meta: { isPublicRegistration: true },
+  },
+
   {
     path: '/platform',
     component: PlatformLayout,
@@ -63,27 +133,18 @@ const routes = [
         name: 'PlatformDashboard',
         component: PlatformDashboard,
       },
-      {
-        path: 'onboarding/:tenantId',
-        name: 'OnboardingWizard',
-        component: OnboardingWizard,
-      },
-      {
-        path: '/register',
-        redirect: '/register-school',
-      },
     ],
   },
-
-  // ── 2. School Self-Registration (free trial) ─────────────────
   {
-    path: '/register-school',
-    name: 'SchoolRegister',
-    component: SchoolRegister,
-    meta: { isPlatform: false, isPublicRegistration: true },
+    path: '/school/:slug',
+    meta: { isSchoolRoot: true },
+    children: schoolChildren.map((r) => ({
+      ...r,
+      // prefix names to avoid conflict with legacy routes
+      name: r.name ? `School_${r.name}` : undefined,
+    })),
   },
-
-  // ── 3. School App ─────────────────────────────────────────────
+  // ── 2. School App ─────────────────────────────────────────────
   {
     path: '/',
     name: 'Home',
@@ -162,7 +223,17 @@ router.beforeEach((to, from, next) => {
     if (!platformToken) return next('/platform/login')
     return next()
   }
-
+  if (to.path.startsWith('/school/')) {
+    if (to.meta.requiresAuth && !schoolToken) {
+      const slug = to.params.slug
+      return next(`/school/${slug}/login`)
+    }
+    if (to.meta.roles && user && !to.meta.roles.includes(user.role)) {
+      const slug = to.params.slug
+      return next(`/school/${slug}/courses`)
+    }
+    return next()
+  }
   // 2. School auth routes
   if (to.meta.requiresAuth) {
     if (!schoolToken) return next('/login')
@@ -180,5 +251,7 @@ router.beforeEach((to, from, next) => {
 
   next()
 })
-
+export function getSlugFromRoute(route) {
+  return route?.params?.slug || tenantSlug
+}
 export default router

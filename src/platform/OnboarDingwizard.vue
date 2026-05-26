@@ -22,7 +22,6 @@
 
     <!-- Form card -->
     <div class="ob-card">
-
       <!-- Step 0: Personal Info (the human registering) -->
       <div v-if="currentStep === 0" class="step-content">
         <h2>معلوماتك الشخصية</h2>
@@ -46,8 +45,19 @@
 
         <div class="field">
           <label>كلمة المرور <span class="req">*</span></label>
-          <input v-model="form.adminPassword" type="password" placeholder="8 أحرف على الأقل" dir="ltr" />
-          <p class="field-hint">{{ form.adminPassword.length > 0 && form.adminPassword.length < 8 ? '⚠️ كلمة المرور قصيرة جداً' : '' }}</p>
+          <input
+            v-model="form.adminPassword"
+            type="password"
+            placeholder="8 أحرف على الأقل"
+            dir="ltr"
+          />
+          <p class="field-hint">
+            {{
+              form.adminPassword.length > 0 && form.adminPassword.length < 8
+                ? '⚠️ كلمة المرور قصيرة جداً'
+                : ''
+            }}
+          </p>
         </div>
 
         <div class="field-row">
@@ -85,7 +95,7 @@
               placeholder="najah"
               @input="checkSlug"
               dir="ltr"
-              style="direction:ltr"
+              style="direction: ltr"
             />
             <span class="domain">.votre-plateforme.dz</span>
           </div>
@@ -131,9 +141,11 @@
           <div class="preview-header" :style="{ background: form.primaryColor }">
             <img v-if="logoPreview" :src="logoPreview" class="preview-logo" />
             <span v-else class="preview-logo-ph">🏫</span>
-            <span style="color:white;font-weight:bold">{{ form.schoolNameAr || 'اسم المدرسة' }}</span>
+            <span style="color: white; font-weight: bold">{{
+              form.schoolNameAr || 'اسم المدرسة'
+            }}</span>
           </div>
-          <p style="padding:12px;color:#333;font-size:0.85rem">معاينة شكل نافبار المدرسة</p>
+          <p style="padding: 12px; color: #333; font-size: 0.85rem">معاينة شكل نافبار المدرسة</p>
         </div>
       </div>
 
@@ -192,8 +204,12 @@
         <div class="success-icon">✅</div>
         <h2>تم استلام طلبكم!</h2>
         <p>مدرستك في انتظار موافقة المشرف. سيتم إعلامكم قريباً على البريد الإلكتروني.</p>
-        <p class="trial-info">بعد الموافقة، ادخل عبر: <strong>{{ form.slug }}.plateforme.dz</strong></p>
-        <p class="trial-info" style="color:#666;font-size:0.8rem">ستجد شعار مدرستك وألوانها عند تسجيل الدخول.</p>
+        <p class="trial-info">
+          بعد الموافقة، ادخل عبر: <strong>{{ form.slug }}.plateforme.dz</strong>
+        </p>
+        <p class="trial-info" style="color: #666; font-size: 0.8rem">
+          ستجد شعار مدرستك وألوانها عند تسجيل الدخول.
+        </p>
       </div>
     </div>
   </div>
@@ -203,8 +219,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const currentStep = ref(0)
 const loading = ref(false)
 const success = ref(false)
@@ -217,18 +232,64 @@ const steps = ['معلوماتك', 'المدرسة', 'الهوية', 'الباق
 const plans = ref([])
 
 const wilayas = [
-  '01 - Adrar', '02 - Chlef', '03 - Laghouat', '04 - Oum El Bouaghi', '05 - Batna',
-  '06 - Béjaïa', '07 - Biskra', '08 - Béchar', '09 - Blida', '10 - Bouira',
-  '11 - Tamanrasset', '12 - Tébessa', '13 - Tlemcen', '14 - Tiaret', '15 - Tizi Ouzou',
-  '16 - Alger', '17 - Djelfa', '18 - Jijel', '19 - Sétif', '20 - Saïda',
-  '21 - Skikda', '22 - Sidi Bel Abbès', '23 - Annaba', '24 - Guelma', '25 - Constantine',
-  '26 - Médéa', '27 - Mostaganem', "28 - M'Sila", '29 - Mascara', '30 - Ouargla',
-  '31 - Oran', '32 - El Bayadh', '33 - Illizi', '34 - Bordj Bou Arréridj', '35 - Boumerdès',
-  '36 - El Tarf', '37 - Tindouf', '38 - Tissemsilt', '39 - El Oued', '40 - Khenchela',
-  '41 - Souk Ahras', '42 - Tipaza', '43 - Mila', '44 - Aïn Defla', '45 - Naâma',
-  '46 - Aïn Témouchent', '47 - Ghardaïa', '48 - Relizane', '49 - Timimoun',
-  '50 - Bordj Badji Mokhtar', '51 - Ouled Djellal', '52 - Béni Abbès', '53 - In Salah',
-  '54 - In Guezzam', '55 - Touggourt', '56 - Djanet', "57 - El M'Ghair", '58 - El Meniaa',
+  '01 - Adrar',
+  '02 - Chlef',
+  '03 - Laghouat',
+  '04 - Oum El Bouaghi',
+  '05 - Batna',
+  '06 - Béjaïa',
+  '07 - Biskra',
+  '08 - Béchar',
+  '09 - Blida',
+  '10 - Bouira',
+  '11 - Tamanrasset',
+  '12 - Tébessa',
+  '13 - Tlemcen',
+  '14 - Tiaret',
+  '15 - Tizi Ouzou',
+  '16 - Alger',
+  '17 - Djelfa',
+  '18 - Jijel',
+  '19 - Sétif',
+  '20 - Saïda',
+  '21 - Skikda',
+  '22 - Sidi Bel Abbès',
+  '23 - Annaba',
+  '24 - Guelma',
+  '25 - Constantine',
+  '26 - Médéa',
+  '27 - Mostaganem',
+  "28 - M'Sila",
+  '29 - Mascara',
+  '30 - Ouargla',
+  '31 - Oran',
+  '32 - El Bayadh',
+  '33 - Illizi',
+  '34 - Bordj Bou Arréridj',
+  '35 - Boumerdès',
+  '36 - El Tarf',
+  '37 - Tindouf',
+  '38 - Tissemsilt',
+  '39 - El Oued',
+  '40 - Khenchela',
+  '41 - Souk Ahras',
+  '42 - Tipaza',
+  '43 - Mila',
+  '44 - Aïn Defla',
+  '45 - Naâma',
+  '46 - Aïn Témouchent',
+  '47 - Ghardaïa',
+  '48 - Relizane',
+  '49 - Timimoun',
+  '50 - Bordj Badji Mokhtar',
+  '51 - Ouled Djellal',
+  '52 - Béni Abbès',
+  '53 - In Salah',
+  '54 - In Guezzam',
+  '55 - Touggourt',
+  '56 - Djanet',
+  "57 - El M'Ghair",
+  '58 - El Meniaa',
 ]
 
 const form = ref({
@@ -253,7 +314,8 @@ const form = ref({
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${API}/api/onboarding/plans`)
+    const res = await axios.get(`${API}/onboarding/plans`)
+
     plans.value = res.data
   } catch {
     plans.value = [
@@ -275,7 +337,7 @@ function checkSlug() {
   slugStatus.value = { type: '', msg: 'جاري التحقق...' }
   slugTimeout.value = setTimeout(async () => {
     try {
-      const res = await axios.get(`${API}/api/onboarding/check-slug?slug=${s}`)
+      const res = await axios.get(`${API}/onboarding/check-slug?slug=${s}`)
       slugStatus.value = res.data.available
         ? { type: 'ok', msg: `✅ ${s}.plateforme.dz متاح` }
         : { type: 'error', msg: '❌ هذا الاسم محجوز، جرّب اسماً آخر' }
@@ -336,7 +398,7 @@ async function submitRegistration() {
       formData.append('logo', form.value.logoFile)
     }
 
-    await axios.post(`${API}/api/onboarding/register`, formData, {
+    await axios.post(`${API}/onboarding/register`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
 
@@ -407,8 +469,14 @@ async function submitRegistration() {
   color: #888;
   white-space: nowrap;
 }
-.step-dot.active span { background: var(--primary, #1a73e8); color: white; }
-.step-dot.done span { background: #34a853; color: white; }
+.step-dot.active span {
+  background: var(--primary, #1a73e8);
+  color: white;
+}
+.step-dot.done span {
+  background: #34a853;
+  color: white;
+}
 
 .ob-card {
   background: white;
@@ -416,7 +484,7 @@ async function submitRegistration() {
   padding: 32px;
   width: 100%;
   max-width: 540px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
 }
 
 .step-content h2 {
@@ -430,15 +498,20 @@ async function submitRegistration() {
   margin-bottom: 20px;
 }
 
-.field { margin-bottom: 16px; }
+.field {
+  margin-bottom: 16px;
+}
 .field label {
   display: block;
   font-size: 0.85rem;
   color: #555;
   margin-bottom: 6px;
 }
-.req { color: #e53935; }
-.field input, .field select {
+.req {
+  color: #e53935;
+}
+.field input,
+.field select {
   width: 100%;
   padding: 12px 14px;
   border: 2px solid #e0e0e0;
@@ -449,18 +522,48 @@ async function submitRegistration() {
   box-sizing: border-box;
   background: white;
 }
-.field input:focus, .field select:focus { border-color: var(--primary, #1a73e8); }
-.field-hint { font-size: 0.75rem; color: #e53935; margin-top: 4px; min-height: 18px; }
+.field input:focus,
+.field select:focus {
+  border-color: var(--primary, #1a73e8);
+}
+.field-hint {
+  font-size: 0.75rem;
+  color: #e53935;
+  margin-top: 4px;
+  min-height: 18px;
+}
 
-.field-row { display: flex; gap: 12px; }
-.field-row .field { flex: 1; }
+.field-row {
+  display: flex;
+  gap: 12px;
+}
+.field-row .field {
+  flex: 1;
+}
 
-.slug-row { display: flex; align-items: center; gap: 8px; }
-.slug-row input { flex: 1; }
-.domain { color: #888; font-size: 0.8rem; white-space: nowrap; }
-.slug-status { font-size: 0.78rem; margin-top: 4px; }
-.slug-status.ok { color: #34a853; }
-.slug-status.error { color: #e53935; }
+.slug-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slug-row input {
+  flex: 1;
+}
+.domain {
+  color: #888;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.slug-status {
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+.slug-status.ok {
+  color: #34a853;
+}
+.slug-status.error {
+  color: #e53935;
+}
 
 .logo-upload {
   border: 2px dashed #ccc;
@@ -470,13 +573,30 @@ async function submitRegistration() {
   cursor: pointer;
   transition: border-color 0.2s;
 }
-.logo-upload:hover { border-color: var(--primary, #1a73e8); }
-.logo-preview-img { max-height: 80px; max-width: 100%; border-radius: 8px; }
-.upload-placeholder span { font-size: 2rem; }
-.upload-placeholder p { color: #888; margin: 4px 0 0; font-size: 0.85rem; }
+.logo-upload:hover {
+  border-color: var(--primary, #1a73e8);
+}
+.logo-preview-img {
+  max-height: 80px;
+  max-width: 100%;
+  border-radius: 8px;
+}
+.upload-placeholder span {
+  font-size: 2rem;
+}
+.upload-placeholder p {
+  color: #888;
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+}
 
-.colors-row { display: flex; gap: 16px; }
-.colors-row .field { flex: 1; }
+.colors-row {
+  display: flex;
+  gap: 16px;
+}
+.colors-row .field {
+  flex: 1;
+}
 .color-picker {
   display: flex;
   align-items: center;
@@ -485,15 +605,44 @@ async function submitRegistration() {
   border: 2px solid #e0e0e0;
   border-radius: 10px;
 }
-.color-picker input[type='color'] { width: 40px; height: 32px; border: none; padding: 0; cursor: pointer; }
-.color-picker span { font-size: 0.82rem; color: #555; }
+.color-picker input[type='color'] {
+  width: 40px;
+  height: 32px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.color-picker span {
+  font-size: 0.82rem;
+  color: #555;
+}
 
-.preview-card { border-radius: 12px; overflow: hidden; margin-top: 16px; }
-.preview-header { padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
-.preview-logo { height: 30px; width: 30px; border-radius: 50%; object-fit: cover; }
-.preview-logo-ph { font-size: 1.4rem; }
+.preview-card {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.preview-header {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preview-logo {
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.preview-logo-ph {
+  font-size: 1.4rem;
+}
 
-.plans-grid { display: flex; flex-direction: column; gap: 10px; }
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .plan-card {
   border: 2px solid #e0e0e0;
   border-radius: 12px;
@@ -501,14 +650,41 @@ async function submitRegistration() {
   cursor: pointer;
   transition: all 0.2s;
 }
-.plan-card:hover, .plan-card.selected { border-color: var(--primary, #1a73e8); }
-.plan-card.selected { background: #f0f7ff; }
-.plan-card h3 { margin: 0 0 6px; }
-.price { font-size: 1.2rem; font-weight: bold; color: var(--primary, #1a73e8); margin-bottom: 6px; }
-.plan-card ul { margin: 0; padding-right: 18px; color: #555; font-size: 0.82rem; }
-.trial-note { text-align: center; color: #34a853; font-size: 0.82rem; margin-top: 10px; }
+.plan-card:hover,
+.plan-card.selected {
+  border-color: var(--primary, #1a73e8);
+}
+.plan-card.selected {
+  background: #f0f7ff;
+}
+.plan-card h3 {
+  margin: 0 0 6px;
+}
+.price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary, #1a73e8);
+  margin-bottom: 6px;
+}
+.plan-card ul {
+  margin: 0;
+  padding-right: 18px;
+  color: #555;
+  font-size: 0.82rem;
+}
+.trial-note {
+  text-align: center;
+  color: #34a853;
+  font-size: 0.82rem;
+  margin-top: 10px;
+}
 
-.ob-nav { display: flex; justify-content: space-between; margin-top: 28px; gap: 12px; }
+.ob-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+  gap: 12px;
+}
 .btn-back {
   padding: 12px 22px;
   border: 2px solid #ddd;
@@ -517,7 +693,8 @@ async function submitRegistration() {
   cursor: pointer;
   font-size: 0.95rem;
 }
-.btn-next, .btn-submit {
+.btn-next,
+.btn-submit {
   flex: 1;
   padding: 14px;
   border: none;
@@ -528,12 +705,16 @@ async function submitRegistration() {
   cursor: pointer;
   transition: opacity 0.2s;
 }
-.btn-next:disabled, .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-next:disabled,
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .success-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -547,12 +728,25 @@ async function submitRegistration() {
   max-width: 420px;
   width: 90%;
 }
-.success-icon { font-size: 3.5rem; margin-bottom: 14px; }
-.trial-info { color: #555; font-size: 0.88rem; margin-top: 8px; }
+.success-icon {
+  font-size: 3.5rem;
+  margin-bottom: 14px;
+}
+.trial-info {
+  color: #555;
+  font-size: 0.88rem;
+  margin-top: 8px;
+}
 
 @media (max-width: 480px) {
-  .ob-card { padding: 20px; }
-  .field-row { flex-direction: column; }
-  .colors-row { flex-direction: column; }
+  .ob-card {
+    padding: 20px;
+  }
+  .field-row {
+    flex-direction: column;
+  }
+  .colors-row {
+    flex-direction: column;
+  }
 }
 </style>

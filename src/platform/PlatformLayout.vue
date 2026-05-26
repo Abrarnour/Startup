@@ -9,7 +9,8 @@ import { useLanguage } from '../composables/useLanguage.js'
 const hostname = window.location.hostname.replace(':5173', '').replace(':3000', '')
 const parts = hostname.split('.')
 const isPlatform = parts[0] === 'admin' || window.location.pathname.startsWith('/platform')
-const isSchool = parts.length >= 2 && parts[0] !== 'admin' && parts[0] !== 'localhost' && parts[0] !== 'www'
+const isSchool =
+  parts.length >= 2 && parts[0] !== 'admin' && parts[0] !== 'localhost' && parts[0] !== 'www'
 
 // ── Tenant data (for school app only) ─────────────────────────
 const tenantConfig = ref(null)
@@ -53,7 +54,9 @@ const handleLogout = () => {
   user.value = null
   router.push('/login')
 }
-const toggleDarkMode = () => { darkMode.value = !darkMode.value }
+const toggleDarkMode = () => {
+  darkMode.value = !darkMode.value
+}
 
 const toastMessage = ref(null)
 
@@ -63,7 +66,9 @@ const navbarStyle = computed(() => ({
 }))
 
 const schoolLogoUrl = computed(() => tenantConfig.value?.logo_url || null)
-const schoolName = computed(() => tenantConfig.value?.school_name_ar || tenantConfig.value?.school_name || '')
+const schoolName = computed(
+  () => tenantConfig.value?.school_name_ar || tenantConfig.value?.school_name || '',
+)
 </script>
 
 <template>
@@ -126,16 +131,38 @@ const schoolName = computed(() => tenantConfig.value?.school_name_ar || tenantCo
                   :href="`mailto:${tenantConfig?.admin_email || ''}`"
                   class="flex items-center gap-2 hover:text-blue-400 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
                   </svg>
                   {{ tenantConfig?.admin_email || 'contact@ecole.dz' }}
                 </a>
               </p>
               <p v-if="tenantConfig?.admin_phone" class="text-gray-400">
                 <span class="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
                   </svg>
                   {{ tenantConfig.admin_phone }}
                 </span>
@@ -154,9 +181,8 @@ const schoolName = computed(() => tenantConfig.value?.school_name_ar || tenantCo
         </div>
         <div class="border-t border-gray-700 pt-6">
           <p class="text-gray-400 text-sm">
-            &copy; {{ new Date().getFullYear() }} —
-            {{ schoolName || 'École' }}.
-            Plateforme propulsée par EduSaaS DZ.
+            &copy; {{ new Date().getFullYear() }} — {{ schoolName || 'École' }}. Plateforme
+            propulsée par EduSaaS DZ.
           </p>
         </div>
       </div>
@@ -173,7 +199,9 @@ const schoolName = computed(() => tenantConfig.value?.school_name_ar || tenantCo
           <p class="font-bold text-sm">Rappel de cours</p>
           <p class="text-sm opacity-90 mt-1">{{ toastMessage }}</p>
         </div>
-        <button @click="toastMessage = null" class="ml-2 opacity-70 hover:opacity-100 text-xl">×</button>
+        <button @click="toastMessage = null" class="ml-2 opacity-70 hover:opacity-100 text-xl">
+          ×
+        </button>
       </div>
     </Transition>
   </div>
@@ -186,7 +214,16 @@ const schoolName = computed(() => tenantConfig.value?.school_name_ar || tenantCo
   --color-primary-light: #e8f0fe;
   --color-secondary: #f0f4ff;
 }
-.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s ease; }
-.slide-up-enter-from { opacity: 0; transform: translateY(20px); }
-.slide-up-leave-to { opacity: 0; transform: translateY(20px); }
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.4s ease;
+}
+.slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
 </style>

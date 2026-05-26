@@ -1,7 +1,7 @@
 // src/composables/useTenant.js
 // ─────────────────────────────────────────────────────────────
-// يجلب config المدرسة من الـ API ويطبق الألوان والشعار
-// يُستدعى مرة واحدة في App.vue عند التحميل
+// Fetches school config from API and applies colors/logo
+// Called once in App.vue on load
 // ─────────────────────────────────────────────────────────────
 
 import { ref, readonly } from 'vue'
@@ -13,16 +13,28 @@ const error = ref(null)
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+// ── Detect slug — also handles /school/:slug path ─────────────
+function resolveSlug() {
+  // Try tenantSlug (set at startup from subdomain, path, or query)
+  if (tenantSlug) return tenantSlug
+  // Try path at runtime (for late navigation to /school/:slug)
+  const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)(\/|$)/i)
+  if (pathMatch) return pathMatch[1].toLowerCase()
+  return null
+}
+
 export function useTenant() {
-  async function loadTenant() {
-    if (!tenantSlug) {
+  async function loadTenant(slugOverride) {
+    const slug = slugOverride || resolveSlug()
+
+    if (!slug) {
       loading.value = false
       return
     }
 
     try {
       const res = await fetch(`${API}/api/tenant-config`, {
-        headers: { 'X-Tenant-Slug': tenantSlug },
+        headers: { 'X-Tenant-Slug': slug },
       })
 
       if (!res.ok) throw new Error('School not found')
@@ -30,14 +42,18 @@ export function useTenant() {
       const data = await res.json()
       tenant.value = data
 
-      // ── تطبيق CSS Variables على الـ :root ────────────────
+      // Apply CSS Variables to :root
       applyTheme(data)
 
-      // ── تحديث favicon وعنوان الصفحة ──────────────────────
-      document.title = data.school_name_ar || data.school_name
+      // Update favicon and page title
+      document.title = data.school_name_ar || data.school_name || 'School Platform'
       if (data.logo_url) {
+        // Build absolute URL for logo
+        const logoSrc = data.logo_url.startsWith('http')
+          ? data.logo_url
+          : `${API.replace('/api', '')}${data.logo_url}`
         const favicon = document.querySelector("link[rel*='icon']")
-        if (favicon) favicon.href = data.logo_url
+        if (favicon) favicon.href = logoSrc
       }
     } catch (err) {
       error.value = err.message
@@ -51,12 +67,12 @@ export function useTenant() {
     tenant: readonly(tenant),
     loading: readonly(loading),
     error: readonly(error),
-    tenantSlug,
+    tenantSlug: resolveSlug(),
     loadTenant,
   }
 }
 
-// ── تطبيق ألوان المدرسة كـ CSS Variables ─────────────────────
+// ── Apply school colors as CSS Variables ─────────────────────
 function applyTheme(config) {
   const root = document.documentElement
   root.style.setProperty('--color-primary', config.primary_color || '#1a73e8')
@@ -68,7 +84,6 @@ function applyTheme(config) {
   )
 }
 
-// ── Hex color helpers ─────────────────────────────────────────
 function darkenColor(hex, amount) {
   return shiftColor(hex, -amount)
 }

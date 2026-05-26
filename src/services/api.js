@@ -75,11 +75,12 @@ export const platformCreateInvoice = (data) =>
   }).then((r) => r.json())
 
 // ── School registration (onboarding) ──────────────────────────
-export const registerSchool = async (schoolData) => {
+export const registerSchool = async (formData) => {
+  // formData is already a FormData object built in OnboardingWizard
   const response = await fetch(`${API_URL}/onboarding/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(schoolData),
+    // NO Content-Type header — browser sets it automatically with boundary for multipart
+    body: formData,
   })
   if (!response.ok) {
     const errorData = await response.json()
