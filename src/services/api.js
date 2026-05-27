@@ -12,10 +12,22 @@ const getPlatformToken = () => localStorage.getItem('platform_token')
 // ── School request headers (includes tenant slug) ──────────────
 const getHeaders = (includeAuth = true) => {
   const token = getToken()
-  const h = window.location.hostname
-  const parts = h.split('.')
-  const subdomainSlug = parts.length >= 3 && parts[0] !== 'www' ? parts[0] : null
-  const slug = tenantSlug || subdomainSlug
+
+  // 1. Module-load slug (most reliable — from URL when page first loaded)
+  let slug = tenantSlug
+
+  // 2. Subdomain fallback (production)
+  if (!slug) {
+    const h = window.location.hostname
+    const parts = h.split('.')
+    if (parts.length >= 3 && parts[0] !== 'www') slug = parts[0]
+  }
+
+  // 3. Current path fallback — catches navigation where slug was lost
+  if (!slug) {
+    const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)/i)
+    if (pathMatch) slug = pathMatch[1].toLowerCase()
+  }
 
   return {
     'Content-Type': 'application/json',
@@ -58,11 +70,15 @@ export const platformSetStatus = (id, status) =>
   }).then((r) => r.json())
 
 // BUG 6 FIX: was referencing PLATFORM_URL before it was defined
-export const platformApproveTenant = (id) =>
-  fetch(`${PLATFORM_URL}/tenants/${id}/approve`, {
+export const platformApproveTenant = async (id) => {
+  const r = await fetch(`${PLATFORM_URL}/tenants/${id}/approve`, {
     method: 'POST',
     headers: platformHeaders(),
-  }).then((r) => r.json())
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`)
+  return data
+}
 
 export const platformGetInvoices = () =>
   fetch(`${PLATFORM_URL}/invoices`, { headers: platformHeaders() }).then((r) => r.json())
@@ -94,7 +110,7 @@ export const registerSchool = async (formData) => {
 export const login = async (email, password) => {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(false), // false = no auth token (we don't have it yet), but includes X-Tenant-Slug
     body: JSON.stringify({ email, password }),
   })
 
@@ -112,7 +128,7 @@ export const login = async (email, password) => {
 export const register = async (userData) => {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(false),
     body: JSON.stringify(userData),
   })
 

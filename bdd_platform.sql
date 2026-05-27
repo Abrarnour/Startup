@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AwBfaIJDSwCnQsXFvfSbh9cVQfR5hMiku4kcdq66RBt16RJY3Rmat5KwdFt11P9
+\restrict 2Tn7w22aaZsJvCIVMj2HQfPkjfk1Dzbdk7qTJeEDBAxTBbNQkXr5k2yjZe4hbUn
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -294,7 +294,7 @@ COPY public.plans (id, name, name_ar, price_dzd, max_students, max_teachers, fea
 --
 
 COPY public.platform_admins (id, email, password_hash, name, role, is_active, created_at) FROM stdin;
-1	admin@platform.dz	$2b$10$atXaBgGk3L8aWiKIuv3ov.RcXq1rfPoWDKf8F0tNZasEBOWe3kDte	Super Admin	super_admin	t	2026-05-22 22:23:04.866702
+1	admin@platform.dz	$2b$10$8Xt5lgC8s/Hd.jj5o9UNL.8pYfoZZx98/hl9FkfqVu9brcWU.p6Aa	Super Admin	super_admin	t	2026-05-22 22:23:04.866702
 \.
 
 
@@ -304,6 +304,8 @@ COPY public.platform_admins (id, email, password_hash, name, role, is_active, cr
 
 COPY public.platform_logs (id, tenant_id, admin_id, action, details, created_at) FROM stdin;
 1	1	\N	tenant_registered_pending	{"email": "abrarlacida@gmail.com"}	2026-05-24 18:03:41.604741
+2	4	\N	tenant_registered_pending	{"email": "test@gmail.com"}	2026-05-26 16:30:50.210203
+3	10	\N	tenant_registered_pending	{"email": "lol@gmail.com"}	2026-05-27 07:58:40.200117
 \.
 
 
@@ -313,6 +315,9 @@ COPY public.platform_logs (id, tenant_id, admin_id, action, details, created_at)
 
 COPY public.tenants (id, slug, school_name, school_name_ar, logo_url, primary_color, secondary_color, db_name, plan_id, status, trial_ends_at, admin_email, admin_phone, city, country, onboarding_done, created_at, updated_at, details) FROM stdin;
 1	abrar	Abrar	ابرار	\N	#971ce9	#f5f5f5		1	pending	\N	abrarlacida@gmail.com	07653543366	Oran	DZ	f	2026-05-24 18:03:41.589578	2026-05-24 18:03:41.589578	{"pending_hash": "$2b$10$VjNSXxABFr4C53PWumOHuex.opNXRdyZ2On0YlIMxGIZxaKFRSDiy"}
+4	test	test	تاست	\N	#1ce9a4	#0a42db		1	pending	\N	test@gmail.com	09999999999	\N	DZ	f	2026-05-26 16:30:50.192034	2026-05-26 16:30:50.192034	{"wilaya": "15 - Tizi Ouzou", "logo_url": "/uploads/logos/logo_1779809450055.png", "pending_hash": "$2b$10$FYcL1LwzhlLDfXKVLLpTEeMnn6aFaeaTilrzPDSRTDx0hvMMo.VGq", "admin_last_name": "testy", "admin_first_name": "test"}
+10	lol	lol	لول	\N	#e91ce2	#803bc4		1	pending	\N	lol@gmail.com	05555555555	\N	DZ	f	2026-05-27 07:58:40.187016	2026-05-27 07:58:40.187016	{"wilaya": "14 - Tiaret", "logo_url": "/uploads/logos/logo_1779865120067.png", "pending_hash": "$2b$10$3CYTjRRkCA7YZ3cK2ipTYesJmYfp1dVBXXB3hz6xuPWRW3k6PNeFS", "admin_last_name": "lol", "admin_first_name": "lol"}
+5	belmahi	Belmahi School	مدرسة بلماحي	\N	#0255ae	#f4f3ef	project	\N	active	\N	admin@belmahi.dz	0550000001	Oran	DZ	t	2026-05-26 23:51:25.70446	2026-05-27 08:28:52.233822	{}
 \.
 
 
@@ -341,14 +346,14 @@ SELECT pg_catalog.setval('public.platform_admins_id_seq', 1, true);
 -- Name: platform_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.platform_logs_id_seq', 1, true);
+SELECT pg_catalog.setval('public.platform_logs_id_seq', 3, true);
 
 
 --
 -- Name: tenants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tenants_id_seq', 3, true);
+SELECT pg_catalog.setval('public.tenants_id_seq', 14, true);
 
 
 --
@@ -479,5 +484,5 @@ ALTER TABLE ONLY public.tenants
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AwBfaIJDSwCnQsXFvfSbh9cVQfR5hMiku4kcdq66RBt16RJY3Rmat5KwdFt11P9
+\unrestrict 2Tn7w22aaZsJvCIVMj2HQfPkjfk1Dzbdk7qTJeEDBAxTBbNQkXr5k2yjZe4hbUn
 

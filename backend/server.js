@@ -62,7 +62,21 @@ app.get('/api/tenant-config', async (req, res) => {
        FROM tenants WHERE slug = $1`,
       [slug.toLowerCase()],
     )
-    if (!result.rows[0]) return res.status(404).json({ error: 'School not found' })
+    if (!result.rows[0]) {
+      // belmahi is the built-in demo — always return hardcoded config
+      if (slug === 'belmahi') {
+        return res.json({
+          slug: 'belmahi',
+          school_name: 'Belmahi School',
+          school_name_ar: 'مدرسة بلماحي',
+          logo_url: null,
+          primary_color: '#0255ae',
+          secondary_color: '#f4f3ef',
+          status: 'active',
+        })
+      }
+      return res.status(404).json({ error: 'School not found' })
+    }
     res.json(result.rows[0])
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -109,6 +123,34 @@ async function getActiveTenants() {
   } catch (err) {
     console.error('Failed to fetch tenants for cron:', err.message)
     return []
+  }
+}
+
+// ── Auto-seed: ensure the demo Belmahi school exists in platform_db ──
+// This runs once at startup. If 'belmahi' is already in tenants it does nothing.
+// This is what makes /school/belmahi work out of the box without manual SQL.
+async function seedDemoTenant() {
+  try {
+    await platformPool.query(`
+      INSERT INTO tenants
+        (slug, school_name, school_name_ar, logo_url, primary_color, secondary_color,
+         db_name, status, admin_email, admin_phone, city, country, onboarding_done)
+      VALUES
+        ('belmahi', 'Belmahi School', 'مدرسة بلماحي',
+         NULL, '#0255ae', '#f4f3ef',
+         'project', 'active',
+         'admin@belmahi.dz', '0550000001', 'Oran', 'DZ', true)
+      ON CONFLICT (slug) DO UPDATE
+        SET db_name        = EXCLUDED.db_name,
+            status         = EXCLUDED.status,
+            school_name    = EXCLUDED.school_name,
+            school_name_ar = EXCLUDED.school_name_ar,
+            primary_color  = EXCLUDED.primary_color,
+            updated_at     = NOW()
+    `)
+    console.log('✅ Demo tenant "belmahi" seeded → project')
+  } catch (err) {
+    console.error('⚠️  seedDemoTenant error (non-fatal):', err.message)
   }
 }
 
@@ -317,6 +359,8 @@ app.listen(PORT, () => {
   console.log(`📊 Platform API: /api/platform`)
   console.log(`🏫 School API:   /api/auth  (+ X-Tenant-Slug header)`)
   console.log(`⏰ Cron jobs started`)
+  // Seed the demo tenant after DB is ready
+  seedDemoTenant()
 })
 
 export default app

@@ -164,9 +164,12 @@ router.post('/tenants/:id/approve', platformAuth, async (req, res) => {
       schoolName: tenant.school_name,
     })
 
-    // 2. Set status='trial', save db_name, clear pending details
+    // 2. Set status='trial', save db_name, promote logo_url from details, clear pending details
     const trialEnds = new Date()
     trialEnds.setDate(trialEnds.getDate() + 14)
+
+    // Promote logo_url from registration details to the main column before clearing details
+    const logoUrl = details.logo_url || tenant.logo_url || null
 
     await platformPool.query(
       `UPDATE tenants
@@ -174,10 +177,11 @@ router.post('/tenants/:id/approve', platformAuth, async (req, res) => {
              db_name = $1,
              trial_ends_at = $2,
              onboarding_done = true,
+             logo_url = $4,
              details = NULL,
              updated_at = NOW()
        WHERE id = $3`,
-      [dbName, trialEnds, tenant.id],
+      [dbName, trialEnds, tenant.id, logoUrl],
     )
 
     // 3. Log the action

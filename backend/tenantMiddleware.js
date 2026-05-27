@@ -48,6 +48,22 @@ export async function tenantMiddleware(req, res, next) {
     const tenant = await getTenantBySlug(slug)
 
     if (!tenant) {
+      // 'belmahi' is the built-in demo school — always resolve to bdd_school
+      if (slug === 'belmahi') {
+        req.tenant = {
+          id: 0,
+          slug: 'belmahi',
+          school_name: 'Belmahi School',
+          school_name_ar: 'مدرسة بلماحي',
+          db_name: 'project',
+          logo_url: null,
+          primary_color: '#0255ae',
+          secondary_color: '#f4f3ef',
+          status: 'active',
+        }
+        req.db = getPool('project')
+        return next()
+      }
       return res.status(404).json({ error: 'School not found' })
     }
 

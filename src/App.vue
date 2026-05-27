@@ -5,9 +5,9 @@ import NavBar from './components/NavBar.vue'
 import { getCurrentUser, logout as apiLogout } from './services/api.js'
 import { useLanguage } from './composables/useLanguage.js'
 import { useTenant } from './composables/useTenant.js'
-import { isSchool } from './router/index.js'
+import { isSchool, tenantSlug } from './router/index.js'
 
-const { loading, error, loadTenant } = useTenant()
+const { loading, error, loadTenant, markLoaded } = useTenant()
 
 onMounted(async () => {
   user.value = getCurrentUser()
@@ -16,7 +16,7 @@ onMounted(async () => {
   if (isSchool) {
     await loadTenant()
   } else {
-    loading.value = false
+    markLoaded()
   }
 })
 
@@ -27,15 +27,17 @@ const router = useRouter()
 const user = ref(null)
 const darkMode = ref(false)
 
+const schoolBase = tenantSlug ? `/school/${tenantSlug}` : ''
+
 const handleLogin = (loggedInUser) => {
   user.value = loggedInUser
-  router.push('/courses')
+  router.push(`${schoolBase}/courses`)
 }
 
 const handleLogout = () => {
   apiLogout()
   user.value = null
-  router.push('/login')
+  router.push(`${schoolBase}/login`)
 }
 
 const toggleDarkMode = () => {

@@ -11,7 +11,8 @@ const tenant = ref(null)
 const loading = ref(true)
 const error = ref(null)
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+// Strip trailing /api so we don't get double /api/api in the URL
+const API = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/api$/, '')
 
 // ── Detect slug — also handles /school/:slug path ─────────────
 function resolveSlug() {
@@ -56,11 +57,30 @@ export function useTenant() {
         if (favicon) favicon.href = logoSrc
       }
     } catch (err) {
-      error.value = err.message
-      console.error('Failed to load tenant config:', err.message)
+      // If this is the demo/product slug, use hardcoded fallback
+      // so the product always renders even without a platform_db entry
+      if (slug === 'belmahi') {
+        tenant.value = {
+          slug: 'belmahi',
+          school_name: 'Belmahi School',
+          school_name_ar: 'مدرسة بلماحي',
+          logo_url: null,
+          primary_color: '#0255ae',
+          secondary_color: '#f4f3ef',
+          status: 'active',
+        }
+        console.warn('useTenant: belmahi not in platform_db — using hardcoded fallback')
+      } else {
+        error.value = err.message
+        console.error('Failed to load tenant config:', err.message)
+      }
     } finally {
       loading.value = false
     }
+  }
+
+  function markLoaded() {
+    loading.value = false
   }
 
   return {
@@ -69,6 +89,7 @@ export function useTenant() {
     error: readonly(error),
     tenantSlug: resolveSlug(),
     loadTenant,
+    markLoaded,
   }
 }
 

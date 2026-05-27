@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useTenant } from '../composables/useTenant.js'
+import { tenantSlug } from '../router/index.js'
 import { RouterLink, useRoute } from 'vue-router'
 import {
   User as UserIcon,
@@ -28,6 +30,21 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['logout', 'toggle-dark-mode', 'toggle-lang'])
+
+const { tenant } = useTenant()
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const tenantLogoUrl = computed(() => {
+  if (!tenant.value?.logo_url) return null
+  const u = tenant.value.logo_url
+  return u.startsWith('http') ? u : API.replace('/api', '') + u
+})
+const tenantName = computed(() => tenant.value?.school_name || '')
+const tenantInitial = computed(() => tenantName.value?.charAt(0)?.toUpperCase() || '🏫')
+
+// p(path) — prepend /school/:slug when running inside a school route
+// so navigation never drops the tenant context
+const base = tenantSlug ? `/school/${tenantSlug}` : ''
+const p = (path) => `${base}${path}`
 
 const {
   notifications,
@@ -122,7 +139,7 @@ const roleBadgeClass = computed(() => {
           <Bell :size="14" />
         </span>
         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-blue-600 mb-1">Belmahi School</p>
+          <p class="text-xs font-bold text-blue-600 mb-1">{{ tenantName }}</p>
           <p class="text-sm text-gray-800 leading-snug">{{ toastNotif.message }}</p>
         </div>
         <button
@@ -144,14 +161,21 @@ const roleBadgeClass = computed(() => {
       <div class="flex items-center justify-between h-14 sm:h-16">
         <!-- ── LEFT: Logo ─────────────────────────────────────────────────── -->
         <RouterLink
-          to="/"
+          :to="p('/')"
           class="flex items-center gap-2 text-white hover:text-blue-200 transition-colors shrink-0"
         >
           <img
-            src="/belmahilogo.jpg"
-            alt="Belmahi School"
+            v-if="tenantLogoUrl"
+            :src="tenantLogoUrl"
+            :alt="tenantName"
             class="w-9 h-9 sm:w-11 sm:h-11 object-cover rounded-full border-2 border-white shadow-lg"
           />
+          <div
+            v-else
+            class="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-white shadow-lg bg-white flex items-center justify-center text-blue-700 font-bold text-lg"
+          >
+            {{ tenantInitial }}
+          </div>
           <div class="hidden sm:block">
             <h1 class="text-sm font-bold leading-tight">{{ props.t('nav_portal_title') }}</h1>
             <p class="text-xs text-blue-100">{{ props.t('nav_school_subtitle') }}</p>
@@ -162,10 +186,10 @@ const roleBadgeClass = computed(() => {
         <ul class="hidden md:flex items-center gap-1">
           <li>
             <RouterLink
-              to="/"
+              :to="p('/')"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/') ? 'bg-white/30 text-white' : 'text-blue-100 hover:bg-white/20',
+                isActive(p('/')) ? 'bg-white/30 text-white' : 'text-blue-100 hover:bg-white/20',
               ]"
             >
               <Home :size="18" />
@@ -174,10 +198,12 @@ const roleBadgeClass = computed(() => {
           </li>
           <li v-if="user && user.role === 'admin'">
             <RouterLink
-              to="/courses"
+              :to="p('/courses')"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/courses') ? 'bg-white/30 text-white' : 'text-blue-100 hover:bg-white/20',
+                isActive(p('/courses'))
+                  ? 'bg-white/30 text-white'
+                  : 'text-blue-100 hover:bg-white/20',
               ]"
             >
               <BookOpen :size="18" />
@@ -186,10 +212,10 @@ const roleBadgeClass = computed(() => {
           </li>
           <li v-if="user && user.role === 'teacher'">
             <RouterLink
-              to="/teacher-dashboard"
+              :to="p('/teacher-dashboard')"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/teacher-dashboard')
+                isActive(p('/teacher-dashboard'))
                   ? 'bg-white/30 text-white'
                   : 'text-blue-100 hover:bg-white/20',
               ]"
@@ -203,7 +229,7 @@ const roleBadgeClass = computed(() => {
               :to="user.role === 'Parent' ? '/parent-dashboard' : '/student-dashboard'"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/parent-dashboard') || isActive('/student-dashboard')
+                isActive(p('/parent-dashboard')) || isActive(p('/student-dashboard'))
                   ? 'bg-white/30 text-white'
                   : 'text-blue-100 hover:bg-white/20',
               ]"
@@ -214,10 +240,10 @@ const roleBadgeClass = computed(() => {
           </li>
           <li v-if="user && user.role === 'admin'">
             <RouterLink
-              to="/add-teacher"
+              :to="p('/add-teacher')"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/add-teacher')
+                isActive(p('/add-teacher'))
                   ? 'bg-white/30 text-white'
                   : 'text-blue-100 hover:bg-white/20',
               ]"
@@ -228,10 +254,10 @@ const roleBadgeClass = computed(() => {
           </li>
           <li v-if="user">
             <RouterLink
-              to="/calendar"
+              :to="p('/calendar')"
               :class="[
                 'flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all text-sm',
-                isActive('/calendar')
+                isActive(p('/calendar'))
                   ? 'bg-white/30 text-white'
                   : 'text-blue-100 hover:bg-white/20',
               ]"
@@ -378,10 +404,10 @@ const roleBadgeClass = computed(() => {
             </div>
             <RouterLink
               v-else
-              to="/login"
+              :to="p('/login')"
               :class="[
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold transition-all text-sm',
-                isActive('/login')
+                isActive(p('/login'))
                   ? 'bg-white text-purple-600'
                   : 'bg-white/20 text-white hover:bg-white/30',
               ]"
@@ -444,7 +470,7 @@ const roleBadgeClass = computed(() => {
           :class="darkMode ? 'text-gray-300' : 'text-gray-600'"
           class="font-semibold text-sm"
         >
-          Belmahi School
+          {{ tenantName }}
         </p>
         <button
           @click="closeMobileMenu"
@@ -458,11 +484,11 @@ const roleBadgeClass = computed(() => {
       <!-- Drawer nav links -->
       <nav class="p-4 space-y-1">
         <RouterLink
-          to="/"
+          :to="p('/')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/')
+            isActive(p('/'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -477,11 +503,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user && user.role === 'admin'"
-          to="/courses"
+          :to="p('/courses')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/courses')
+            isActive(p('/courses'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -496,11 +522,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user && user.role === 'teacher'"
-          to="/teacher-dashboard"
+          :to="p('/teacher-dashboard')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/teacher-dashboard')
+            isActive(p('/teacher-dashboard'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -515,11 +541,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user && user.role === 'Parent'"
-          to="/parent-dashboard"
+          :to="p('/parent-dashboard')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/parent-dashboard')
+            isActive(p('/parent-dashboard'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -534,11 +560,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user && user.role === 'student'"
-          to="/student-dashboard"
+          :to="p('/student-dashboard')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/student-dashboard')
+            isActive(p('/student-dashboard'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -553,11 +579,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user && user.role === 'admin'"
-          to="/add-teacher"
+          :to="p('/add-teacher')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/add-teacher')
+            isActive(p('/add-teacher'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -572,11 +598,11 @@ const roleBadgeClass = computed(() => {
 
         <RouterLink
           v-if="user"
-          to="/calendar"
+          :to="p('/calendar')"
           @click="closeMobileMenu"
           :class="[
             'flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all text-sm',
-            isActive('/calendar')
+            isActive(p('/calendar'))
               ? darkMode
                 ? 'bg-blue-900 text-blue-200'
                 : 'bg-blue-50 text-blue-700'
@@ -605,7 +631,7 @@ const roleBadgeClass = computed(() => {
         </button>
         <RouterLink
           v-else
-          to="/login"
+          :to="p('/login')"
           @click="closeMobileMenu"
           class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold transition-all"
         >

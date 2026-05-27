@@ -2,10 +2,34 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useLanguage } from '../composables/useLanguage.js'
+import { useTenant } from '../composables/useTenant.js'
 import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
 import AnimatedButton from '../components/AnimatedButton.vue'
 const { t } = useLanguage()
+const { tenant } = useTenant()
 const router = useRouter()
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+// Dynamic hero heading — uses tenant school name if available, else translation key
+const heroHeading = computed(() => tenant.value?.school_name || t('hero_h_main'))
+
+// Dynamic about images — uses tenant logo if available, else default Belmahi photos
+const resolveLogoUrl = (u) => (u.startsWith('http') ? u : API.replace('/api', '') + u)
+const aboutImg1 = computed(() => {
+  if (!tenant.value?.logo_url) return null
+  return resolveLogoUrl(tenant.value.logo_url)
+})
+const aboutImg2 = computed(() => {
+  if (!tenant.value?.logo_url) return null
+  return resolveLogoUrl(tenant.value.logo_url)
+})
+
+// Dynamic maps link
+const mapsLink = computed(() => {
+  if (tenant.value?.city)
+    return `https://www.google.com/maps/search/${encodeURIComponent(tenant.value.school_name + ' ' + tenant.value.city)}`
+  return 'https://www.google.com/maps/place/Belmahi+School'
+})
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
   user: { type: Object, default: null },
@@ -175,7 +199,7 @@ onUnmounted(() => clearInterval(tInterval))
 
         <h1 class="hero-heading">
           <span class="h-top">{{ t('hero_h_top') }}</span>
-          <span class="h-main">{{ t('hero_h_main') }}</span>
+          <span class="h-main">{{ heroHeading }}</span>
         </h1>
 
         <p class="hero-body">
@@ -202,7 +226,7 @@ onUnmounted(() => clearInterval(tInterval))
       <div class="hero-right">
         <img
           src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1000&q=88"
-          alt="Salle de classe Belmahi"
+          :alt="`Salle de classe ${heroHeading}`"
           class="hero-photo"
         />
         <div class="hero-photo-veil"></div>
@@ -354,10 +378,10 @@ onUnmounted(() => clearInterval(tInterval))
         <!-- Visual -->
         <div class="about-vis">
           <div class="av-frame av-frame1">
-            <img src="/blmahi.jpeg" alt="Belmahi School" class="av-img" />
+            <img :src="aboutImg1" :alt="heroHeading" class="av-img" />
           </div>
           <div class="av-frame av-frame2">
-            <img src="/blmahi2.jpeg" alt="Belmahi School" class="av-img" />
+            <img :src="aboutImg2" :alt="heroHeading" class="av-img" />
           </div>
           <div class="av-chip">
             <span class="av-chip-num">8+</span>
@@ -382,11 +406,7 @@ onUnmounted(() => clearInterval(tInterval))
               <span>{{ pt }}</span>
             </li>
           </ul>
-          <a
-            href="https://www.google.com/maps/place/Belmahi+School"
-            target="_blank"
-            class="map-btn"
-          >
+          <a :href="mapsLink" target="_blank" class="map-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"

@@ -1913,6 +1913,3 @@ ALTER TABLE ONLY public.student_notes
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict 6I28pWHr7AvxnwZR5evJ8Ix3qlxl9GXC29QlG58rHPbKZI7rjuTbeyx8cj62CER
-

@@ -18,6 +18,18 @@
           <span>{{ item.label }}</span>
         </button>
       </nav>
+      <!-- ── Quick-access: open the general school product ── -->
+      <div class="sidebar-demo">
+        <a
+          :href="demoSchoolLink"
+          target="_blank"
+          class="demo-school-btn"
+          title="فتح المنصة التجريبية (École Belmahi)"
+        >
+          🏫 فتح المنصة
+        </a>
+      </div>
+
       <div class="sidebar-footer">
         <div class="admin-badge">{{ adminName }}</div>
         <button class="logout-btn" @click="handleLogout">تسجيل الخروج</button>
@@ -29,7 +41,10 @@
       <div v-if="activeTab === 'dashboard'">
         <div class="page-header">
           <h1 class="page-title">إحصائيات المنصة</h1>
-          <button class="btn-primary" @click="loadStats">🔄 تحديث</button>
+          <div style="display: flex; gap: 0.5rem; align-items: center">
+            <a :href="demoSchoolLink" target="_blank" class="btn-demo">🏫 فتح المنصة</a>
+            <button class="btn-primary" @click="loadStats">🔄 تحديث</button>
+          </div>
         </div>
 
         <div v-if="statsLoading" class="loading-state">
@@ -366,6 +381,11 @@ const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 )
 const FRONTEND_URL = window.location.origin // e.g. http://localhost:5173
 
+// Link to the general demo school (the product itself — bdd_school.sql database)
+// When clicked it opens the school at /school/belmahi which uses the bdd_school DB
+const DEMO_SLUG = import.meta.env.VITE_DEMO_SLUG || 'belmahi'
+const demoSchoolLink = `${FRONTEND_URL}/school/${DEMO_SLUG}`
+
 const navItems = [
   { key: 'dashboard', label: 'الإحصائيات', icon: '📊' },
   { key: 'tenants', label: 'المدارس', icon: '🏫' },
@@ -598,6 +618,45 @@ const formatDate = (d) => (d ? new Date(d).toLocaleDateString('ar-DZ') : '—')
 .nav-item:hover {
   background: #16213e;
   color: #fff;
+}
+.sidebar-demo {
+  padding: 0.75rem 0 0.25rem;
+}
+.demo-school-btn {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: linear-gradient(135deg, #1ba8f4, #0255ae);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.demo-school-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.btn-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #1ba8f4, #0255ae);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.btn-demo:hover {
+  opacity: 0.85;
 }
 .sidebar-footer {
   border-top: 1px solid #333;
