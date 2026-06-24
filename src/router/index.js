@@ -1,27 +1,26 @@
 // src/router/index.js
 // ─────────────────────────────────────────────────────────────
-// 3 interface roots:
-//   /platform/*      → SuperAdmin (no tenant needed)
-//   /register-school → School owner self-registration (no tenant)
-//   /*               → School app (requires tenant slug)
+// 4 interface roots:
+//   /mudar           → MUDAR platform landing page (public)
+//   /mudar/login     → Unified login (school clients + superadmin)
+//   /platform/*      → SuperAdmin dashboard (requires platform_token)
+//   /register-school → School self-registration
+//   /school/:slug/*  → School tenant app
+//   /*               → School app (legacy, requires tenant slug)
 // ─────────────────────────────────────────────────────────────
 
 import { createRouter, createWebHistory } from 'vue-router'
 
 // ── Detect tenant slug ────────────────────────────────────────
-// Priority: subdomain > ?tenant= query param > localStorage (dev)
 function detectTenantSlug() {
-  // 1. Subdomain (production)
   const h = window.location.hostname
   const parts = h.split('.')
   if (parts.length >= 2 && parts[0] !== 'localhost' && parts[0] !== 'www')
     return parts[0].toLowerCase()
 
-  // 2. Path-based /school/:slug (dev & fallback)
   const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)(\/|$)/i)
   if (pathMatch) return pathMatch[1].toLowerCase()
 
-  // 3. Query param
   const params = new URLSearchParams(window.location.search)
   const q = params.get('tenant')
   if (q) return q.toLowerCase()
@@ -31,11 +30,14 @@ function detectTenantSlug() {
 
 export const tenantSlug = detectTenantSlug()
 
-// ── Platform (SuperAdmin) views ───────────────────────────────
+// ── MUDAR Platform views ──────────────────────────────────────
+import MudarLanding from '../platform/MudarLanding.vue'
+import MudarLogin from '../platform/MudarLogin.vue'
 import PlatformLogin from '../platform/PlatformLogin.vue'
 import PlatformLayout from '../platform/PlatformLayout.vue'
 import PlatformDashboard from '../platform/PlatformDashboard.vue'
 import OnboardingWizard from '../platform/OnboarDingwizard.vue'
+import RegisterSchoolPage from '../platform/RegisterSchoolPage.vue'
 
 // ── School app views ──────────────────────────────────────────
 import HomeView from '../views/HomeView.vue'
@@ -50,6 +52,7 @@ import ParentDashboard from '../views/ParentDashboard.vue'
 import PublicCourses from '../views/PublicCourses.vue'
 
 export const isSchool = !!tenantSlug
+
 const schoolChildren = [
   { path: '', name: 'Home', component: HomeView },
   { path: 'login', name: 'Login', component: LoginPage, meta: { requiresTenant: true } },
@@ -97,21 +100,39 @@ const schoolChildren = [
   },
   { path: 'public-courses', name: 'PublicCourses', component: PublicCourses },
 ]
+
 const routes = [
-  // ── 0. School Self-Registration (SaaS onboarding) ──────────
+  // ── MUDAR Platform ─────────────────────────────────────────
+  {
+    path: '/mudar',
+    name: 'MudarLanding',
+    component: MudarLanding,
+    meta: { isPublic: true, isPublicRegistration: true },
+  },
+  {
+    path: '/mudar/login',
+    name: 'MudarLogin',
+    component: MudarLogin,
+    meta: { isPublic: true, isPublicRegistration: true },
+  },
+
+  // ── School Self-Registration ────────────────────────────────
   {
     path: '/register-school',
     name: 'RegisterSchool',
-    component: OnboardingWizard,
+    component: RegisterSchoolPage,
     meta: { isPublicRegistration: true },
   },
+
+  // ── SuperAdmin login (keep for direct access) ───────────────
   {
     path: '/platform/login',
     name: 'PlatformLogin',
     component: PlatformLogin,
     meta: { requiresNoAuth: true, isPlatform: true },
   },
-  // ── 0b. Post-approval onboarding (admin activates tenant) ──
+
+  // ── Onboarding wizard ───────────────────────────────────────
   {
     path: '/onboarding/:tenantId',
     name: 'OnboardingWizard',
@@ -119,43 +140,40 @@ const routes = [
     meta: { isPublicRegistration: true },
   },
 
+  // ── SuperAdmin dashboard ────────────────────────────────────
   {
     path: '/platform',
     component: PlatformLayout,
     meta: { requiresPlatformAuth: true, isPlatform: true },
     children: [
-      {
-        path: '',
-        redirect: '/platform/dashboard',
-      },
-      {
-        path: 'dashboard',
-        name: 'PlatformDashboard',
-        component: PlatformDashboard,
-      },
+      { path: '', redirect: '/platform/dashboard' },
+      { path: 'dashboard', name: 'PlatformDashboard', component: PlatformDashboard },
     ],
   },
+
+  // ── School tenant app (slug-based) ─────────────────────────
   {
     path: '/school/:slug',
     meta: { isSchoolRoot: true },
     children: schoolChildren.map((r) => ({
       ...r,
-      // prefix names to avoid conflict with legacy routes
       name: r.name ? `School_${r.name}` : undefined,
     })),
   },
-  // ── 2. School App ─────────────────────────────────────────────
+
+  // ── Root redirect ───────────────────────────────────────────
+  // If there's a tenant slug in URL, show school home; else show MUDAR landing
   {
     path: '/',
-    name: 'Home',
-    component: HomeView,
+    redirect: () => {
+      const slug = detectTenantSlug()
+      return slug ? `/school/${slug}` : '/mudar'
+    },
+    meta: { isPublicRegistration: true },
   },
-  {
-    path: '/login',
-    name: 'Login',
-    component: LoginPage,
-    meta: { requiresTenant: true },
-  },
+
+  // ── Legacy school routes (for subdomain/query-param tenants) ─
+  { path: '/login', name: 'Login', component: LoginPage, meta: { requiresTenant: true } },
   {
     path: '/courses',
     name: 'Courses',
@@ -198,11 +216,7 @@ const routes = [
     component: ParentDashboard,
     meta: { requiresAuth: true, requiresTenant: true, roles: ['parent'] },
   },
-  {
-    path: '/public-courses',
-    name: 'PublicCourses',
-    component: PublicCourses,
-  },
+  { path: '/public-courses', name: 'PublicCourses', component: PublicCourses },
 ]
 
 const router = createRouter({
@@ -218,11 +232,13 @@ router.beforeEach((to, from, next) => {
   const userRaw = localStorage.getItem('user')
   const user = userRaw ? JSON.parse(userRaw) : null
 
-  // 1. Platform routes
+  // Platform admin routes
   if (to.meta.requiresPlatformAuth) {
-    if (!platformToken) return next('/platform/login')
+    if (!platformToken) return next('/mudar/login')
     return next()
   }
+
+  // /school/:slug/* routes
   if (to.path.startsWith('/school/')) {
     if (to.meta.requiresAuth && !schoolToken) {
       const slug = to.params.slug
@@ -234,7 +250,8 @@ router.beforeEach((to, from, next) => {
     }
     return next()
   }
-  // 2. School auth routes
+
+  // School auth routes (legacy)
   if (to.meta.requiresAuth) {
     if (!schoolToken) return next('/login')
     if (to.meta.roles && user && !to.meta.roles.includes(user.role)) {
@@ -243,15 +260,16 @@ router.beforeEach((to, from, next) => {
     return next()
   }
 
-  // 3. requiresTenant: if no tenant slug, block access
+  // requiresTenant: if no tenant slug, redirect to MUDAR landing
   if (to.meta.requiresTenant && !tenantSlug) {
-    // No tenant → redirect to school self-registration page
-    return next('/register-school')
+    return next('/mudar')
   }
 
   next()
 })
+
 export function getSlugFromRoute(route) {
   return route?.params?.slug || tenantSlug
 }
+
 export default router

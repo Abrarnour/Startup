@@ -1,6 +1,7 @@
 <script setup>
 // src/components/StatsModal.vue
 import { ref, computed, watch, onMounted } from 'vue'
+import { getHeaders } from '../services/api.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -18,10 +19,9 @@ const fetchDash = async () => {
   loading.value = true
   error.value = null
   try {
-    const token = localStorage.getItem('token')
     const API = import.meta.env.VITE_API_URL
     const res = await fetch(`${API}/stats/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: getHeaders(), // ✅ includes X-Tenant-Slug + Authorization
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))

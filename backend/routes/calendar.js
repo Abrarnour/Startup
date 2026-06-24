@@ -207,28 +207,34 @@ function buildEvents(row, year, month, extraFields = {}) {
 
 // ─── Shared SQL fragment: fetch session_schedule for groups in a month ─────────
 // Returns an object: { group_id → [session rows] }
-async function fetchSessionsByGroupIds(groupIds, year, month) {
+async function fetchSessionsByGroupIds(pool, groupIds, year, month) {
   if (!groupIds.length) return {}
   const firstDay = `${year}-${String(month).padStart(2, '0')}-01`
   const lastDate = new Date(year, month, 0)
   const lastDay = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}-${String(lastDate.getDate()).padStart(2, '0')}`
 
-  const result = await pool.query(
-    `SELECT group_id, id, session_number, session_date, start_time, end_time, is_cancelled
-     FROM session_schedule
-     WHERE group_id = ANY($1::int[])
-       AND session_date BETWEEN $2 AND $3
-       AND (is_cancelled IS NOT TRUE)
-     ORDER BY group_id, session_date, start_time`,
-    [groupIds, firstDay, lastDay],
-  )
+  try {
+    const result = await pool.query(
+      `SELECT group_id, id, session_number, session_date, start_time, end_time, is_cancelled
+       FROM session_schedule
+       WHERE group_id = ANY($1::int[])
+         AND session_date BETWEEN $2 AND $3
+         AND (is_cancelled IS NOT TRUE)
+       ORDER BY group_id, session_date, start_time`,
+      [groupIds, firstDay, lastDay],
+    )
 
-  const map = {}
-  for (const row of result.rows) {
-    if (!map[row.group_id]) map[row.group_id] = []
-    map[row.group_id].push(row)
+    const map = {}
+    for (const row of result.rows) {
+      if (!map[row.group_id]) map[row.group_id] = []
+      map[row.group_id].push(row)
+    }
+    return map
+  } catch (err) {
+    // session_schedule table may not exist in older DBs — return empty map
+    console.warn('fetchSessionsByGroupIds warning:', err.message)
+    return {}
   }
-  return map
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -273,7 +279,7 @@ router.get('/admin', authMiddleware, async (req, res) => {
     `)
 
     const groupIds = result.rows.map((r) => r.group_id)
-    const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
+    const sessionMap = await fetchSessionsByGroupIds(pool, groupIds, year, month)
 
     const events = []
     for (const row of result.rows) {
@@ -283,8 +289,8 @@ router.get('/admin', authMiddleware, async (req, res) => {
 
     res.json({ events, year, month })
   } catch (err) {
-    console.error('Erreur calendar admin:', err)
-    res.status(500).json({ error: 'Erreur serveur' })
+    console.error('Erreur calendar admin:', err.message, err.stack)
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
   }
 })
 
@@ -327,7 +333,7 @@ router.get('/teacher', authMiddleware, async (req, res) => {
     )
 
     const groupIds = result.rows.map((r) => r.group_id)
-    const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
+    const sessionMap = await fetchSessionsByGroupIds(pool, groupIds, year, month)
 
     const events = []
     for (const row of result.rows) {
@@ -340,7 +346,7 @@ router.get('/teacher', authMiddleware, async (req, res) => {
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar teacher:', err)
-    res.status(500).json({ error: 'Erreur serveur' })
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
   }
 })
 
@@ -392,7 +398,7 @@ router.get('/parent', authMiddleware, async (req, res) => {
     )
 
     const groupIds = [...new Set(result.rows.map((r) => r.group_id))]
-    const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
+    const sessionMap = await fetchSessionsByGroupIds(pool, groupIds, year, month)
 
     const events = []
     for (const row of result.rows) {
@@ -404,7 +410,7 @@ router.get('/parent', authMiddleware, async (req, res) => {
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar parent:', err)
-    res.status(500).json({ error: 'Erreur serveur' })
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
   }
 })
 
@@ -451,7 +457,7 @@ router.get('/student', authMiddleware, async (req, res) => {
     )
 
     const groupIds = result.rows.map((r) => r.group_id)
-    const sessionMap = await fetchSessionsByGroupIds(groupIds, year, month)
+    const sessionMap = await fetchSessionsByGroupIds(pool, groupIds, year, month)
 
     const events = []
     for (const row of result.rows) {
@@ -462,7 +468,7 @@ router.get('/student', authMiddleware, async (req, res) => {
     res.json({ events, year, month })
   } catch (err) {
     console.error('Erreur calendar student:', err)
-    res.status(500).json({ error: 'Erreur serveur' })
+    res.status(500).json({ error: 'Erreur serveur', detail: err.message })
   }
 })
 

@@ -5,30 +5,34 @@ import { useLanguage } from '../composables/useLanguage.js'
 import { useTenant } from '../composables/useTenant.js'
 import { Home, GraduationCap, Star, ListChecks } from 'lucide-vue-next'
 import AnimatedButton from '../components/AnimatedButton.vue'
-const { t } = useLanguage()
+const { t, currentLang } = useLanguage()
 const { tenant } = useTenant()
+const isAdmin = computed(() => {
+  try { return JSON.parse(localStorage.getItem('user') || '{}')?.role === 'admin' } catch { return false }
+})
 const router = useRouter()
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 // Dynamic hero heading — uses tenant school name if available, else translation key
 const heroHeading = computed(() => tenant.value?.school_name || t('hero_h_main'))
 
-// Dynamic about images — uses tenant logo if available, else default Belmahi photos
+// Dynamic about images — uses tenant about photos, falls back to logo, then null
 const resolveLogoUrl = (u) => (u.startsWith('http') ? u : API.replace('/api', '') + u)
 const aboutImg1 = computed(() => {
-  if (!tenant.value?.logo_url) return null
-  return resolveLogoUrl(tenant.value.logo_url)
+  const u = tenant.value?.about_photo1 || tenant.value?.logo_url
+  return u ? resolveLogoUrl(u) : null
 })
 const aboutImg2 = computed(() => {
-  if (!tenant.value?.logo_url) return null
-  return resolveLogoUrl(tenant.value.logo_url)
+  const u = tenant.value?.about_photo2 || tenant.value?.logo_url
+  return u ? resolveLogoUrl(u) : null
 })
 
-// Dynamic maps link
+// Dynamic maps link — use tenant.map_link if set, else build from school name+city
 const mapsLink = computed(() => {
+  if (tenant.value?.map_link) return tenant.value.map_link
   if (tenant.value?.city)
     return `https://www.google.com/maps/search/${encodeURIComponent(tenant.value.school_name + ' ' + tenant.value.city)}`
-  return 'https://www.google.com/maps/place/Belmahi+School'
+  return 'https://www.google.com/maps'
 })
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -199,7 +203,11 @@ onUnmounted(() => clearInterval(tInterval))
 
         <h1 class="hero-heading">
           <span class="h-top">{{ t('hero_h_top') }}</span>
-          <span class="h-main">{{ heroHeading }}</span>
+          <span class="h-main">
+            {{
+              currentLang === 'ar' && tenant?.school_name_ar ? tenant.school_name_ar : heroHeading
+            }}
+          </span>
         </h1>
 
         <p class="hero-body">
@@ -245,7 +253,12 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          2. BENTO STATS
          ══════════════════════════════════ -->
-    <section id="stats-section" class="bento reveal" ref="countersRef">
+    <section
+      id="stats-section"
+      class="bento reveal"
+      :class="{ 'dark-mode': darkMode }"
+      ref="countersRef"
+    >
       <div class="bento-grid">
         <!-- Big card -->
         <div class="bc bc-navy bc-big">
@@ -289,7 +302,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          3. LEVELS — full photo cards
          ══════════════════════════════════ -->
-    <section id="levels-section" class="levels reveal">
+    <section id="levels-section" class="levels reveal" :class="{ 'dark-mode': darkMode }">
       <div class="levels-top">
         <div>
           <span class="eyetag">{{ t('levels_eyetag') }}</span>
@@ -396,7 +409,7 @@ onUnmounted(() => clearInterval(tInterval))
         <div class="about-txt">
           <span class="eyetag">{{ t('about_eyetag') }}</span>
           <h2 class="about-h">{{ t('about_title_1') }}<br />{{ t('about_title_2') }}</h2>
-          <p class="about-desc" v-html="t('about_desc')"></p>
+          <p class="about-desc" v-html="tenant?.description || t('about_desc')"></p>
           <ul class="about-list">
             <li
               v-for="pt in [t('about_li_1'), t('about_li_2'), t('about_li_3'), t('about_li_4')]"
@@ -421,7 +434,7 @@ onUnmounted(() => clearInterval(tInterval))
     <!-- ══════════════════════════════════
          6. TESTIMONIALS — featured quote
          ══════════════════════════════════ -->
-    <section id="testimonials-section" class="testi reveal">
+    <section id="testimonials-section" class="testi reveal" :class="{ 'dark-mode': darkMode }">
       <div class="testi-layout">
         <!-- Sidebar -->
         <div class="testi-side">
@@ -510,9 +523,9 @@ onUnmounted(() => clearInterval(tInterval))
 .home {
   --navy: #040d1f;
   --blue: #0255ae;
-  --electric: #1ba8f4;
+  --electric: var(--color-primary, #1ba8f4);
   --amber: #fca716;
-  --cream: #f4f3ef;
+  --cream: var(--color-secondary, #f4f3ef);
   --gray: #64748b;
   --white: #ffffff;
   /* Navbar height — keep in sync with NavBar h-16 (64px) */
@@ -521,6 +534,7 @@ onUnmounted(() => clearInterval(tInterval))
   font-family: 'DM Sans', sans-serif;
   background: var(--cream);
   overflow-x: hidden;
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
   gap: clamp(0.75rem, 2vw, 1.25rem);
@@ -552,8 +566,8 @@ h3 {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--blue);
-  background: rgba(2, 85, 174, 0.09);
+  color: var(--color-primary, var(--blue));
+  background: color-mix(in srgb, var(--color-primary, #0255ae) 10%, transparent);
   padding: 0.28rem 0.85rem;
   border-radius: 999px;
   margin-bottom: 0.9rem;
@@ -574,7 +588,7 @@ h3 {
 }
 .sec-title em {
   font-style: italic;
-  color: var(--blue);
+  color: var(--color-primary, var(--blue));
 }
 .dark-mode .sec-title {
   color: var(--white);
@@ -700,7 +714,11 @@ h3 {
 }
 
 .snav-active {
-  background: linear-gradient(135deg, #0255ae, #1ba8f4) !important;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark, #0255ae),
+    var(--color-primary, #1ba8f4)
+  ) !important;
   color: white !important;
   box-shadow: 0 4px 16px rgba(2, 85, 174, 0.28);
 }
@@ -710,10 +728,14 @@ h3 {
 }
 .dark-mode .snav-btn:hover {
   background: rgba(27, 168, 244, 0.12);
-  color: #1ba8f4;
+  color: var(--color-primary, #1ba8f4);
 }
 .dark-mode .snav-active {
-  background: linear-gradient(135deg, #0255ae, #1ba8f4) !important;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark, #0255ae),
+    var(--color-primary, #1ba8f4)
+  ) !important;
   color: white !important;
 }
 
@@ -1043,6 +1065,11 @@ h3 {
   color: var(--navy);
   box-shadow: 0 2px 20px rgba(2, 85, 174, 0.07);
 }
+.dark-mode .bc-light {
+  background: #0d1a33;
+  color: white;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
 .bc-electric {
   background: var(--electric);
   color: white;
@@ -1131,6 +1158,16 @@ h3 {
 /* ═══════════════════════════════════════
    3. LEVELS
    ═══════════════════════════════════════ */
+.levels {
+  background: white;
+  border-radius: clamp(12px, 2vw, 24px);
+  padding: clamp(1.75rem, 5vw, 4rem) clamp(1.25rem, 4vw, 3.5rem);
+  box-shadow: 0 2px 32px rgba(2, 85, 174, 0.05);
+}
+.levels.dark-mode {
+  background: #080f20;
+}
+
 .levels-top {
   display: flex;
   justify-content: space-between;
@@ -1579,6 +1616,16 @@ h3 {
 /* ═══════════════════════════════════════
    6. TESTIMONIALS
    ═══════════════════════════════════════ */
+.testi {
+  background: white;
+  border-radius: clamp(12px, 2vw, 24px);
+  padding: clamp(1.75rem, 5vw, 4rem) clamp(1.25rem, 4vw, 3.5rem);
+  box-shadow: 0 2px 32px rgba(2, 85, 174, 0.05);
+}
+.testi.dark-mode {
+  background: #080f20;
+}
+
 .testi-layout {
   display: grid;
   /* FIX: was grid-template-columns: 340px 1fr — fixed px caused overflow on small screens */

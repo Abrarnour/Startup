@@ -65,7 +65,7 @@
               </svg>
             </div>
             <div>
-              <p class="text-white font-bold text-sm leading-tight">École Belmahi</p>
+              <p class="text-white font-bold text-sm leading-tight">{{ schoolName }}</p>
               <p class="text-white/70 text-xs">Carte Étudiant</p>
             </div>
           </div>
@@ -362,7 +362,7 @@
               letter-spacing: 0.5px;
             "
           >
-            École Belmahi
+            {{ schoolName }}
           </p>
           <p style="color: rgba(255, 255, 255, 0.75); font-size: 13px; margin: 4px 0 0">
             Carte d'Identité Étudiant
@@ -592,7 +592,7 @@
           align-items: center;
         "
       >
-        <p style="font-size: 11px; color: #111827; margin: 0">www.ecole-belmahi.dz</p>
+        <p style="font-size: 11px; color: #111827; margin: 0">{{ schoolWebsite }}</p>
         <p style="font-size: 11px; color: #111827; margin: 0">Année scolaire 2025–2026</p>
         <p style="font-size: 11px; color: #111827; margin: 0">
           Document officiel — ne pas falsifier
@@ -603,8 +603,13 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import * as api from '../services/api.js'
+import { useTenant } from '../composables/useTenant.js'
+
+const { tenant } = useTenant()
+const schoolName = computed(() => tenant.value?.school_name || 'MUDAR')
+const schoolWebsite = computed(() => `www.${tenant.value?.slug || 'mudar'}.dz`)
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

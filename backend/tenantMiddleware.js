@@ -13,7 +13,7 @@
 import { platformPool, getPool } from './db.js'
 
 const tenantCache = new Map()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL = 60 * 1000 // 1 minute (reduced from 5 to detect approval faster)
 
 async function getTenantBySlug(slug) {
   const cached = tenantCache.get(slug)
@@ -22,9 +22,17 @@ async function getTenantBySlug(slug) {
   }
 
   const result = await platformPool.query(
-    `SELECT id, slug, school_name, school_name_ar, db_name,
-            logo_url, primary_color, secondary_color, status, plan_id
-     FROM tenants WHERE slug = $1`,
+    `SELECT t.id, t.slug, t.school_name, t.school_name_ar, t.db_name,
+            t.logo_url, t.primary_color, t.secondary_color, t.status, t.plan_id,
+            t.trial_ends_at,
+            COALESCE(p.max_students, 30)   AS max_students,
+            COALESCE(p.max_teachers, 3)    AS max_teachers,
+            COALESCE(p.name, 'trial')      AS plan_name,
+            COALESCE(p.name_ar, 'تجريبية') AS plan_name_ar,
+            COALESCE(p.price_dzd, 0)       AS plan_price_dzd
+     FROM tenants t
+     LEFT JOIN plans p ON p.id = t.plan_id
+     WHERE t.slug = $1`,
     [slug],
   )
 
@@ -48,17 +56,17 @@ export async function tenantMiddleware(req, res, next) {
     const tenant = await getTenantBySlug(slug)
 
     if (!tenant) {
-      // 'belmahi' is the built-in demo school — always resolve to bdd_school
-      if (slug === 'belmahi') {
+      // 'mudar' and 'belmahi' are the built-in demo school — always resolve to project db
+      if (slug === 'belmahi' || slug === 'mudar') {
         req.tenant = {
           id: 0,
-          slug: 'belmahi',
-          school_name: 'Belmahi School',
-          school_name_ar: 'مدرسة بلماحي',
+          slug: slug,
+          school_name: 'MUDAR',
+          school_name_ar: 'منصة مودار',
           db_name: 'project',
           logo_url: null,
-          primary_color: '#0255ae',
-          secondary_color: '#f4f3ef',
+          primary_color: '#7c3aed',
+          secondary_color: '#5b21b6',
           status: 'active',
         }
         req.db = getPool('project')

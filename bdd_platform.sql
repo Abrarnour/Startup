@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2Tn7w22aaZsJvCIVMj2HQfPkjfk1Dzbdk7qTJeEDBAxTBbNQkXr5k2yjZe4hbUn
+\restrict SoTIkp6thqRPId6E8LLzleI8R9AUNSOFgPGmHCUoCOUtcgoQTbsZ640aGnLiwBS
 
 -- Dumped from database version 15.18 (Debian 15.18-0+deb12u1)
 -- Dumped by pg_dump version 15.18 (Debian 15.18-0+deb12u1)
@@ -206,6 +206,14 @@ CREATE TABLE public.tenants (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     details jsonb DEFAULT '{}'::jsonb,
+    about_photo1 character varying(255),
+    about_photo2 character varying(255),
+    instagram_url character varying(255),
+    whatsapp_number character varying(30),
+    map_link text,
+    address character varying(255),
+    description text,
+    open_hours character varying(500),
     CONSTRAINT tenants_status_check CHECK (((status)::text = ANY (ARRAY['pending'::text, 'trial'::text, 'active'::text, 'suspended'::text, 'cancelled'::text])))
 );
 
@@ -306,6 +314,8 @@ COPY public.platform_logs (id, tenant_id, admin_id, action, details, created_at)
 1	1	\N	tenant_registered_pending	{"email": "abrarlacida@gmail.com"}	2026-05-24 18:03:41.604741
 2	4	\N	tenant_registered_pending	{"email": "test@gmail.com"}	2026-05-26 16:30:50.210203
 3	10	\N	tenant_registered_pending	{"email": "lol@gmail.com"}	2026-05-27 07:58:40.200117
+4	15	\N	tenant_registered_pending	{"email": "nn@gmail.com"}	2026-05-27 08:33:16.211609
+5	15	1	tenant_approved	{"dbName": "school_nnn"}	2026-05-27 08:51:31.010187
 \.
 
 
@@ -313,11 +323,12 @@ COPY public.platform_logs (id, tenant_id, admin_id, action, details, created_at)
 -- Data for Name: tenants; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.tenants (id, slug, school_name, school_name_ar, logo_url, primary_color, secondary_color, db_name, plan_id, status, trial_ends_at, admin_email, admin_phone, city, country, onboarding_done, created_at, updated_at, details) FROM stdin;
-1	abrar	Abrar	ابرار	\N	#971ce9	#f5f5f5		1	pending	\N	abrarlacida@gmail.com	07653543366	Oran	DZ	f	2026-05-24 18:03:41.589578	2026-05-24 18:03:41.589578	{"pending_hash": "$2b$10$VjNSXxABFr4C53PWumOHuex.opNXRdyZ2On0YlIMxGIZxaKFRSDiy"}
-4	test	test	تاست	\N	#1ce9a4	#0a42db		1	pending	\N	test@gmail.com	09999999999	\N	DZ	f	2026-05-26 16:30:50.192034	2026-05-26 16:30:50.192034	{"wilaya": "15 - Tizi Ouzou", "logo_url": "/uploads/logos/logo_1779809450055.png", "pending_hash": "$2b$10$FYcL1LwzhlLDfXKVLLpTEeMnn6aFaeaTilrzPDSRTDx0hvMMo.VGq", "admin_last_name": "testy", "admin_first_name": "test"}
-10	lol	lol	لول	\N	#e91ce2	#803bc4		1	pending	\N	lol@gmail.com	05555555555	\N	DZ	f	2026-05-27 07:58:40.187016	2026-05-27 07:58:40.187016	{"wilaya": "14 - Tiaret", "logo_url": "/uploads/logos/logo_1779865120067.png", "pending_hash": "$2b$10$3CYTjRRkCA7YZ3cK2ipTYesJmYfp1dVBXXB3hz6xuPWRW3k6PNeFS", "admin_last_name": "lol", "admin_first_name": "lol"}
-5	belmahi	Belmahi School	مدرسة بلماحي	\N	#0255ae	#f4f3ef	project	\N	active	\N	admin@belmahi.dz	0550000001	Oran	DZ	t	2026-05-26 23:51:25.70446	2026-05-27 08:28:52.233822	{}
+COPY public.tenants (id, slug, school_name, school_name_ar, logo_url, primary_color, secondary_color, db_name, plan_id, status, trial_ends_at, admin_email, admin_phone, city, country, onboarding_done, created_at, updated_at, details, about_photo1, about_photo2, instagram_url, whatsapp_number, map_link, address, description, open_hours) FROM stdin;
+15	nnn	nn	نن	\N	#e91cd7	#a72ac0	school_nnn	1	trial	2026-06-10 08:51:31.003	nn@gmail.com	05555555555	\N	DZ	t	2026-05-27 08:33:16.204613	2026-05-27 08:51:31.004695	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1	abrar	Abrar	ابرار	\N	#971ce9	#f5f5f5		1	pending	\N	abrarlacida@gmail.com	07653543366	Oran	DZ	f	2026-05-24 18:03:41.589578	2026-05-24 18:03:41.589578	{"pending_hash": "$2b$10$VjNSXxABFr4C53PWumOHuex.opNXRdyZ2On0YlIMxGIZxaKFRSDiy"}	\N	\N	\N	\N	\N	\N	\N	\N
+4	test	test	تاست	\N	#1ce9a4	#0a42db		1	pending	\N	test@gmail.com	09999999999	\N	DZ	f	2026-05-26 16:30:50.192034	2026-05-26 16:30:50.192034	{"wilaya": "15 - Tizi Ouzou", "logo_url": "/uploads/logos/logo_1779809450055.png", "pending_hash": "$2b$10$FYcL1LwzhlLDfXKVLLpTEeMnn6aFaeaTilrzPDSRTDx0hvMMo.VGq", "admin_last_name": "testy", "admin_first_name": "test"}	\N	\N	\N	\N	\N	\N	\N	\N
+10	lol	lol	لول	\N	#e91ce2	#803bc4		1	pending	\N	lol@gmail.com	05555555555	\N	DZ	f	2026-05-27 07:58:40.187016	2026-05-27 07:58:40.187016	{"wilaya": "14 - Tiaret", "logo_url": "/uploads/logos/logo_1779865120067.png", "pending_hash": "$2b$10$3CYTjRRkCA7YZ3cK2ipTYesJmYfp1dVBXXB3hz6xuPWRW3k6PNeFS", "admin_last_name": "lol", "admin_first_name": "lol"}	\N	\N	\N	\N	\N	\N	\N	\N
+5	belmahi	Belmahi School	مدرسة بلماحي	\N	#0255ae	#f4f3ef	project	\N	active	\N	admin@belmahi.dz	0550000001	Oran	DZ	t	2026-05-26 23:51:25.70446	2026-05-27 21:10:46.011266	{}	\N	\N	\N	\N	\N	\N	\N	Dimanche – Jeudi : 8h00 – 17h00 | Samedi : 8h00 – 12h00 | Fermé le vendredi
 \.
 
 
@@ -346,14 +357,14 @@ SELECT pg_catalog.setval('public.platform_admins_id_seq', 1, true);
 -- Name: platform_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.platform_logs_id_seq', 3, true);
+SELECT pg_catalog.setval('public.platform_logs_id_seq', 5, true);
 
 
 --
 -- Name: tenants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.tenants_id_seq', 14, true);
+SELECT pg_catalog.setval('public.tenants_id_seq', 20, true);
 
 
 --
@@ -479,10 +490,20 @@ ALTER TABLE ONLY public.platform_logs
 ALTER TABLE ONLY public.tenants
     ADD CONSTRAINT tenants_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES public.plans(id);
 
+-- Migration: add payment_method and period columns to invoices
+ALTER TABLE public.invoices 
+  ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'manual';
 
+ALTER TABLE public.invoices
+  ADD CONSTRAINT invoices_payment_method_check 
+  CHECK (payment_method IN ('manual', 'ccp', 'baridimob', 'virement'));
+
+ALTER TABLE public.invoices
+  ADD COLUMN IF NOT EXISTS period_start DATE,
+  ADD COLUMN IF NOT EXISTS period_end DATE;
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2Tn7w22aaZsJvCIVMj2HQfPkjfk1Dzbdk7qTJeEDBAxTBbNQkXr5k2yjZe4hbUn
+\unrestrict SoTIkp6thqRPId6E8LLzleI8R9AUNSOFgPGmHCUoCOUtcgoQTbsZ640aGnLiwBS
 

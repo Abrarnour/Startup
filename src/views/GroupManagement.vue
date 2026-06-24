@@ -807,7 +807,7 @@ function printGroupStudents() {
       <tbody>${rows}</tbody>
     </table>
     <div class="footer">
-      Total : ${students.value.length} étudiant(s) — Belmahi School
+      Total : ${students.value.length} étudiant(s) — MUDAR
     </div>
     <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script>
     </body></html>

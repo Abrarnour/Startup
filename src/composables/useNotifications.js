@@ -90,7 +90,7 @@ export function useNotifications(user) {
 
     // OS notification via Service Worker (works even when tab loses focus)
     if ('Notification' in window && Notification.permission === 'granted') {
-      const icon = '/belmahilogo.jpg'
+      const icon = '/favicon.ico'
       const titleMap = {
         welcome: 'welcome_title_notif',
 
@@ -108,7 +108,7 @@ export function useNotifications(user) {
       const titleKey = titleMap[type] || 'info_title_notif'
 
       // Note: To translate OS notifications, you must import the t function at the top of useNotifications.js.
-      const title = titleMap[type] || ' Belmahi School'
+      const title = titleMap[type] || 'MUDAR'
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
@@ -117,7 +117,7 @@ export function useNotifications(user) {
               body: message,
               icon,
               badge: icon,
-              tag: `belmahi-${Date.now()}`,
+              tag: `mudar-${Date.now()}`,
               requireInteraction: false,
               silent: false,
             })

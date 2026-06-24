@@ -1,217 +1,807 @@
 <template>
-  <div class="onboarding-page" :style="{ '--primary': form.primaryColor }">
-    <!-- Header — Generic platform branding, NOT Belmahi -->
-    <div class="ob-header">
-      <div class="ob-logo-placeholder">🏫</div>
-      <h1>سجّل مدرستك</h1>
-      <p>ابدأ تجربتك المجانية لمدة 14 يوماً — بدون بطاقة بنكية</p>
+  <div class="ow-root" :style="{ '--brand': form.primaryColor || '#7c3aed' }">
+    <!-- ── Ambient background orbs ──────────────────────── -->
+    <div class="ow-bg">
+      <div class="ow-orb ow-orb-1"></div>
+      <div class="ow-orb ow-orb-2"></div>
+      <div class="ow-orb ow-orb-3"></div>
+      <div class="ow-orb ow-orb-4"></div>
+      <div class="ow-grid-lines"></div>
     </div>
 
-    <!-- Progress steps -->
-    <div class="ob-steps">
-      <div
-        v-for="(step, i) in steps"
-        :key="i"
-        class="step-dot"
-        :class="{ active: currentStep === i, done: currentStep > i }"
-      >
-        <span>{{ i + 1 }}</span>
-        <p>{{ step }}</p>
-      </div>
-    </div>
-
-    <!-- Form card -->
-    <div class="ob-card">
-      <!-- Step 0: Personal Info (the human registering) -->
-      <div v-if="currentStep === 0" class="step-content">
-        <h2>معلوماتك الشخصية</h2>
-        <p class="step-sub">أنت مسؤول المدرسة — سيُستخدم هذا البريد لتسجيل الدخول لاحقاً</p>
-
-        <div class="field-row">
-          <div class="field">
-            <label>الاسم <span class="req">*</span></label>
-            <input v-model="form.firstName" placeholder="أحمد" />
-          </div>
-          <div class="field">
-            <label>اللقب <span class="req">*</span></label>
-            <input v-model="form.lastName" placeholder="بن علي" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>البريد الإلكتروني <span class="req">*</span></label>
-          <input v-model="form.adminEmail" type="email" placeholder="admin@ecole.dz" dir="ltr" />
-        </div>
-
-        <div class="field">
-          <label>كلمة المرور <span class="req">*</span></label>
-          <input
-            v-model="form.adminPassword"
-            type="password"
-            placeholder="8 أحرف على الأقل"
-            dir="ltr"
+    <!-- ── Top navbar ────────────────────────────────────── -->
+    <nav class="ow-nav">
+      <div class="ow-nav-brand">
+        <div class="ow-nav-icon">
+          <img
+            src="/logoMUDAR.png"
+            alt="MUDAR"
+            style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px"
           />
-          <p class="field-hint">
-            {{
-              form.adminPassword.length > 0 && form.adminPassword.length < 8
-                ? '⚠️ كلمة المرور قصيرة جداً'
-                : ''
-            }}
+        </div>
+        <span>MUDAR</span>
+      </div>
+      <div class="ow-nav-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+        تجربة مجانية لمدة 14 يوم
+      </div>
+      <button @click="loginMode = !loginMode" class="ow-login-toggle-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        {{ loginMode ? 'Créer un compte' : 'Déjà inscrit ?' }}
+      </button>
+    </nav>
+
+    <!-- ── LOGIN PANEL ───────────────────────────────────── -->
+    <transition name="ow-slide" mode="out-in">
+      <div v-if="loginMode" class="ow-login-overlay">
+        <div class="ow-login-card">
+          <div class="ow-login-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="4" />
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            </svg>
+          </div>
+          <h2 class="ow-login-title">Accéder à mon espace</h2>
+          <p class="ow-login-sub">
+            Connectez-vous avec l'email et le mot de passe utilisés lors de votre inscription
           </p>
-        </div>
 
-        <div class="field-row">
-          <div class="field">
-            <label>رقم الهاتف</label>
-            <input v-model="form.adminPhone" placeholder="07 XX XX XX XX" dir="ltr" />
+          <div v-if="loginError" class="ow-login-error">{{ loginError }}</div>
+
+          <div class="ow-login-fields">
+            <div class="ow-lfield">
+              <label>Email</label>
+              <input
+                v-model="loginEmail"
+                type="email"
+                placeholder="admin@ecole.dz"
+                @keyup.enter="doClientLogin"
+              />
+            </div>
+            <div class="ow-lfield">
+              <label>Mot de passe</label>
+              <input
+                v-model="loginPassword"
+                type="password"
+                placeholder="••••••••"
+                @keyup.enter="doClientLogin"
+              />
+            </div>
           </div>
-          <div class="field">
-            <label>الولاية <span class="req">*</span></label>
-            <select v-model="form.wilaya">
-              <option value="" disabled>اختر الولاية</option>
-              <option v-for="w in wilayas" :key="w" :value="w">{{ w }}</option>
-            </select>
-          </div>
+
+          <button @click="doClientLogin" :disabled="loginLoading" class="ow-login-submit">
+            <svg
+              v-if="!loginLoading"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <div v-else class="ow-spin-mini"></div>
+            {{ loginLoading ? 'Connexion...' : 'Se connecter' }}
+          </button>
+
+          <button @click="loginMode = false" class="ow-login-back">
+            Pas encore inscrit ? Créer un compte
+          </button>
         </div>
       </div>
+    </transition>
 
-      <!-- Step 1: School Info -->
-      <div v-if="currentStep === 1" class="step-content">
-        <h2>معلومات المدرسة</h2>
-
-        <div class="field">
-          <label>اسم المدرسة (عربي) <span class="req">*</span></label>
-          <input v-model="form.schoolNameAr" placeholder="مدرسة النجاح" />
-        </div>
-        <div class="field">
-          <label>School Name (FR/EN)</label>
-          <input v-model="form.schoolName" placeholder="École Najah" />
-        </div>
-        <div class="field">
-          <label>الرابط المميز (Slug) <span class="req">*</span></label>
-          <div class="slug-row">
-            <input
-              v-model="form.slug"
-              placeholder="najah"
-              @input="checkSlug"
-              dir="ltr"
-              style="direction: ltr"
+    <!-- ── Main container ────────────────────────────────── -->
+    <div class="ow-container">
+      <!-- Left info panel -->
+      <div class="ow-panel-left">
+        <div class="ow-panel-tag">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
             />
-            <span class="domain">.votre-plateforme.dz</span>
+          </svg>
+          MOUDAR.dz
+        </div>
+
+        <h1 class="ow-panel-title">
+          أنشئ منصتك<br />
+          <em>في 3 دقائق</em>
+        </h1>
+
+        <p class="ow-panel-desc">
+          MOUDAR تولّد لك منصة إدارة كاملة — طلاب، أساتذة، حضور، مواد — بدون كود وبألوانك الخاصة.
+        </p>
+
+        <ul class="ow-steps-list">
+          <li :class="{ active: currentStep === 0, done: currentStep > 0 }">
+            <div class="ow-step-circle">
+              <svg
+                v-if="currentStep > 0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span v-else>1</span>
+            </div>
+            <div>
+              <strong>معلوماتك الشخصية</strong>
+              <p>البريد وكلمة المرور للمسؤول</p>
+            </div>
+          </li>
+          <li :class="{ active: currentStep === 1, done: currentStep > 1 }">
+            <div class="ow-step-circle">
+              <svg
+                v-if="currentStep > 1"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span v-else>2</span>
+            </div>
+            <div>
+              <strong>معلومات المدرسة</strong>
+              <p>الاسم والرابط والتواصل</p>
+            </div>
+          </li>
+          <li :class="{ active: currentStep === 2, done: currentStep > 2 }">
+            <div class="ow-step-circle">
+              <svg
+                v-if="currentStep > 2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span v-else>3</span>
+            </div>
+            <div>
+              <strong>الهوية البصرية</strong>
+              <p>الشعار والألوان والصور</p>
+            </div>
+          </li>
+          <li :class="{ active: currentStep === 3, done: currentStep > 3 }">
+            <div class="ow-step-circle">
+              <svg
+                v-if="currentStep > 3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span v-else>4</span>
+            </div>
+            <div>
+              <strong>اختر الباقة</strong>
+              <p>ابدأ مجاناً</p>
+            </div>
+          </li>
+        </ul>
+
+        <div class="ow-panel-footer">
+          <div class="ow-trust-avatars">
+            <div class="ow-avatar" style="background: #7c3aed">أ</div>
+            <div class="ow-avatar" style="background: #a855f7">م</div>
+            <div class="ow-avatar" style="background: #5b21b6">ك</div>
+            <div class="ow-avatar" style="background: #6d28d9">س</div>
           </div>
-          <p class="slug-status" :class="slugStatus.type">{{ slugStatus.msg }}</p>
+          <p>+200 مدرسة تثق بـ MOUDAR</p>
         </div>
       </div>
 
-      <!-- Step 2: Visual Identity (logo + colors) -->
-      <div v-if="currentStep === 2" class="step-content">
-        <h2>هوية المدرسة البصرية</h2>
-
-        <div class="field">
-          <label>شعار المدرسة</label>
-          <div class="logo-upload" @click="$refs.logoInput.click()">
-            <img v-if="logoPreview" :src="logoPreview" alt="Logo" class="logo-preview-img" />
-            <div v-else class="upload-placeholder">
-              <span>📤</span>
-              <p>اضغط لرفع الشعار (PNG, JPG)</p>
-            </div>
-          </div>
-          <input ref="logoInput" type="file" accept="image/*" hidden @change="handleLogo" />
-        </div>
-
-        <div class="colors-row">
-          <div class="field">
-            <label>اللون الرئيسي</label>
-            <div class="color-picker">
-              <input type="color" v-model="form.primaryColor" />
-              <span>{{ form.primaryColor }}</span>
-            </div>
-          </div>
-          <div class="field">
-            <label>اللون الثانوي</label>
-            <div class="color-picker">
-              <input type="color" v-model="form.secondaryColor" />
-              <span>{{ form.secondaryColor }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Live preview -->
-        <div class="preview-card" :style="{ background: form.secondaryColor }">
-          <div class="preview-header" :style="{ background: form.primaryColor }">
-            <img v-if="logoPreview" :src="logoPreview" class="preview-logo" />
-            <span v-else class="preview-logo-ph">🏫</span>
-            <span style="color: white; font-weight: bold">{{
-              form.schoolNameAr || 'اسم المدرسة'
-            }}</span>
-          </div>
-          <p style="padding: 12px; color: #333; font-size: 0.85rem">معاينة شكل نافبار المدرسة</p>
-        </div>
-      </div>
-
-      <!-- Step 3: Plan -->
-      <div v-if="currentStep === 3" class="step-content">
-        <h2>اختر الباقة</h2>
-        <div class="plans-grid">
+      <!-- Right form card -->
+      <div class="ow-card">
+        <!-- Step progress bar (mobile) -->
+        <div class="ow-progress-bar">
           <div
-            v-for="plan in plans"
-            :key="plan.id"
-            class="plan-card"
-            :class="{ selected: form.planId === plan.id }"
-            @click="form.planId = plan.id"
-          >
-            <h3>{{ plan.name_ar }}</h3>
-            <div class="price">
-              <span v-if="plan.price_dzd == 0">مجاناً</span>
-              <span v-else>{{ plan.price_dzd }} دج/شهر</span>
-            </div>
-            <ul>
-              <li>حتى {{ plan.max_students }} طالب</li>
-              <li>حتى {{ plan.max_teachers }} أستاذ</li>
-            </ul>
-          </div>
+            class="ow-progress-fill"
+            :style="{ width: ((currentStep + 1) / steps.length) * 100 + '%' }"
+          ></div>
         </div>
-        <p class="trial-note">✅ جميع الباقات تشمل 14 يوماً تجريبياً مجاناً</p>
-      </div>
+        <div class="ow-progress-label">
+          <span>الخطوة {{ currentStep + 1 }} من {{ steps.length }}</span>
+          <span class="ow-progress-name">{{ steps[currentStep] }}</span>
+        </div>
 
-      <!-- Navigation -->
-      <div class="ob-nav">
-        <button v-if="currentStep > 0" @click="currentStep--" class="btn-back">السابق</button>
-        <button
-          v-if="currentStep < steps.length - 1"
-          @click="nextStep"
-          class="btn-next"
-          :style="{ background: form.primaryColor }"
-          :disabled="!canProceed"
-        >
-          التالي
-        </button>
-        <button
-          v-if="currentStep === steps.length - 1"
-          @click="submitRegistration"
-          class="btn-submit"
-          :style="{ background: form.primaryColor }"
-          :disabled="loading"
-        >
-          {{ loading ? 'جاري الإرسال...' : 'إرسال الطلب 🎉' }}
-        </button>
-      </div>
-    </div>
+        <!-- ═══ STEP 0 ═══════════════════════════════════ -->
+        <transition name="ow-slide" mode="out-in">
+          <div v-if="currentStep === 0" key="s0" class="ow-step-body">
+            <div class="ow-step-head">
+              <div class="ow-step-head-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div>
+                <h2>معلوماتك الشخصية</h2>
+                <p class="ow-step-sub">أنت مسؤول المدرسة — هذا البريد سيُستخدم لتسجيل الدخول</p>
+              </div>
+            </div>
 
-    <!-- Success overlay -->
-    <div v-if="success" class="success-overlay">
-      <div class="success-card">
-        <div class="success-icon">✅</div>
-        <h2>تم استلام طلبكم!</h2>
-        <p>مدرستك في انتظار موافقة المشرف. سيتم إعلامكم قريباً على البريد الإلكتروني.</p>
-        <p class="trial-info">
-          بعد الموافقة، ادخل عبر: <strong>{{ form.slug }}.plateforme.dz</strong>
-        </p>
-        <p class="trial-info" style="color: #666; font-size: 0.8rem">
-          ستجد شعار مدرستك وألوانها عند تسجيل الدخول.
-        </p>
+            <div class="ow-field-row">
+              <div class="ow-field">
+                <label>الاسم <span class="ow-req">*</span></label>
+                <div class="ow-input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <input v-model="form.firstName" placeholder="أحمد" />
+                </div>
+              </div>
+              <div class="ow-field">
+                <label>اللقب <span class="ow-req">*</span></label>
+                <div class="ow-input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <input v-model="form.lastName" placeholder="بن علي" />
+                </div>
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>البريد الإلكتروني <span class="ow-req">*</span></label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <input
+                  v-model="form.adminEmail"
+                  type="email"
+                  placeholder="admin@ecole.dz"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>كلمة المرور <span class="ow-req">*</span></label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <input
+                  v-model="form.adminPassword"
+                  type="password"
+                  placeholder="8 أحرف على الأقل"
+                  dir="ltr"
+                />
+              </div>
+              <p
+                class="ow-hint ow-hint-warn"
+                v-if="form.adminPassword.length > 0 && form.adminPassword.length < 8"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                  />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                كلمة المرور قصيرة جداً
+              </p>
+              <p class="ow-hint ow-hint-ok" v-else-if="form.adminPassword.length >= 8">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                كلمة مرور قوية
+              </p>
+            </div>
+
+            <div class="ow-field-row">
+              <div class="ow-field">
+                <label>رقم الهاتف</label>
+                <div class="ow-input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.8-1.8a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"
+                    />
+                  </svg>
+                  <input v-model="form.adminPhone" placeholder="07 XX XX XX XX" dir="ltr" />
+                </div>
+              </div>
+              <div class="ow-field">
+                <label>الولاية <span class="ow-req">*</span></label>
+                <div class="ow-input-wrap ow-select-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <select v-model="form.wilaya">
+                    <option value="" disabled>اختر الولاية</option>
+                    <option v-for="w in wilayas" :key="w" :value="w">{{ w }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <!-- ═══ STEP 1 ═══════════════════════════════════ -->
+        <transition name="ow-slide" mode="out-in">
+          <div v-if="currentStep === 1" key="s1" class="ow-step-body">
+            <div class="ow-step-head">
+              <div class="ow-step-head-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <div>
+                <h2>معلومات المدرسة</h2>
+                <p class="ow-step-sub">بيانات مؤسستك التعليمية</p>
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>اسم المدرسة (عربي) <span class="ow-req">*</span></label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <input v-model="form.schoolNameAr" placeholder="مدرسة النجاح" />
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>School Name (FR/EN)</label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <input v-model="form.schoolName" placeholder="École Najah" />
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>الرابط المميز (Slug) <span class="ow-req">*</span></label>
+              <div class="ow-slug-row">
+                <div class="ow-input-wrap ow-slug-input">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <input
+                    v-model="form.slug"
+                    placeholder="najah"
+                    @input="checkSlug"
+                    dir="ltr"
+                    style="direction: ltr"
+                  />
+                </div>
+                <span class="ow-domain">.votre-plateforme.dz</span>
+              </div>
+              <p
+                v-if="slugStatus.msg"
+                class="ow-hint"
+                :class="slugStatus.type === 'ok' ? 'ow-hint-ok' : 'ow-hint-warn'"
+              >
+                <svg
+                  v-if="slugStatus.type === 'ok'"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                {{ slugStatus.msg }}
+              </p>
+            </div>
+
+            <div class="ow-field">
+              <label>وصف المدرسة <span class="ow-optional">اختياري</span></label>
+              <div class="ow-textarea-wrap">
+                <textarea
+                  v-model="form.description"
+                  placeholder="نبذة عن مدرستك تظهر في قسم 'من نحن؟' بالصفحة الرئيسية..."
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="ow-field-row">
+              <div class="ow-field">
+                <label>رقم واتساب</label>
+                <div class="ow-input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <input v-model="form.whatsapp_number" placeholder="+213 7XX XX XX XX" dir="ltr" />
+                </div>
+              </div>
+              <div class="ow-field">
+                <label>إنستغرام</label>
+                <div class="ow-input-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                  <input
+                    v-model="form.instagram_url"
+                    placeholder="https://instagram.com/..."
+                    dir="ltr"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>رابط Google Maps</label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <input
+                  v-model="form.map_link"
+                  placeholder="https://maps.google.com/..."
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>العنوان الكامل</label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                <input v-model="form.address" placeholder="شارع الأمير عبد القادر، وهران" />
+              </div>
+            </div>
+
+            <div class="ow-field">
+              <label>أيام وساعات العمل <span class="ow-optional">اختياري</span></label>
+              <div class="ow-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <input
+                  v-model="form.open_hours"
+                  placeholder="الأحد – الخميس: 8h–17h | السبت: 8h–12h"
+                />
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <!-- ═══ STEP 2 ═══════════════════════════════════ -->
+        <transition name="ow-slide" mode="out-in">
+          <div v-if="currentStep === 2" key="s2" class="ow-step-body">
+            <div class="ow-step-head">
+              <div class="ow-step-head-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2>الهوية البصرية</h2>
+                <p class="ow-step-sub">اجعل منصتك مميزة بألوانك وشعارك</p>
+              </div>
+            </div>
+
+            <!-- Logo upload -->
+            <div class="ow-field">
+              <label>شعار المدرسة</label>
+              <div
+                class="ow-upload-zone"
+                @click="$refs.logoInput.click()"
+                :class="{ 'has-image': logoPreview }"
+              >
+                <img v-if="logoPreview" :src="logoPreview" alt="Logo" class="ow-upload-preview" />
+                <div v-else class="ow-upload-inner">
+                  <div class="ow-upload-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 16 12 12 8 16" />
+                      <line x1="12" y1="12" x2="12" y2="21" />
+                      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+                    </svg>
+                  </div>
+                  <p>اضغط لرفع الشعار</p>
+                  <span>PNG, JPG — حتى 5 ميغابايت</span>
+                </div>
+              </div>
+              <input ref="logoInput" type="file" accept="image/*" hidden @change="handleLogo" />
+            </div>
+
+            <!-- Colors -->
+            <div class="ow-colors-row">
+              <div class="ow-field">
+                <label>اللون الرئيسي</label>
+                <div class="ow-color-pick">
+                  <div class="ow-color-swatch" :style="{ background: form.primaryColor }"></div>
+                  <input type="color" v-model="form.primaryColor" />
+                  <span>{{ form.primaryColor }}</span>
+                </div>
+              </div>
+              <div class="ow-field">
+                <label>اللون الثانوي</label>
+                <div class="ow-color-pick">
+                  <div class="ow-color-swatch" :style="{ background: form.secondaryColor }"></div>
+                  <input type="color" v-model="form.secondaryColor" />
+                  <span>{{ form.secondaryColor }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live preview -->
+            <div class="ow-preview-card" :style="{ background: form.secondaryColor }">
+              <div class="ow-preview-bar" :style="{ background: form.primaryColor }">
+                <img v-if="logoPreview" :src="logoPreview" class="ow-preview-logo" />
+                <div v-else class="ow-preview-logo-ph">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </div>
+                <span>{{ form.schoolNameAr || form.schoolName || 'اسم المدرسة' }}</span>
+                <div class="ow-preview-dots"><span></span><span></span><span></span></div>
+              </div>
+              <p class="ow-preview-label">معاينة شريط التنقل</p>
+            </div>
+
+            <!-- About photos -->
+            <div class="ow-photos-row">
+              <div class="ow-field">
+                <label>صورة "من نحن؟" الأولى <span class="ow-optional">اختياري</span></label>
+                <div
+                  class="ow-upload-zone ow-upload-sm"
+                  @click="$refs.photo1Input.click()"
+                  :class="{ 'has-image': photo1Preview }"
+                >
+                  <img
+                    v-if="photo1Preview"
+                    :src="photo1Preview"
+                    alt="Photo 1"
+                    class="ow-upload-preview"
+                  />
+                  <div v-else class="ow-upload-inner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span>صورة المبنى</span>
+                  </div>
+                </div>
+                <input
+                  ref="photo1Input"
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  @change="handlePhoto1"
+                />
+              </div>
+              <div class="ow-field">
+                <label>صورة "من نحن؟" الثانية <span class="ow-optional">اختياري</span></label>
+                <div
+                  class="ow-upload-zone ow-upload-sm"
+                  @click="$refs.photo2Input.click()"
+                  :class="{ 'has-image': photo2Preview }"
+                >
+                  <img
+                    v-if="photo2Preview"
+                    :src="photo2Preview"
+                    alt="Photo 2"
+                    class="ow-upload-preview"
+                  />
+                  <div v-else class="ow-upload-inner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    <span>صورة ثانية</span>
+                  </div>
+                </div>
+                <input
+                  ref="photo2Input"
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  @change="handlePhoto2"
+                />
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <!-- ═══ STEP 3 ═══════════════════════════════════ -->
+        <transition name="ow-slide" mode="out-in">
+          <div v-if="currentStep === 3" key="s3" class="ow-step-body">
+            <div class="ow-step-head">
+              <div class="ow-step-head-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <div>
+                <h2>اختر الباقة</h2>
+                <p class="ow-step-sub">كل الباقات تشمل 14 يوماً تجريبياً مجاناً</p>
+              </div>
+            </div>
+
+            <div class="ow-plans-grid">
+              <div
+                v-for="plan in plans"
+                :key="plan.id"
+                class="ow-plan-card"
+                :class="{ selected: form.planId === plan.id }"
+                @click="form.planId = plan.id"
+              >
+                <div class="ow-plan-check">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <div class="ow-plan-icon">
+                  <svg
+                    v-if="plan.price_dzd == 0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0a2 2 0 1 1-4 0m4 0a2 2 0 1 0 4 0"
+                    />
+                  </svg>
+                  <svg
+                    v-else-if="plan.price_dzd <= 4000"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                  <svg
+                    v-else
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                    />
+                  </svg>
+                </div>
+                <h3>{{ plan.name_ar }}</h3>
+                <div class="ow-plan-price">
+                  <span v-if="plan.price_dzd == 0" class="ow-free">مجاناً</span>
+                  <span v-else>{{ plan.price_dzd }} <small>دج/شهر</small></span>
+                </div>
+                <ul class="ow-plan-features">
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    حتى {{ plan.max_students }} طالب
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    حتى {{ plan.max_teachers }} أستاذ
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="ow-trial-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              جميع الباقات تشمل 14 يوماً تجريبياً مجاناً — بدون بطاقة بنكية
+            </div>
+          </div>
+        </transition>
+
+        <!-- ── Navigation ──────────────────────────────── -->
+        <div class="ow-nav-btns">
+          <button v-if="currentStep > 0" @click="currentStep--" class="ow-btn-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+            السابق
+          </button>
+          <div v-else class="ow-btn-spacer"></div>
+
+          <button
+            v-if="currentStep < steps.length - 1"
+            @click="nextStep"
+            class="ow-btn-next"
+            :disabled="!canProceed"
+          >
+            التالي
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+
+          <button
+            v-if="currentStep === steps.length - 1"
+            @click="submitRegistration"
+            class="ow-btn-submit"
+            :disabled="loading"
+          >
+            <span v-if="loading" class="ow-spinner"></span>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M22 2L11 13" />
+              <path d="M22 2L15 22 11 13 2 9l20-7z" />
+            </svg>
+            {{ loading ? 'جاري الإرسال...' : 'إرسال الطلب' }}
+          </button>
+        </div>
       </div>
+      <!-- /ow-card -->
     </div>
+    <!-- /ow-container -->
+
+    <!-- ── Success overlay ──────────────────────────────── -->
+    <transition name="ow-fade">
+      <div v-if="success" class="ow-success-overlay">
+        <div class="ow-success-card">
+          <div class="ow-success-orb"></div>
+          <div class="ow-success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <h2>تم استلام طلبكم!</h2>
+          <p>مدرستك في انتظار موافقة المشرف. سيتم إعلامكم قريباً عبر البريد الإلكتروني.</p>
+          <div class="ow-success-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            <span dir="ltr">{{ origin }}/school/{{ form.slug }}</span>
+          </div>
+          <p class="ow-success-note">ستجد شعار مدرستك وألوانها عند تسجيل الدخول بعد الموافقة.</p>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -220,10 +810,54 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const origin = window.location.origin
+
+// ── Client login mode ────────────────────────────────────────
+const loginMode = ref(false)
+const loginEmail = ref('')
+const loginPassword = ref('')
+const loginLoading = ref(false)
+const loginError = ref('')
+
+// Check if already logged in
+onMounted(() => {
+  const token = localStorage.getItem('client_token')
+  if (token) {
+    // Let parent component handle redirect to portal
+    emit('client-logged-in')
+  }
+})
+
+const emit = defineEmits(['client-logged-in'])
+
+async function doClientLogin() {
+  loginError.value = ''
+  if (!loginEmail.value || !loginPassword.value) {
+    loginError.value = 'Veuillez remplir tous les champs'
+    return
+  }
+  loginLoading.value = true
+  try {
+    const res = await axios.post(`${API}/onboarding/client-login`, {
+      email: loginEmail.value,
+      password: loginPassword.value,
+    })
+    localStorage.setItem('client_token', res.data.token)
+    localStorage.setItem('client_tenant', JSON.stringify(res.data.tenant))
+    emit('client-logged-in')
+  } catch (err) {
+    loginError.value = err.response?.data?.error || 'Email ou mot de passe incorrect'
+  } finally {
+    loginLoading.value = false
+  }
+}
+
 const currentStep = ref(0)
 const loading = ref(false)
 const success = ref(false)
 const logoPreview = ref(null)
+const photo1Preview = ref(null)
+const photo2Preview = ref(null)
 const slugTimeout = ref(null)
 const slugStatus = ref({ type: '', msg: '' })
 
@@ -293,29 +927,32 @@ const wilayas = [
 ]
 
 const form = ref({
-  // Step 0: personal
   firstName: '',
   lastName: '',
   adminEmail: '',
   adminPassword: '',
   adminPhone: '',
   wilaya: '',
-  // Step 1: school
   schoolName: '',
   schoolNameAr: '',
   slug: '',
-  // Step 2: branding
-  primaryColor: '#1a73e8',
-  secondaryColor: '#f0f4ff',
+  primaryColor: '#7c3aed',
+  secondaryColor: '#f5f3ff',
   logoFile: null,
-  // Step 3: plan
+  aboutPhoto1File: null,
+  aboutPhoto2File: null,
+  description: '',
+  open_hours: '',
+  instagram_url: '',
+  whatsapp_number: '',
+  map_link: '',
+  address: '',
   planId: 1,
 })
 
 onMounted(async () => {
   try {
     const res = await axios.get(`${API}/onboarding/plans`)
-
     plans.value = res.data
   } catch {
     plans.value = [
@@ -339,8 +976,8 @@ function checkSlug() {
     try {
       const res = await axios.get(`${API}/onboarding/check-slug?slug=${s}`)
       slugStatus.value = res.data.available
-        ? { type: 'ok', msg: `✅ ${s}.plateforme.dz متاح` }
-        : { type: 'error', msg: '❌ هذا الاسم محجوز، جرّب اسماً آخر' }
+        ? { type: 'ok', msg: `${s}.plateforme.dz متاح` }
+        : { type: 'error', msg: 'هذا الاسم محجوز، جرّب اسماً آخر' }
     } catch {
       slugStatus.value = { type: 'error', msg: 'خطأ في التحقق' }
     }
@@ -348,14 +985,26 @@ function checkSlug() {
 }
 
 function handleLogo(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  form.value.logoFile = file
-  logoPreview.value = URL.createObjectURL(file)
+  const f = e.target.files[0]
+  if (!f) return
+  form.value.logoFile = f
+  logoPreview.value = URL.createObjectURL(f)
+}
+function handlePhoto1(e) {
+  const f = e.target.files[0]
+  if (!f) return
+  form.value.aboutPhoto1File = f
+  photo1Preview.value = URL.createObjectURL(f)
+}
+function handlePhoto2(e) {
+  const f = e.target.files[0]
+  if (!f) return
+  form.value.aboutPhoto2File = f
+  photo2Preview.value = URL.createObjectURL(f)
 }
 
 const canProceed = computed(() => {
-  if (currentStep.value === 0) {
+  if (currentStep.value === 0)
     return (
       form.value.firstName &&
       form.value.lastName &&
@@ -363,14 +1012,12 @@ const canProceed = computed(() => {
       form.value.adminPassword.length >= 8 &&
       form.value.wilaya
     )
-  }
-  if (currentStep.value === 1) {
+  if (currentStep.value === 1)
     return (
       (form.value.schoolName || form.value.schoolNameAr) &&
       form.value.slug.length >= 3 &&
       slugStatus.value.type === 'ok'
     )
-  }
   return true
 })
 
@@ -394,15 +1041,30 @@ async function submitRegistration() {
     formData.append('primaryColor', form.value.primaryColor)
     formData.append('secondaryColor', form.value.secondaryColor)
     formData.append('planId', String(form.value.planId))
-    if (form.value.logoFile) {
-      formData.append('logo', form.value.logoFile)
-    }
-
+    if (form.value.logoFile) formData.append('logo', form.value.logoFile)
+    if (form.value.aboutPhoto1File) formData.append('about_photo1', form.value.aboutPhoto1File)
+    if (form.value.aboutPhoto2File) formData.append('about_photo2', form.value.aboutPhoto2File)
+    formData.append('instagram_url', form.value.instagram_url || '')
+    formData.append('whatsapp_number', form.value.whatsapp_number || '')
+    formData.append('map_link', form.value.map_link || '')
+    formData.append('address', form.value.address || '')
+    formData.append('description', form.value.description || '')
+    formData.append('open_hours', form.value.open_hours || '')
     await axios.post(`${API}/onboarding/register`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
-
-    success.value = true
+    // Auto-login after registration so client lands on portal
+    try {
+      const loginRes = await axios.post(`${API}/onboarding/client-login`, {
+        email: form.value.adminEmail,
+        password: form.value.adminPassword,
+      })
+      localStorage.setItem('client_token', loginRes.data.token)
+      localStorage.setItem('client_tenant', JSON.stringify(loginRes.data.tenant))
+      emit('client-logged-in')
+    } catch {
+      success.value = true
+    }
   } catch (err) {
     alert(err.response?.data?.error || 'حدث خطأ، حاول مرة أخرى')
   } finally {
@@ -412,341 +1074,1258 @@ async function submitRegistration() {
 </script>
 
 <style scoped>
-.onboarding-page {
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ── Root ────────────────────────────────────────────── */
+.ow-root {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 16px 48px;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #faf9ff;
+  font-family: 'IBM Plex Sans Arabic', 'Segoe UI', sans-serif;
   direction: rtl;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.ob-header {
-  text-align: center;
-  margin-bottom: 32px;
+/* ── Ambient Background ──────────────────────────────── */
+.ow-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
 }
-.ob-logo-placeholder {
-  font-size: 3.5rem;
-  margin-bottom: 8px;
+.ow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
 }
-.ob-header h1 {
-  font-size: 2rem;
-  color: #1a1a2e;
-  margin: 0 0 4px;
+.ow-orb-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, transparent 70%);
+  top: -200px;
+  right: -100px;
+  animation: ow-float 8s ease-in-out infinite;
 }
-.ob-header p {
-  color: #666;
-  font-size: 0.9rem;
+.ow-orb-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.22) 0%, transparent 70%);
+  bottom: -150px;
+  left: -100px;
+  animation: ow-float 10s ease-in-out infinite reverse;
+}
+.ow-orb-3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(196, 181, 253, 0.3) 0%, transparent 70%);
+  top: 40%;
+  left: 30%;
+  animation: ow-float 12s ease-in-out infinite 2s;
+}
+.ow-orb-4 {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(91, 33, 182, 0.15) 0%, transparent 70%);
+  top: 20%;
+  right: 20%;
+  animation: ow-float 9s ease-in-out infinite 1s;
+}
+.ow-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+@keyframes ow-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-30px) scale(1.03);
+  }
 }
 
-.ob-steps {
+/* ── Navbar ─────────────────────────────────────────── */
+.ow-nav {
+  position: relative;
+  z-index: 10;
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.step-dot {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  padding: 1.1rem 2.5rem;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.15);
 }
-.step-dot span {
+.ow-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.ow-nav-icon {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
-  background: #ddd;
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: background 0.3s;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
-.step-dot p {
-  font-size: 0.68rem;
-  color: #888;
-  white-space: nowrap;
+.ow-nav-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #fff;
 }
-.step-dot.active span {
-  background: var(--primary, #1a73e8);
-  color: white;
+.ow-nav-brand span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e0a3c;
+  letter-spacing: -0.3px;
 }
-.step-dot.done span {
-  background: #34a853;
-  color: white;
+.ow-nav-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #5b21b6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.9rem;
+  border-radius: 100px;
+}
+.ow-nav-badge svg {
+  width: 13px;
+  height: 13px;
 }
 
-.ob-card {
+/* Login toggle button */
+.ow-login-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #7c3aed;
+  background: transparent;
+  color: #7c3aed;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.ow-login-toggle-btn:hover {
+  background: #7c3aed;
+  color: white;
+}
+.ow-login-toggle-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Login overlay */
+.ow-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(15, 10, 40, 0.7);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.ow-login-card {
   background: white;
-  border-radius: 20px;
-  padding: 32px;
+  border-radius: 24px;
+  padding: 40px 36px;
   width: 100%;
-  max-width: 540px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  max-width: 440px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: ow-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-
-.step-content h2 {
-  font-size: 1.4rem;
-  margin-bottom: 4px;
-  color: #1a1a2e;
+@keyframes ow-pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
-.step-sub {
-  font-size: 0.82rem;
-  color: #888;
+.ow-login-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.ow-login-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke: white;
+}
+.ow-login-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin: 0 0 8px;
+}
+.ow-login-sub {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+.ow-login-error {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border: 1px solid #fca5a5;
+}
+.ow-login-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
   margin-bottom: 20px;
 }
-
-.field {
-  margin-bottom: 16px;
-}
-.field label {
+.ow-lfield label {
   display: block;
-  font-size: 0.85rem;
-  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
   margin-bottom: 6px;
 }
-.req {
-  color: #e53935;
-}
-.field input,
-.field select {
+.ow-lfield input {
   width: 100%;
-  padding: 12px 14px;
-  border: 2px solid #e0e0e0;
+  padding: 12px 16px;
+  border: 1.5px solid #e5e7eb;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border 0.2s;
   box-sizing: border-box;
-  background: white;
 }
-.field input:focus,
-.field select:focus {
-  border-color: var(--primary, #1a73e8);
+.ow-lfield input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
-.field-hint {
-  font-size: 0.75rem;
-  color: #e53935;
-  margin-top: 4px;
-  min-height: 18px;
-}
-
-.field-row {
-  display: flex;
-  gap: 12px;
-}
-.field-row .field {
-  flex: 1;
-}
-
-.slug-row {
+.ow-login-submit {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  transition: opacity 0.2s;
+  margin-bottom: 16px;
 }
-.slug-row input {
-  flex: 1;
+.ow-login-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
-.domain {
-  color: #888;
-  font-size: 0.8rem;
-  white-space: nowrap;
+.ow-login-submit svg {
+  width: 17px;
+  height: 17px;
 }
-.slug-status {
-  font-size: 0.78rem;
-  margin-top: 4px;
+.ow-spin-mini {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ow-spin 0.7s linear infinite;
 }
-.slug-status.ok {
-  color: #34a853;
-}
-.slug-status.error {
-  color: #e53935;
+.ow-login-back {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
 }
 
-.logo-upload {
-  border: 2px dashed #ccc;
+/* ── Main container ─────────────────────────────────── */
+.ow-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* ── Left panel ─────────────────────────────────────── */
+.ow-panel-left {
+  position: sticky;
+  top: 2rem;
+}
+.ow-panel-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  color: #5b21b6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+}
+.ow-panel-tag svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ow-panel-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #1e0a3c;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+  letter-spacing: -0.5px;
+}
+.ow-panel-title em {
+  font-style: italic;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.ow-panel-desc {
+  color: #6b5fa6;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  margin: 0 0 2rem;
+}
+
+/* Steps list in left panel */
+.ow-steps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ow-steps-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.75rem 0;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+  position: relative;
+}
+.ow-steps-list li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 15px;
+  top: calc(0.75rem + 28px);
+  width: 2px;
+  height: calc(100% - 28px);
+  background: #ddd6fe;
+}
+.ow-steps-list li.active {
+  opacity: 1;
+}
+.ow-steps-list li.done {
+  opacity: 0.75;
+}
+.ow-steps-list li.active .ow-step-circle {
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+}
+.ow-steps-list li.done .ow-step-circle {
+  background: #dcfce7;
+}
+.ow-steps-list li.done .ow-step-circle svg {
+  color: #16a34a;
+}
+
+.ow-step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.ow-step-circle span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5b21b6;
+}
+.ow-step-circle svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+}
+
+.ow-steps-list li strong {
+  font-size: 0.88rem;
+  color: #1e0a3c;
+  display: block;
+}
+.ow-steps-list li p {
+  font-size: 0.76rem;
+  color: #7c6f9a;
+  margin: 2px 0 0;
+}
+
+/* Trust footer */
+.ow-panel-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ede9fe;
+}
+.ow-trust-avatars {
+  display: flex;
+}
+.ow-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  margin-left: -6px;
+}
+.ow-panel-footer p {
+  font-size: 0.78rem;
+  color: #7c6f9a;
+  margin: 0;
+}
+
+/* ── Form card ──────────────────────────────────────── */
+.ow-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  box-shadow:
+    0 8px 48px rgba(124, 58, 237, 0.1),
+    0 2px 16px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+/* Progress bar */
+.ow-progress-bar {
+  height: 3px;
+  background: #ede9fe;
+}
+.ow-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5b21b6, #a855f7);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ow-progress-label {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 2rem 0;
+  font-size: 0.75rem;
+  color: #9d8bbf;
+}
+.ow-progress-name {
+  font-weight: 600;
+  color: #5b21b6;
+}
+
+/* Step body */
+.ow-step-body {
+  padding: 1.5rem 2rem 0;
+}
+
+.ow-step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f0ebff;
+}
+.ow-step-head-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+}
+.ow-step-head-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #fff;
+}
+.ow-step-head h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e0a3c;
+  margin: 0 0 0.2rem;
+}
+.ow-step-sub {
+  font-size: 0.8rem;
+  color: #7c6f9a;
+  margin: 0;
+}
+
+/* Fields */
+.ow-field {
+  margin-bottom: 1.1rem;
+}
+.ow-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #3b0764;
+  margin-bottom: 0.4rem;
+}
+.ow-req {
+  color: #dc2626;
+}
+.ow-optional {
+  font-weight: 400;
+  color: #9d8bbf;
+  font-size: 0.73rem;
+  margin-right: 4px;
+}
+
+.ow-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.ow-input-wrap > svg:first-child {
+  position: absolute;
+  right: 13px;
+  width: 15px;
+  height: 15px;
+  color: #a78bfa;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.ow-input-wrap input,
+.ow-input-wrap select {
+  width: 100%;
+  padding: 0.72rem 2.5rem 0.72rem 0.9rem;
+  border: 2px solid #e9d5ff;
   border-radius: 12px;
-  padding: 28px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #1e0a3c;
+  background: #fff;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  appearance: none;
+}
+.ow-input-wrap input:focus,
+.ow-input-wrap select:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.ow-select-wrap::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #a78bfa;
+  pointer-events: none;
+}
+
+.ow-textarea-wrap textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid #e9d5ff;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #1e0a3c;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.ow-textarea-wrap textarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.ow-field-row {
+  display: flex;
+  gap: 0.85rem;
+}
+.ow-field-row .ow-field {
+  flex: 1;
+}
+
+/* Hints */
+.ow-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  margin-top: 0.35rem;
+}
+.ow-hint svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.ow-hint-warn {
+  color: #dc2626;
+}
+.ow-hint-ok {
+  color: #16a34a;
+}
+
+/* Slug row */
+.ow-slug-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ow-slug-input {
+  flex: 1;
+}
+.ow-domain {
+  font-size: 0.78rem;
+  color: #9d8bbf;
+  white-space: nowrap;
+  background: #f5f3ff;
+  padding: 0.72rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #ddd6fe;
+}
+
+/* Upload zone */
+.ow-upload-zone {
+  border: 2px dashed #ddd6fe;
+  border-radius: 16px;
+  padding: 2rem;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  background: #faf9ff;
 }
-.logo-upload:hover {
-  border-color: var(--primary, #1a73e8);
+.ow-upload-zone:hover {
+  border-color: #7c3aed;
+  background: #f5f3ff;
 }
-.logo-preview-img {
+.ow-upload-zone.has-image {
+  padding: 0.75rem;
+  border-style: solid;
+  border-color: #a78bfa;
+}
+.ow-upload-sm {
+  padding: 1.25rem;
+}
+.ow-upload-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ow-upload-icon {
+  width: 40px;
+  height: 40px;
+  background: #ede9fe;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ow-upload-icon svg {
+  width: 20px;
+  height: 20px;
+  color: #7c3aed;
+}
+.ow-upload-inner svg {
+  width: 24px;
+  height: 24px;
+  color: #a78bfa;
+}
+.ow-upload-inner p {
+  font-size: 0.88rem;
+  color: #5b21b6;
+  font-weight: 600;
+  margin: 0;
+}
+.ow-upload-inner span {
+  font-size: 0.75rem;
+  color: #9d8bbf;
+}
+.ow-upload-preview {
   max-height: 80px;
   max-width: 100%;
-  border-radius: 8px;
-}
-.upload-placeholder span {
-  font-size: 2rem;
-}
-.upload-placeholder p {
-  color: #888;
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-}
-
-.colors-row {
-  display: flex;
-  gap: 16px;
-}
-.colors-row .field {
-  flex: 1;
-}
-.color-picker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: 2px solid #e0e0e0;
   border-radius: 10px;
-}
-.color-picker input[type='color'] {
-  width: 40px;
-  height: 32px;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-.color-picker span {
-  font-size: 0.82rem;
-  color: #555;
+  object-fit: contain;
 }
 
-.preview-card {
-  border-radius: 12px;
-  overflow: hidden;
-  margin-top: 16px;
+/* Colors */
+.ow-colors-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
 }
-.preview-header {
-  padding: 14px 18px;
+.ow-colors-row .ow-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+.ow-color-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  border: 2px solid #e9d5ff;
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+.ow-color-pick:hover {
+  border-color: #7c3aed;
+}
+.ow-color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+.ow-color-pick input[type='color'] {
+  width: 0;
+  height: 0;
+  opacity: 0;
+  position: absolute;
+}
+.ow-color-pick span {
+  font-size: 0.8rem;
+  color: #5b21b6;
+  font-weight: 500;
+}
+
+/* Preview */
+.ow-preview-card {
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+  border: 1px solid #ede9fe;
+}
+.ow-preview-bar {
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.preview-logo {
-  height: 30px;
-  width: 30px;
+.ow-preview-logo {
+  height: 28px;
+  width: 28px;
   border-radius: 50%;
   object-fit: cover;
 }
-.preview-logo-ph {
-  font-size: 1.4rem;
-}
-
-.plans-grid {
+.ow-preview-logo-ph {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
 }
-.plan-card {
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 14px 18px;
-  cursor: pointer;
-  transition: all 0.2s;
+.ow-preview-logo-ph svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
 }
-.plan-card:hover,
-.plan-card.selected {
-  border-color: var(--primary, #1a73e8);
-}
-.plan-card.selected {
-  background: #f0f7ff;
-}
-.plan-card h3 {
-  margin: 0 0 6px;
-}
-.price {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--primary, #1a73e8);
-  margin-bottom: 6px;
-}
-.plan-card ul {
-  margin: 0;
-  padding-right: 18px;
-  color: #555;
-  font-size: 0.82rem;
-}
-.trial-note {
-  text-align: center;
-  color: #34a853;
-  font-size: 0.82rem;
-  margin-top: 10px;
-}
-
-.ob-nav {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 28px;
-  gap: 12px;
-}
-.btn-back {
-  padding: 12px 22px;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-.btn-next,
-.btn-submit {
+.ow-preview-bar span {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
   flex: 1;
-  padding: 14px;
-  border: none;
-  border-radius: 10px;
-  color: white;
-  font-size: 1rem;
-  font-weight: bold;
+}
+.ow-preview-dots {
+  display: flex;
+  gap: 4px;
+}
+.ow-preview-dots span {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+.ow-preview-label {
+  padding: 8px 18px;
+  font-size: 0.75rem;
+  color: #7c6f9a;
+  margin: 0;
+}
+
+/* Photos row */
+.ow-photos-row {
+  display: flex;
+  gap: 1rem;
+}
+.ow-photos-row .ow-field {
+  flex: 1;
+}
+
+/* Plans */
+.ow-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.ow-plan-card {
+  border: 2px solid #e9d5ff;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
   cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  text-align: center;
+  background: #fff;
+}
+.ow-plan-card:hover {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+}
+.ow-plan-card.selected {
+  border-color: #7c3aed;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+  transform: translateY(-3px);
+}
+.ow-plan-check {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
   transition: opacity 0.2s;
 }
-.btn-next:disabled,
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.ow-plan-card.selected .ow-plan-check {
+  opacity: 1;
+}
+.ow-plan-check svg {
+  width: 11px;
+  height: 11px;
+  color: #fff;
+}
+.ow-plan-icon {
+  width: 36px;
+  height: 36px;
+  background: #ede9fe;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.65rem;
+}
+.ow-plan-icon svg {
+  width: 18px;
+  height: 18px;
+  color: #7c3aed;
+}
+.ow-plan-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e0a3c;
+  margin: 0 0 0.4rem;
+}
+.ow-plan-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #5b21b6;
+  margin-bottom: 0.65rem;
+}
+.ow-plan-price small {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #9d8bbf;
+}
+.ow-free {
+  color: #16a34a;
+}
+.ow-plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: right;
+}
+.ow-plan-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  color: #6b5fa6;
+  margin-bottom: 3px;
+}
+.ow-plan-features svg {
+  width: 12px;
+  height: 12px;
+  color: #7c3aed;
+  flex-shrink: 0;
 }
 
-.success-overlay {
+.ow-trial-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.8rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+}
+.ow-trial-badge svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* Nav buttons */
+.ow-nav-btns {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem 2rem;
+  gap: 0.75rem;
+}
+.ow-btn-spacer {
+  flex: 0 0 auto;
+  width: 100px;
+}
+
+.ow-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 1.25rem;
+  background: #f5f3ff;
+  border: 2px solid #ddd6fe;
+  border-radius: 12px;
+  color: #5b21b6;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.ow-btn-back svg {
+  width: 15px;
+  height: 15px;
+  transform: scaleX(-1);
+}
+.ow-btn-back:hover {
+  background: #ede9fe;
+  border-color: #a78bfa;
+}
+
+.ow-btn-next {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 2rem;
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 60%, #a855f7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
+  transition:
+    opacity 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+.ow-btn-next svg {
+  width: 16px;
+  height: 16px;
+  transform: scaleX(-1);
+}
+.ow-btn-next:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.45);
+}
+.ow-btn-next:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ow-btn-submit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 2.25rem;
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 60%, #a855f7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(124, 58, 237, 0.4);
+  transition:
+    opacity 0.2s,
+    transform 0.15s,
+    box-shadow 0.2s;
+}
+.ow-btn-submit svg {
+  width: 17px;
+  height: 17px;
+}
+.ow-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 36px rgba(124, 58, 237, 0.5);
+}
+.ow-btn-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ow-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ow-spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes ow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Success overlay ──────────────────────────────────── */
+.ow-success-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(15, 5, 40, 0.65);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
 }
-.success-card {
-  background: white;
-  border-radius: 20px;
-  padding: 44px;
+.ow-success-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  max-width: 440px;
+  width: 100%;
   text-align: center;
-  max-width: 420px;
-  width: 90%;
+  box-shadow: 0 32px 80px rgba(30, 10, 60, 0.3);
+  position: relative;
+  overflow: hidden;
 }
-.success-icon {
-  font-size: 3.5rem;
-  margin-bottom: 14px;
+.ow-success-orb {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, transparent 70%);
+  top: -100px;
+  right: -80px;
+  pointer-events: none;
 }
-.trial-info {
-  color: #555;
-  font-size: 0.88rem;
-  margin-top: 8px;
+.ow-success-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.4);
+  position: relative;
+}
+.ow-success-icon svg {
+  width: 30px;
+  height: 30px;
+  color: #fff;
+}
+.ow-success-card h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e0a3c;
+  margin: 0 0 0.6rem;
+}
+.ow-success-card > p {
+  color: #7c6f9a;
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+.ow-success-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.75rem;
+  direction: ltr;
+}
+.ow-success-link svg {
+  width: 15px;
+  height: 15px;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+.ow-success-link span {
+  font-size: 0.82rem;
+  color: #5b21b6;
+  font-weight: 500;
+  word-break: break-all;
+}
+.ow-success-note {
+  font-size: 0.78rem;
+  color: #9d8bbf;
+  margin: 0;
 }
 
-@media (max-width: 480px) {
-  .ob-card {
-    padding: 20px;
+/* ── Transitions ─────────────────────────────────────── */
+.ow-slide-enter-active,
+.ow-slide-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ow-slide-enter-from {
+  opacity: 0;
+  transform: translateX(-18px);
+}
+.ow-slide-leave-to {
+  opacity: 0;
+  transform: translateX(18px);
+}
+.ow-fade-enter-active,
+.ow-fade-leave-active {
+  transition: opacity 0.3s;
+}
+.ow-fade-enter-from,
+.ow-fade-leave-to {
+  opacity: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ow-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
-  .field-row {
+  .ow-panel-left {
+    position: static;
+  }
+  .ow-panel-title {
+    font-size: 1.8rem;
+  }
+  .ow-steps-list {
+    display: none;
+  }
+}
+@media (max-width: 580px) {
+  .ow-nav {
+    padding: 0.85rem 1.25rem;
+  }
+  .ow-nav-badge {
+    display: none;
+  }
+  .ow-step-body {
+    padding: 1.25rem 1.25rem 0;
+  }
+  .ow-nav-btns {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .ow-field-row {
     flex-direction: column;
   }
-  .colors-row {
+  .ow-colors-row {
     flex-direction: column;
+  }
+  .ow-photos-row {
+    flex-direction: column;
+  }
+  .ow-plans-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ow-slug-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ow-domain {
+    text-align: center;
   }
 }
 </style>

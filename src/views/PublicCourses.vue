@@ -4,10 +4,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as api from '../services/api.js'
 import { useLanguage } from '../composables/useLanguage.js'
+import { useTenant } from '../composables/useTenant.js'
 import AppLoader from '../components/AppLoader.vue'
 const router = useRouter()
 const route = useRoute()
 const { t, currentLang } = useLanguage()
+const { tenant } = useTenant()
 
 const props = defineProps({
   darkMode: { type: Boolean, default: false },
@@ -18,20 +20,23 @@ const loading = ref(true)
 const selectedLevel = ref('tous')
 
 /* ── Level config ─────────────────────────────────────────────── */
-const educationLevels = computed(() => ({
-  tous: { label: t('all_levels'), color: '#0255ae', bg: 'from-[#0255ae] to-[#1ba8f4]' },
-  primaire: {
-    label: t('primary_level_label'),
-    color: '#10b981',
-    bg: 'from-emerald-500 to-teal-400',
-  },
-  moyen: { label: t('middle_level_label'), color: '#3b82f6', bg: 'from-blue-500 to-sky-400' },
-  secondaire: {
-    label: t('secondary_level_label'),
-    color: '#8b5cf6',
-    bg: 'from-violet-500 to-purple-400',
-  },
-}))
+const educationLevels = computed(() => {
+  const primary = tenant.value?.primary_color || '#0255ae'
+  return {
+    tous: { label: t('all_levels'), color: primary, bg: null },
+    primaire: {
+      label: t('primary_level_label'),
+      color: '#10b981',
+      bg: 'from-emerald-500 to-teal-400',
+    },
+    moyen: { label: t('middle_level_label'), color: '#3b82f6', bg: 'from-blue-500 to-sky-400' },
+    secondaire: {
+      label: t('secondary_level_label'),
+      color: '#8b5cf6',
+      bg: 'from-violet-500 to-purple-400',
+    },
+  }
+})
 
 const branchLabels = computed(() => ({
   sciences_experimentales: currentLang.value === 'ar' ? 'علوم تجريبية' : 'Sciences expérimentales',
@@ -110,7 +115,11 @@ onMounted(async () => {
     <div class="relative overflow-hidden rounded-3xl">
       <!-- gradient bg -->
       <div
-        class="absolute inset-0 bg-gradient-to-br from-[#040d1f] via-[#0255ae] to-[#1ba8f4]"
+        class="absolute inset-0"
+        :style="{
+          background:
+            'linear-gradient(135deg, var(--color-primary-dark, #040d1f) 0%, var(--color-primary, #0255ae) 50%, var(--color-primary-light, #1ba8f4) 100%)',
+        }"
       ></div>
       <!-- mesh overlay -->
       <div
@@ -177,7 +186,8 @@ onMounted(async () => {
             </div>
             <button
               @click="router.push('/login')"
-              class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-[#0255ae] font-bold text-sm hover:bg-blue-50 transition-all hover:scale-105 shadow-lg"
+              class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white font-bold text-sm hover:bg-blue-50 transition-all hover:scale-105 shadow-lg"
+              :style="{ color: 'var(--color-primary, #0255ae)' }"
             >
               <svg
                 width="16"
@@ -427,7 +437,11 @@ onMounted(async () => {
               <!-- CTA button -->
               <button
                 @click="router.push('/login')"
-                class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all bg-gradient-to-r from-[#0255ae] to-[#1ba8f4] hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02] flex items-center justify-center gap-2"
+                class="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+                :style="{
+                  background:
+                    'linear-gradient(to right, var(--color-primary-dark, #0255ae), var(--color-primary, #1ba8f4))',
+                }"
               >
                 <svg
                   width="15"

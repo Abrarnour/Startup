@@ -1,6 +1,7 @@
 // backend/routes/auth.js
 import express from 'express'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 import { sendNotif, notifyAllAdmins } from '../notifHelper.js'
 
 const router = express.Router()
@@ -30,6 +31,18 @@ router.post('/register', async (req, res) => {
   try {
     if (!name || !last_name || !email || !password || !role) {
       return res.status(400).json({ error: 'يرجى ملء جميع الحقول المطلوبة' })
+    }
+    // ── PLAN LIMIT: check max_students ───────────────────────
+    if (role === 'student') {
+      const maxStudents = req.tenant?.max_students ?? 30
+      const studentCount = await pool.query(`SELECT COUNT(*) FROM users WHERE role = 'student'`)
+      if (parseInt(studentCount.rows[0].count) >= maxStudents) {
+        return res.status(403).json({
+          error: `لقد وصلت إلى الحد الأقصى للباقة: ${maxStudents} طالب. يرجى ترقية الباقة.`,
+          code: 'PLAN_LIMIT_STUDENTS',
+          limit: maxStudents,
+        })
+      }
     }
     const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email])
     if (userExists.rows.length > 0) {
@@ -81,7 +94,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' })
     }
     const user = result.rows[0]
-    if (password !== user.password) {
+    // Support both bcrypt hashes (new tenants) and plain text (legacy data)
+    const passwordValid = user.password.startsWith('$2')
+      ? await bcrypt.compare(password, user.password)
+      : password === user.password
+    if (!passwordValid) {
       return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' })
     }
 
@@ -133,6 +150,16 @@ router.post('/register-teacher', authMiddleware, adminMiddleware, async (req, re
     }
     if (!['M', 'F'].includes(gender)) {
       return res.status(400).json({ error: 'Le genre doit être M ou F' })
+    }
+    // ── PLAN LIMIT: check max_teachers ───────────────────────
+    const maxTeachers = req.tenant?.max_teachers ?? 3
+    const teacherCount = await pool.query(`SELECT COUNT(*) FROM users WHERE role = 'teacher'`)
+    if (parseInt(teacherCount.rows[0].count) >= maxTeachers) {
+      return res.status(403).json({
+        error: `لقد وصلت إلى الحد الأقصى للباقة: ${maxTeachers} أستاذ. يرجى ترقية الباقة.`,
+        code: 'PLAN_LIMIT_TEACHERS',
+        limit: maxTeachers,
+      })
     }
     const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email])
     if (userExists.rows.length > 0) {
@@ -377,3 +404,28 @@ router.patch('/change-my-password', authMiddleware, async (req, res) => {
   }
 })
 export default router
+// ── GET /api/auth/plan-status ─────────────────────────────────
+// Returns current tenant plan + usage (student/teacher count vs limits)
+router.get('/plan-status', authMiddleware, async (req, res) => {
+  const pool = req.db
+  const tenant = req.tenant
+  try {
+    const [sc, tc] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FROM users WHERE role = 'student'`),
+      pool.query(`SELECT COUNT(*) FROM users WHERE role = 'teacher'`),
+    ])
+    res.json({
+      plan_name: tenant?.plan_name || 'trial',
+      plan_name_ar: tenant?.plan_name_ar || 'تجريبية',
+      plan_price_dzd: tenant?.plan_price_dzd || 0,
+      max_students: tenant?.max_students ?? 30,
+      max_teachers: tenant?.max_teachers ?? 3,
+      student_count: parseInt(sc.rows[0].count),
+      teacher_count: parseInt(tc.rows[0].count),
+      trial_ends_at: tenant?.trial_ends_at || null,
+      status: tenant?.status || 'trial',
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})

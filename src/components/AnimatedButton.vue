@@ -145,14 +145,14 @@ const handle = () => router.push(props.to)
 </template>
 
 <style scoped>
-/* ── colour tokens (light-blue palette) ── */
+/* ── colour tokens — inherit from tenant CSS vars ── */
 .anim-btn {
   --white: #e7f4ff;
-  --blue-100: #bae6fd;
-  --blue-200: #7dd3fc;
-  --blue-300: #38bdf8;
-  --blue-400: #0ea5e9;
-  --blue-500: #0255ae;
+  --blue-100: var(--color-primary-light, #bae6fd);
+  --blue-200: var(--color-primary-light, #7dd3fc);
+  --blue-300: var(--color-primary, #38bdf8);
+  --blue-400: var(--color-primary, #0ea5e9);
+  --blue-500: var(--color-primary-dark, #0255ae);
   --radius: 18px;
 
   border-radius: var(--radius);

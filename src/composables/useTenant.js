@@ -21,7 +21,11 @@ function resolveSlug() {
   // Try path at runtime (for late navigation to /school/:slug)
   const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)(\/|$)/i)
   if (pathMatch) return pathMatch[1].toLowerCase()
-  return null
+  // Skip platform routes — they handle their own auth
+  const path = window.location.pathname
+  if (path.startsWith('/platform') || path.startsWith('/register-school')) return null
+  // Root or unknown path → default to MUDAR demo
+  return 'mudar'
 }
 
 export function useTenant() {
@@ -53,23 +57,36 @@ export function useTenant() {
         const logoSrc = data.logo_url.startsWith('http')
           ? data.logo_url
           : `${API.replace('/api', '')}${data.logo_url}`
-        const favicon = document.querySelector("link[rel*='icon']")
-        if (favicon) favicon.href = logoSrc
+        // Try by ID first, then by rel selector
+        const favicon =
+          document.getElementById('dynamic-favicon') || document.querySelector("link[rel*='icon']")
+        if (favicon) {
+          favicon.href = logoSrc + '?v=' + Date.now()
+        }
       }
     } catch (err) {
-      // If this is the demo/product slug, use hardcoded fallback
-      // so the product always renders even without a platform_db entry
-      if (slug === 'belmahi') {
-        tenant.value = {
-          slug: 'belmahi',
-          school_name: 'Belmahi School',
-          school_name_ar: 'مدرسة بلماحي',
+      if (slug === 'belmahi' || slug === 'mudar') {
+        const fallback = {
+          slug: slug,
+          school_name: 'MUDAR',
+          school_name_ar: 'منصة مودار',
           logo_url: null,
-          primary_color: '#0255ae',
-          secondary_color: '#f4f3ef',
+          primary_color: '#7c3aed',
+          secondary_color: '#5b21b6',
           status: 'active',
+          about_photo1: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=85',
+          about_photo2: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=85',
+          admin_email: 'support@mudar.dz',
+          city: 'Oran',
+          admin_phone: null,
+          instagram_url: null,
+          whatsapp_number: null,
+          map_link: null,
+          address: null,
         }
-        console.warn('useTenant: belmahi not in platform_db — using hardcoded fallback')
+        tenant.value = fallback
+        applyTheme(fallback)
+        console.warn(`useTenant: ${slug} not in platform_db — using MUDAR fallback`)
       } else {
         error.value = err.message
         console.error('Failed to load tenant config:', err.message)
@@ -96,13 +113,57 @@ export function useTenant() {
 // ── Apply school colors as CSS Variables ─────────────────────
 function applyTheme(config) {
   const root = document.documentElement
-  root.style.setProperty('--color-primary', config.primary_color || '#1a73e8')
-  root.style.setProperty('--color-secondary', config.secondary_color || '#f0f4ff')
-  root.style.setProperty('--color-primary-dark', darkenColor(config.primary_color || '#1a73e8', 20))
-  root.style.setProperty(
-    '--color-primary-light',
-    lightenColor(config.primary_color || '#1a73e8', 40),
-  )
+  const p = config.primary_color || '#7c3aed'
+  const s = config.secondary_color || '#5b21b6'
+
+  // Parse hex to HSL for hue-aware gradients
+  function hexToHsl(hex) {
+    let r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255
+    const max = Math.max(r,g,b), min = Math.min(r,g,b)
+    let h, s, l = (max+min)/2
+    if (max===min) { h=s=0 } else {
+      const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min)
+      switch(max){ case r:h=((g-b)/d+(g<b?6:0))/6;break; case g:h=((b-r)/d+2)/6;break; case b:h=((r-g)/d+4)/6;break }
+    }
+    return [h*360, s*100, l*100]
+  }
+  function hslToHex(h,s,l) {
+    h/=360; s/=100; l/=100
+    const hue2rgb=(p,q,t)=>{ if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p }
+    let r,g,b
+    if(s===0){r=g=b=l}else{const q=l<0.5?l*(1+s):l+s-l*s,pp=2*l-q;r=hue2rgb(pp,q,h+1/3);g=hue2rgb(pp,q,h);b=hue2rgb(pp,q,h-1/3)}
+    return '#'+[r,g,b].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')
+  }
+
+  const [ph, ps, pl] = hexToHsl(p)
+
+  // 4 gradient stops: dark deep → slightly shifted → base → bright light
+  // slight hue rotation (+5°) on lighter stops for organic feel
+  const stop1 = hslToHex(ph - 5,  ps + 5,  Math.max(5,  pl - 28))   // very dark, slightly cooler
+  const stop2 = hslToHex(ph,       ps,      Math.max(15, pl - 12))   // dark base
+  const stop3 = hslToHex(ph + 3,   ps - 5,  pl)                      // exact base
+  const stop4 = hslToHex(ph + 8,   ps - 15, Math.min(85, pl + 22))   // lighter, warmer hue
+
+  // secondary 4-stop
+  const [sh, ss, sl] = hexToHsl(s)
+  const ss1 = hslToHex(sh - 5, ss + 5,  Math.max(5,  sl - 28))
+  const ss2 = hslToHex(sh,      ss,      Math.max(15, sl - 12))
+  const ss3 = hslToHex(sh + 3,  ss - 5,  sl)
+  const ss4 = hslToHex(sh + 8,  ss - 15, Math.min(85, sl + 22))
+
+  const g4  = `linear-gradient(135deg, ${stop1} 0%, ${stop2} 33%, ${stop3} 66%, ${stop4} 100%)`
+  const g4y = `linear-gradient(155deg, ${stop1} 0%, ${stop2} 30%, ${stop3} 65%, ${stop4} 100%)`  // steeper angle variant
+  const sg4 = `linear-gradient(135deg, ${ss1} 0%, ${ss2} 33%, ${ss3} 66%, ${ss4} 100%)`
+
+  root.style.setProperty('--color-primary',          p)
+  root.style.setProperty('--color-secondary',        s)
+  root.style.setProperty('--color-primary-dark',     stop1)
+  root.style.setProperty('--color-primary-mid',      stop2)
+  root.style.setProperty('--color-primary-light',    stop4)
+  root.style.setProperty('--color-primary-lighter',  hslToHex(ph+10, ps-20, Math.min(92, pl+35)))
+  root.style.setProperty('--gradient-primary-4',     g4)
+  root.style.setProperty('--gradient-primary-4y',    g4y)
+  root.style.setProperty('--gradient-secondary-4',   sg4)
 }
 
 function darkenColor(hex, amount) {

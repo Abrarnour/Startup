@@ -18,15 +18,33 @@ import * as api from '../services/api.js'
 import TeacherListModal from '../components/TeacherListModal.vue'
 import StudentListModal from '../components/StudentListModal.vue'
 import { useLanguage } from '../composables/useLanguage.js'
+import { useTenant } from '../composables/useTenant.js'
 import StatsModal from '../components/StatsModal.vue'
 import AppLoader from '../components/AppLoader.vue'
 import ChangePasswordModal from '../components/ChangePasswordModal.vue'
+import PlanStatusBanner from '../components/PlanStatusBanner.vue'
 // ── NEW: Student History Modal ─────────────────────────────────────────────
 import StudentHistoryModal from '../components/StudentHistoryModal.vue'
 
 const showStatsModal = ref(false)
 const showChangePwdModal = ref(false)
 const { t } = useLanguage()
+const { tenant } = useTenant()
+
+const secondaryGradient = computed(() => {
+  const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--gradient-secondary-4').trim()
+  if (rootVar) return rootVar
+  const c = tenant.value?.secondary_color || '#5b21b6'
+  const shift = (hex, amt) => { const n=parseInt(hex.replace('#',''),16); const r=Math.min(255,Math.max(0,(n>>16)+amt)),g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt)),b=Math.min(255,Math.max(0,(n&0xff)+amt)); return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}` }
+  return `linear-gradient(135deg, ${shift(c,-40)} 0%, ${shift(c,-15)} 33%, ${c} 66%, ${shift(c,25)} 100%)`
+})
+const primaryGradient = computed(() => {
+  const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--gradient-primary-4y').trim()
+  if (rootVar) return rootVar
+  const c = tenant.value?.primary_color || '#7c3aed'
+  const shift = (hex, amt) => { const n=parseInt(hex.replace('#',''),16); const r=Math.min(255,Math.max(0,(n>>16)+amt)),g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt)),b=Math.min(255,Math.max(0,(n&0xff)+amt)); return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}` }
+  return `linear-gradient(155deg, ${shift(c,-50)} 0%, ${shift(c,-20)} 30%, ${c} 65%, ${shift(c,25)} 100%)`
+})
 const showStudentModal = ref(false)
 // ── NEW ───────────────────────────────────────────────────────────────────
 const showHistoryModal = ref(false)
@@ -284,14 +302,13 @@ onMounted(() => {
   <div v-else>
     <header
       v-if="user?.role === 'admin'"
-      :class="
-        props.darkMode
-          ? 'bg-gradient-to-r from-gray-800 to-gray-900'
-          : 'deep-blue-gradient text-white'
-      "
       class="text-white shadow-2xl rounded-3xl -mt-4 mb-8"
+      :style="props.darkMode ? {} : { background: secondaryGradient }"
+      :class="props.darkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : ''"
     >
       <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Plan usage banner inside dashboard -->
+        <PlanStatusBanner class="mb-6 rounded-xl" />
         <div class="flex justify-between items-center mb-6">
           <div>
             <h2 class="text-2xl font-bold mb-1">{{ t('dashboard') }}</h2>
@@ -446,7 +463,8 @@ onMounted(() => {
         <button
           v-if="props.user && props.user.role === 'admin'"
           @click="openAddModal"
-          class="flex items-center gap-2 px-6 py-3 bg-[#0056b3] text-white rounded-xl font-bold hover:bg-[#004494] transition-all shadow-lg"
+          class="flex items-center gap-2 px-6 py-3 text-white rounded-xl font-bold hover:opacity-90 transition-all shadow-lg"
+          :style="{ background: secondaryGradient }"
         >
           <Plus :size="20" />
           {{ t('add_course') }}
@@ -687,7 +705,7 @@ onMounted(() => {
 
 <style scoped>
 .deep-blue-gradient {
-  background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+  background: var(--gradient-primary-4y, linear-gradient(155deg, #1e0a3c 0%, #3b0764 30%, #5b21b6 65%, #7c3aed 100%));
 }
 
 /* Animated ring on the history card */

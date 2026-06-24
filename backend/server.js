@@ -58,21 +58,32 @@ app.get('/api/tenant-config', async (req, res) => {
 
   try {
     const result = await platformPool.query(
-      `SELECT slug, school_name, school_name_ar, logo_url, primary_color, secondary_color, status
+      `SELECT slug, school_name, school_name_ar, logo_url, primary_color, secondary_color, status,
+              about_photo1, about_photo2, admin_email, city,
+              instagram_url, whatsapp_number, map_link, address, admin_phone
        FROM tenants WHERE slug = $1`,
       [slug.toLowerCase()],
     )
     if (!result.rows[0]) {
-      // belmahi is the built-in demo — always return hardcoded config
-      if (slug === 'belmahi') {
+      // mudar/belmahi are the built-in demo — always return hardcoded config
+      if (slug === 'belmahi' || slug === 'mudar') {
         return res.json({
-          slug: 'belmahi',
-          school_name: 'Belmahi School',
-          school_name_ar: 'مدرسة بلماحي',
+          slug: slug,
+          school_name: 'MUDAR',
+          school_name_ar: 'منصة مودار',
           logo_url: null,
-          primary_color: '#0255ae',
-          secondary_color: '#f4f3ef',
+          primary_color: '#7c3aed',
+          secondary_color: '#5b21b6',
           status: 'active',
+          about_photo1: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=85',
+          about_photo2: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=85',
+          admin_email: 'support@mudar.dz',
+          city: 'Oran',
+          instagram_url: null,
+          whatsapp_number: null,
+          map_link: null,
+          address: null,
+          admin_phone: null,
         })
       }
       return res.status(404).json({ error: 'School not found' })
@@ -131,24 +142,25 @@ async function getActiveTenants() {
 // This is what makes /school/belmahi work out of the box without manual SQL.
 async function seedDemoTenant() {
   try {
-    await platformPool.query(`
-      INSERT INTO tenants
-        (slug, school_name, school_name_ar, logo_url, primary_color, secondary_color,
-         db_name, status, admin_email, admin_phone, city, country, onboarding_done)
-      VALUES
-        ('belmahi', 'Belmahi School', 'مدرسة بلماحي',
-         NULL, '#0255ae', '#f4f3ef',
-         'project', 'active',
-         'admin@belmahi.dz', '0550000001', 'Oran', 'DZ', true)
-      ON CONFLICT (slug) DO UPDATE
-        SET db_name        = EXCLUDED.db_name,
-            status         = EXCLUDED.status,
-            school_name    = EXCLUDED.school_name,
-            school_name_ar = EXCLUDED.school_name_ar,
-            primary_color  = EXCLUDED.primary_color,
-            updated_at     = NOW()
-    `)
-    console.log('✅ Demo tenant "belmahi" seeded → project')
+    // Hash a default password for the demo tenant so client-login works
+    // out of the box. We use DO NOTHING so an existing row (with its real
+    // credentials already stored in `details`) is never overwritten.
+    const { default: bcrypt } = await import('bcrypt')
+    const defaultHash = await bcrypt.hash('Admin1234!', 10)
+
+    await platformPool.query(
+      `INSERT INTO tenants
+         (slug, school_name, school_name_ar, logo_url, primary_color, secondary_color,
+          db_name, status, admin_email, admin_phone, city, country, onboarding_done, details)
+       VALUES
+         ('belmahi', 'Belmahi School', 'مدرسة بلماحي',
+          NULL, '#0255ae', '#f4f3ef',
+          'project', 'active',
+          'admin@belmahi.dz', '0550000001', 'Oran', 'DZ', true, $1)
+       ON CONFLICT (slug) DO NOTHING`,
+      [JSON.stringify({ pending_hash: defaultHash })],
+    )
+    console.log('✅ Demo tenant "belmahi" seeded (credentials preserved if already existed)')
   } catch (err) {
     console.error('⚠️  seedDemoTenant error (non-fatal):', err.message)
   }

@@ -43,8 +43,12 @@ const tenantInitial = computed(() => tenantName.value?.charAt(0)?.toUpperCase() 
 
 // p(path) — prepend /school/:slug when running inside a school route
 // so navigation never drops the tenant context
-const base = tenantSlug ? `/school/${tenantSlug}` : ''
-const p = (path) => `${base}${path}`
+const route = useRoute()
+const base = computed(() => {
+  const slug = route.params?.slug || tenantSlug
+  return slug ? `/school/${slug}` : ''
+})
+const p = (path) => `${base.value}${path}`
 
 const {
   notifications,
@@ -57,7 +61,6 @@ const {
   closeToast,
 } = useNotifications(computed(() => props.user))
 
-const route = useRoute()
 const mobileMenuOpen = ref(false)
 
 const handleLogout = () => {
@@ -95,6 +98,30 @@ const notifStyle = (type) => {
     default:
       return { bg: 'bg-blue-50', dot: 'bg-blue-500', icon: 'bell' }
   }
+}
+
+const tenantGradient = computed(() => {
+  if (props.darkMode) return null
+  const c = tenant.value?.primary_color
+  if (!c) return null
+  // Use CSS var set by applyTheme if available, else compute inline
+  const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--gradient-primary-4y').trim()
+  if (rootVar) return rootVar
+  return `linear-gradient(155deg, ${darken(c, 50)} 0%, ${darken(c, 25)} 30%, ${c} 65%, ${lighten(c, 25)} 100%)`
+})
+
+function darken(hex, amt) {
+  return shiftHex(hex, -amt)
+}
+function lighten(hex, amt) {
+  return shiftHex(hex, amt)
+}
+function shiftHex(hex, amt) {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const r = Math.min(255, Math.max(0, (n >> 16) + amt))
+  const g = Math.min(255, Math.max(0, ((n >> 8) & 0xff) + amt))
+  const b = Math.min(255, Math.max(0, (n & 0xff) + amt))
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')
 }
 
 // Role display helpers
@@ -154,7 +181,14 @@ const roleBadgeClass = computed(() => {
 
   <!-- ─── NavBar ─────────────────────────────────────────────────────────────── -->
   <nav
-    :class="darkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : 'deep-blue-gradient'"
+    :class="
+      darkMode
+        ? 'bg-gradient-to-r from-gray-800 to-gray-900'
+        : tenantGradient
+          ? ''
+          : 'deep-blue-gradient'
+    "
+    :style="tenantGradient && !darkMode ? { background: tenantGradient } : {}"
     class="shadow-2xl sticky top-0 z-50"
   >
     <div class="max-w-7xl mx-auto px-3 sm:px-4">
@@ -177,8 +211,12 @@ const roleBadgeClass = computed(() => {
             {{ tenantInitial }}
           </div>
           <div class="hidden sm:block">
-            <h1 class="text-sm font-bold leading-tight">{{ props.t('nav_portal_title') }}</h1>
-            <p class="text-xs text-blue-100">{{ props.t('nav_school_subtitle') }}</p>
+            <h1 class="text-sm font-bold leading-tight">
+              {{ tenant?.school_name || props.t('nav_portal_title') }}
+            </h1>
+            <p class="text-xs text-blue-100">
+              {{ tenant?.school_name_ar || props.t('nav_school_subtitle') }}
+            </p>
           </div>
         </RouterLink>
 
@@ -633,7 +671,8 @@ const roleBadgeClass = computed(() => {
           v-else
           :to="p('/login')"
           @click="closeMobileMenu"
-          class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold transition-all"
+          class="w-full flex items-center justify-center gap-2 px-4 py-3 text-white rounded-xl font-semibold transition-all"
+          :style="{ background: tenantGradient || 'linear-gradient(135deg,#012254 0%,#0255ae 66%,#1ba8f4 100%)' }"
         >
           <LogIn :size="18" />
           {{ props.t('login') }}
@@ -645,7 +684,7 @@ const roleBadgeClass = computed(() => {
 
 <style scoped>
 .deep-blue-gradient {
-  background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+  background: var(--gradient-primary-4y, linear-gradient(155deg, #1e0a3c 0%, #3b0764 30%, #5b21b6 65%, #7c3aed 100%));
 }
 
 /* Toast */

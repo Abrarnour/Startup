@@ -67,7 +67,7 @@ export const translations = {
 
     // ── REGISTER (page login mode inscription) ──
     register_title: 'Créer un compte',
-    register_subtitle: 'Rejoignez Belmahi School et commencez votre apprentissage.',
+    register_subtitle: 'Rejoignez MUDAR et commencez votre apprentissage.',
     register_button: "S'inscrire",
     loading_inscription: 'Inscription...',
     registration_success: ' Inscription réussie ! Redirection...',
@@ -221,7 +221,7 @@ export const translations = {
     // ── HOME PAGE EXTRA TRANSLATIONS ──
     hero_eyebrow: 'Oran, Algérie  ·  École Privée',
     hero_h_top: 'PORTAIL DE',
-    hero_h_main: 'BELMAHI SCHOOL',
+    hero_h_main: 'MUDAR',
 
     hero_body:
       "Une plateforme moderne pour suivre, gérer et accéder à vos Matiére — du primaire jusqu'au baccalauréat.",
@@ -270,7 +270,7 @@ export const translations = {
     about_title_1: 'Qui Sommes-',
     about_title_2: 'Nous ?',
     about_desc:
-      "<strong>Belmahi School</strong> est une institution éducative privée à Oran, dédiée à l'excellence académique. Nous combinons innovation pédagogique et encadrement humain pour accompagner chaque élève vers la réussite.",
+      "<strong>MUDAR</strong> est une institution éducative privée à Oran, dédiée à l'excellence académique. Nous combinons innovation pédagogique et encadrement humain pour accompagner chaque élève vers la réussite.",
     about_li_1: 'Primaire, Moyen et Secondaire',
     about_li_2: 'Professeurs diplômés et expérimentés',
     about_li_3: 'Suivi numérique en temps réel',
@@ -281,7 +281,7 @@ export const translations = {
     testi_title_1: 'Ce que disent',
     testi_title_2: 'nos familles',
     testi_1_text:
-      'Grâce à Belmahi School, ma fille a gagné confiance et méthode. Les résultats sont là !',
+      'Grâce à MUDAR, ma fille a gagné confiance et méthode. Les résultats sont là !',
     testi_2_text: "Les Matiére sont clairs, les profs disponibles. J'ai eu mon BEM avec mention !",
     testi_3_text:
       'Interface moderne, suivi rigoureux. Enfin une école qui utilise la technologie !',
@@ -310,7 +310,7 @@ export const translations = {
     cleanup_error: 'Erreur lors du nettoyage : ',
 
     nav_portal_title: 'Portail de Matiéres ',
-    nav_school_subtitle: 'Belmahi School - Oran',
+    nav_school_subtitle: 'MUDAR - Oran',
     nav_notifications_header: ' Notifications',
     my_space: 'Mon Espace',
     Admin: 'ADMIN',
@@ -725,8 +725,8 @@ export const translations = {
     phone_number: 'Numéro de téléphone',
     wilaya_label: 'Wilaya',
     test_accounts_label: 'Exemple de comptes:',
-    test_student_example: 'Étudiant: etudiant@belmahi.dz',
-    test_admin_example: 'Admin: admin@belmahi.dz',
+    test_student_example: 'Étudiant: etudiant@mudar.dz',
+    test_admin_example: 'Admin: admin@mudar.dz',
     password_min_8: 'Le mot de passe doit contenir au minimum 8 caractères',
 
     // ── TEACHER PASSWORD MANAGEMENT ──
@@ -776,16 +776,16 @@ export const translations = {
     hours_ago: 'Il y a {n}h',
     clear_all: 'Tout effacer',
     notification_count: '{n} notification(s)',
-    welcome_title_notif: ' Bienvenue — Belmahi School',
-    reminder_title_notif: ' Rappel de Matiére — Belmahi School',
-    assignment_title_notif: ' Nouveau devoir — Belmahi School',
-    warning_title_notif: ' Avertissement — Belmahi School',
-    success_title_notif: ' Succès — Belmahi School',
-    info_title_notif: ' Belmahi School',
+    welcome_title_notif: ' Bienvenue — MUDAR',
+    reminder_title_notif: ' Rappel de Matiére — MUDAR',
+    assignment_title_notif: ' Nouveau devoir — MUDAR',
+    warning_title_notif: ' Avertissement — MUDAR',
+    success_title_notif: ' Succès — MUDAR',
+    info_title_notif: ' MUDAR',
 
     // ── STATS DASHBOARD ──
     stats_dashboard_title: 'Tableau de bord des statistiques',
-    stats_realtime_view: 'Belmahi School · Vue en temps réel',
+    stats_realtime_view: 'MUDAR · Vue en temps réel',
     loading_data: 'Chargement des données...',
     error_loading_data: 'Erreur lors du chargement des données',
     paid_ok: 'Payé ✓',
@@ -1141,16 +1141,16 @@ export const translations = {
     hours_ago: 'منذ {n} ساعة',
     clear_all: 'مسح الكل',
     notification_count: '{n} إشعار',
-    welcome_title_notif: ' مرحباً — Belmahi School',
-    reminder_title_notif: ' تذكير بالدرس — Belmahi School',
-    assignment_title_notif: ' تعيين جديد — Belmahi School',
-    warning_title_notif: ' تنبيه — مدرسة بلماحي',
-    success_title_notif: 'تم بنجاح — Belmahi School',
-    info_title_notif: 'Belmahi School',
+    welcome_title_notif: ' مرحباً — MUDAR',
+    reminder_title_notif: ' تذكير بالدرس — MUDAR',
+    assignment_title_notif: ' تعيين جديد — MUDAR',
+    warning_title_notif: ' تنبيه — مدرسة مودار',
+    success_title_notif: 'تم بنجاح — MUDAR',
+    info_title_notif: 'MUDAR',
 
     // ── STATS DASHBOARD ──
     stats_dashboard_title: 'لوحة الإحصائيات',
-    stats_realtime_view: 'Belmahi School · عرض في الوقت الفعلي',
+    stats_realtime_view: 'MUDAR · عرض في الوقت الفعلي',
     loading_data: 'جاري تحميل البيانات...',
     error_loading_data: 'خطأ في تحميل البيانات',
     paid_ok: 'مدفوع ✓',
@@ -1200,7 +1200,7 @@ export const translations = {
     seen_check: '✓ شوهد',
     watch: 'مشاهدة',
     browser_no_video: 'متصفحك لا يدعم تشغيل الفيديو.',
-    hero_h_main: 'مدرسة بلماحي',
+    hero_h_main: 'مدرسة مودار',
     confirm_password: 'تأكيد كلمة المرور',
     passwords_not_match: 'كلمتا المرور غير متطابقتين',
     same_password_error: 'كلمة المرور الجديدة يجب أن تختلف عن القديمة',
@@ -1211,8 +1211,8 @@ export const translations = {
     phone_number: 'رقم الهاتف',
 
     test_accounts_label: 'أمثلة حسابات:',
-    test_student_example: 'طالب: etudiant@belmahi.dz',
-    test_admin_example: 'مشرف: admin@belmahi.dz',
+    test_student_example: 'طالب: etudiant@mudar.dz',
+    test_admin_example: 'مشرف: admin@mudar.dz',
     password_min_8: 'يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل',
 
     // ── TEACHER PASSWORD MANAGEMENT ──
@@ -1293,7 +1293,7 @@ export const translations = {
     contact_us: 'اتصل بنا',
     opening_hours: 'ساعات العمل',
     administration: 'الإدارة',
-    school_address: 'Belmahi School _ وهران /  ',
+    school_address: 'MUDAR _ وهران /  ',
     schedule_1: 'الأحد - الخميس: 8:00 - 17:00',
     schedule_2: 'السبت: 8:00 - 12:00',
     closed_friday: 'مغلق يوم الجمعة',
@@ -1321,7 +1321,7 @@ export const translations = {
 
     // ── REGISTER ──
     register_title: 'إنشاء حساب',
-    register_subtitle: 'انضم إلى Belmahi School وابدأ رحلة التعلم.',
+    register_subtitle: 'انضم إلى MUDAR وابدأ رحلة التعلم.',
     register_button: 'تسجيل',
     loading_inscription: 'جاري التسجيل...',
     registration_success: ' تم التسجيل بنجاح! جاري التحويل...',
@@ -1516,7 +1516,7 @@ export const translations = {
     about_title_1: 'من',
     about_title_2: 'نحن؟',
     about_desc:
-      '<strong>Belmahi School</strong> هي مؤسسة تعليمية خاصة في وهران، مكرسة للتميز الأكاديمي. نحن نجمع بين الابتكار البيداغوجي والتأطير البشري لمرافقة كل طالب نحو النجاح.',
+      '<strong>MUDAR</strong> هي مؤسسة تعليمية خاصة في وهران، مكرسة للتميز الأكاديمي. نحن نجمع بين الابتكار البيداغوجي والتأطير البشري لمرافقة كل طالب نحو النجاح.',
     about_li_1: 'ابتدائي، متوسط وثانوي',
     about_li_2: 'أساتذة متخرجون وذوو خبرة',
     about_li_3: 'متابعة رقمية في الوقت الفعلي',
@@ -1526,7 +1526,7 @@ export const translations = {
     testi_eyetag: 'آراء وتقييمات',
     testi_title_1: 'ماذا تقول',
     testi_title_2: 'عائلاتنا',
-    testi_1_text: 'بفضل Belmahi School، اكتسبت ابنتي الثقة والمنهجية. النتائج واضحة!',
+    testi_1_text: 'بفضل MUDAR، اكتسبت ابنتي الثقة والمنهجية. النتائج واضحة!',
     testi_2_text: 'الدروس واضحة، الأساتذة متاحون. حصلت على شهادة التعليم المتوسط بامتياز!',
     testi_3_text: 'واجهة حديثة، متابعة دقيقة. أخيرًا مدرسة تستخدم التكنولوجيا!',
 
@@ -1553,7 +1553,7 @@ export const translations = {
     cleanup_error: 'خطأ أثناء التنظيف : ',
 
     nav_portal_title: 'بوابة الدروس',
-    nav_school_subtitle: 'Belmahi School - وهران',
+    nav_school_subtitle: 'MUDAR - وهران',
     nav_notifications_header: ' الإشعارات',
     my_space: 'فضائي',
     admin_badge: 'مشرف',

@@ -536,6 +536,7 @@
 import { ref, computed, reactive, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 import { useLanguage } from '../composables/useLanguage.js'
+import { useTenant } from '../composables/useTenant.js'
 import {
   getAdminStudentsList,
   adminDeleteUser,
@@ -544,6 +545,9 @@ import {
 import AppLoader from '../components/AppLoader.vue'
 
 const { t } = useLanguage()
+const { tenant } = useTenant()
+const schoolName = computed(() => tenant.value?.school_name || 'MUDAR')
+const schoolWebsite = computed(() => tenant.value?.website || `www.${tenant.value?.slug || 'mudar'}.dz`)
 
 // ─── AFTER ──────────────────────────────────
 const props = defineProps({
@@ -632,7 +636,7 @@ function printStudentList() {
       <tbody>${rows}</tbody>
     </table>
     <div class="footer">
-      Total : ${filteredStudents.value.length} étudiant(s) — Belmahi School
+      Total : ${filteredStudents.value.length} étudiant(s) — ${schoolName.value}
     </div>
     <script>window.onload=()=>{window.print();window.onafterprint=()=>window.close()}<\/script>
     </body></html>
@@ -880,7 +884,7 @@ function printStudentCard(student) {
         </svg>
       </div>
       <div>
-        <div class="hdr-title">École Belmahi</div>
+        <div class="hdr-title">{{ schoolName }}</div>
         <div class="hdr-sub">Carte d'Identité Étudiant</div>
       </div>
     </div>
@@ -926,7 +930,7 @@ function printStudentCard(student) {
 
     <!-- Footer -->
     <div class="card-footer">
-      <span>www.ecole-belmahi.dz</span>
+      <span>${schoolWebsite.value}</span>
       <span>Année scolaire 2025–2026</span>
       <span>Document officiel — ne pas falsifier</span>
     </div>

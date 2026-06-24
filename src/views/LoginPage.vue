@@ -19,11 +19,33 @@ import {
 import { login } from '../services/api.js'
 import axios from 'axios' // سنحتاجه لعملية الـ Register
 import { useLanguage } from '../composables/useLanguage.js'
+import { useTenant } from '../composables/useTenant.js'
 import AppLoader from '../components/AppLoader.vue'
+import { useRoute } from 'vue-router'
 const router = useRouter()
+const route = useRoute()
+// Build path relative to current school slug if present
+function schoolPath(path) {
+  const slug = route.params?.slug
+  return slug ? `/school/${slug}${path}` : path
+}
 // دالة لتحديد اتجاه حركة الطبقة الزرقاء بدقة بناءً على اتجاه المتصفح
 import { computed } from 'vue'
 const { t, isRTL, local } = useLanguage()
+const { tenant } = useTenant()
+
+const supportEmail = computed(() => tenant.value?.admin_email || 'support@mudar.dz')
+const loginGradient = computed(() => {
+  const rootVar = getComputedStyle(document.documentElement).getPropertyValue('--gradient-primary-4y').trim()
+  if (rootVar) return rootVar
+  const c = tenant.value?.primary_color || '#7c3aed'
+  const shift = (hex, amt) => {
+    const n = parseInt(hex.replace('#',''),16)
+    const r = Math.min(255,Math.max(0,(n>>16)+amt)), g = Math.min(255,Math.max(0,((n>>8)&0xff)+amt)), b = Math.min(255,Math.max(0,(n&0xff)+amt))
+    return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}`
+  }
+  return `linear-gradient(155deg, ${shift(c,-60)} 0%, ${shift(c,-30)} 30%, ${c} 65%, ${shift(c,25)} 100%)`
+})
 
 const overlayTransform = computed(() => {
   if (!isSignUp.value) return 'translateX(0)'
@@ -143,23 +165,8 @@ const handleLogin = async () => {
   try {
     const data = await login(email.value, password.value)
 
-    // 1. حفظ بيانات المستخدم وتحديث الحالة
+    // Emit login event — App.vue handles redirect based on role
     emit('login', data.user)
-
-    // 2. التوجيه الديناميكي بناءً على الرتبة (Role)
-    const userRole = data.user.role
-
-    if (userRole === 'admin') {
-      router.push('/courses')
-    } else if (userRole === 'Parent') {
-      router.push('/parent-dashboard')
-    } else if (userRole === 'student') {
-      router.push('/student-dashboard')
-    } else if (userRole === 'teacher') {
-      router.push('/teacher-dashboard')
-    } else {
-      router.push('/courses') // المسار الافتراضي
-    }
   } catch (err) {
     error.value = err.message || t('error_login')
   } finally {
@@ -208,8 +215,8 @@ const handleRegister = async () => {
       class="relative rounded-3xl md:rounded-[40px] shadow-2xl overflow-hidden max-w-5xl w-full mx-4 min-h-[700px] md:h-[650px] flex"
     >
       <div
-        class="hidden md:flex absolute top-0 start-0 w-1/2 h-full z-20 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] deep-blue-gradient text-white flex-col justify-center items-center text-center p-12"
-        :style="{ transform: overlayTransform }"
+        class="hidden md:flex absolute top-0 start-0 w-1/2 h-full z-20 transition-all duration-700 ease-[cubic-bezier(0.77,0,0.175,1)] text-white flex-col justify-center items-center text-center p-12"
+        :style="{ transform: overlayTransform, background: loginGradient }"
       >
         <div v-if="!isSignUp" class="space-y-6">
           <h2 class="text-4xl font-bold">{{ t('welcome_title') }}</h2>
@@ -354,7 +361,8 @@ const handleRegister = async () => {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 deep-blue-gradient text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
+            class="w-full py-3 text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
+            :style="{ background: loginGradient }"
           >
             {{ loading ? t('loading_inscription') : t('register_button') }}
           </button>
@@ -427,7 +435,8 @@ const handleRegister = async () => {
           <button
             type="submit"
             :disabled="loading"
-            class="w-full py-3 deep-blue-gradient text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
+            class="w-full py-3 text-white rounded-xl font-bold text-lg hover:scale-105 transition-all shadow-lg"
+            :style="{ background: loginGradient }"
           >
             {{ loading ? t('loading_connexion') : t('login_button') }}
           </button>
@@ -444,7 +453,7 @@ const handleRegister = async () => {
             <span class="text-xs opacity-80 mt-2 block">
               {{ t('prblm_txt') }}
               <a
-                href="mailto:support@belmahi-school.dz"
+                :href="`mailto:${supportEmail}`"
                 class="text-blue-600 font-bold hover:underline ms-1"
               >
                 {{ t('support_link') }}
@@ -481,7 +490,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 .deep-blue-gradient {
-  background: linear-gradient(135deg, #012254 0%, #0255ae 35%, #0271d9 70%, #1ba8f4 100%);
+  background: var(--gradient-primary-4y, linear-gradient(155deg, #1e0a3c 0%, #3b0764 30%, #5b21b6 65%, #7c3aed 100%));
 }
 
 /* Prevent content flash during transition */

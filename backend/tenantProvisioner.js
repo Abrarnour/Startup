@@ -27,6 +27,8 @@ export async function provisionTenant({
   adminPassword,
   adminPasswordHash,
   schoolName,
+  adminFirstName,
+  adminLastName,
 }) {
   const dbName = `school_${slug.replace(/-/g, '_')}`
 
@@ -76,15 +78,17 @@ export async function provisionTenant({
   // FIX: tenant_schema.sql sets search_path='' (pg_dump default).
   // Must reset search_path and use public.users explicitly.
   const hashToUse = adminPasswordHash ? adminPasswordHash : await bcrypt.hash(adminPassword, 10)
+  const firstName = adminFirstName || 'Admin'
+  const lastName = adminLastName || schoolName
 
   const adminClient = await schemaPool.connect()
   try {
     await adminClient.query(`SET search_path = public`)
     await adminClient.query(
       `INSERT INTO public.users (name, last_name, email, password, role)
-       VALUES ('Admin', $1, $2, $3, 'admin')
+       VALUES ($1, $2, $3, $4, 'admin')
        ON CONFLICT (email) DO NOTHING`,
-      [schoolName, adminEmail, hashToUse],
+      [firstName, lastName, adminEmail, hashToUse],
     )
     console.log(`✅ Admin user created for ${dbName}`)
   } finally {

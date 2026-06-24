@@ -10,7 +10,7 @@ const getToken = () => localStorage.getItem('token')
 const getPlatformToken = () => localStorage.getItem('platform_token')
 
 // ── School request headers (includes tenant slug) ──────────────
-const getHeaders = (includeAuth = true) => {
+export const getHeaders = (includeAuth = true) => {
   const token = getToken()
 
   // 1. Module-load slug (most reliable — from URL when page first loaded)
@@ -28,6 +28,9 @@ const getHeaders = (includeAuth = true) => {
     const pathMatch = window.location.pathname.match(/^\/school\/([a-z0-9-]+)/i)
     if (pathMatch) slug = pathMatch[1].toLowerCase()
   }
+
+  // 4. Default to demo slug for root/unknown paths
+  if (!slug) slug = 'mudar'
 
   return {
     'Content-Type': 'application/json',
@@ -83,11 +86,20 @@ export const platformApproveTenant = async (id) => {
 export const platformGetInvoices = () =>
   fetch(`${PLATFORM_URL}/invoices`, { headers: platformHeaders() }).then((r) => r.json())
 
+export const platformGetBillingSummary = () =>
+  fetch(`${PLATFORM_URL}/invoices/summary`, { headers: platformHeaders() }).then((r) => r.json())
+
 export const platformCreateInvoice = (data) =>
   fetch(`${PLATFORM_URL}/invoices`, {
     method: 'POST',
     headers: platformHeaders(),
     body: JSON.stringify(data),
+  }).then((r) => r.json())
+
+export const platformDeleteTenant = (id) =>
+  fetch(`${PLATFORM_URL}/tenants/${id}`, {
+    method: 'DELETE',
+    headers: platformHeaders(),
   }).then((r) => r.json())
 
 // ── School registration (onboarding) ──────────────────────────
@@ -262,10 +274,7 @@ export const deleteTeacher = async (teacherId) => {
 
 export const getTeacherStats = async () => {
   const response = await fetch(`${API_URL}/stats/teacher`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
+    headers: getHeaders(), // ✅ includes X-Tenant-Slug
   })
 
   if (!response.ok) {
@@ -1218,11 +1227,7 @@ export const deleteUser = async (userId) => {
 // Get stats (admin)
 export const getStats = async () => {
   const response = await fetch(`${API_URL}/stats`, {
-    // ✅ FIXED URL
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
+    headers: getHeaders(), // ✅ includes X-Tenant-Slug
   })
 
   if (!response.ok) {

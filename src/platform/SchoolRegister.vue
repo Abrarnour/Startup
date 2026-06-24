@@ -114,20 +114,13 @@ async function submit() {
     <div v-else class="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
       <!-- Header -->
       <div class="text-center mb-8">
-        <div
-          class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4"
-        >
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            stroke-width="2"
-          >
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
+        <div class="flex justify-center items-center mx-auto mb-6">
+          <img
+            src="/logoMUDAR.png"
+            alt="MUDAR"
+            class="w-28 h-auto object-contain"
+            style="mix-blend-mode: multiply"
+          />
         </div>
         <h1 class="text-2xl font-bold text-gray-900">Inscrire votre école</h1>
         <p class="text-gray-500 mt-1">Essai gratuit · Aucune carte bancaire requise</p>

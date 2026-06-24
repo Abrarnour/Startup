@@ -1,11 +1,26 @@
 // backend/routes/public.js
 import express from 'express'
+import { platformPool, getPool } from '../db.js'
 
 const router = express.Router()
+
+// Helper: resolve the correct pool from tenant slug header
+async function getTenantPool(req) {
+  const slug = req.headers['x-tenant-slug'] || req.query.tenant
+  if (!slug) throw new Error('No tenant slug provided')
+
+  const tenant = await platformPool.query(
+    `SELECT db_name FROM tenants WHERE slug = $1 AND status IN ('active','trial')`,
+    [slug.toLowerCase()],
+  )
+  if (!tenant.rows[0]) throw new Error('Tenant not found or inactive')
+  return getPool(tenant.rows[0].db_name)
+}
 
 // 📋 GET /api/public/courses - Tous les cours (page publique)
 router.get('/courses', async (req, res) => {
   try {
+    const pool = await getTenantPool(req)
     const result = await pool.query(`
       SELECT
         c.*,
@@ -32,6 +47,7 @@ router.get('/courses', async (req, res) => {
 // 📖 GET /api/public/courses/:id - Détails d'un cours
 router.get('/courses/:id', async (req, res) => {
   try {
+    const pool = await getTenantPool(req)
     const result = await pool.query(
       `
       SELECT
