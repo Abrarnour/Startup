@@ -165,10 +165,7 @@ const routes = [
   // If there's a tenant slug in URL, show school home; else show MUDAR landing
   {
     path: '/',
-    redirect: () => {
-      const slug = detectTenantSlug()
-      return slug ? `/school/${slug}` : '/mudar'
-    },
+    redirect: '/mudar',
     meta: { isPublicRegistration: true },
   },
 
