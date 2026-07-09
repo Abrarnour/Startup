@@ -5,6 +5,7 @@
       <div class="blob blob-1"></div>
       <div class="blob blob-2"></div>
       <div class="blob blob-3"></div>
+      <div class="noise"></div>
 
       <div class="left-content">
         <router-link to="/mudar" class="logo">
@@ -19,17 +20,29 @@
 
         <div class="stats-row">
           <div class="stat-pill">
-            <span class="stat-num">200+</span>
+            <span class="stat-num">{{ displayedStats[0] }}+</span>
             <span class="stat-lbl">مدرسة</span>
           </div>
           <div class="stat-pill">
-            <span class="stat-num">48</span>
+            <span class="stat-num">{{ displayedStats[1] }}</span>
             <span class="stat-lbl">ولاية</span>
           </div>
           <div class="stat-pill">
-            <span class="stat-num">100%</span>
+            <span class="stat-num">{{ displayedStats[2] }}%</span>
             <span class="stat-lbl">آمن</span>
           </div>
+        </div>
+
+        <div class="live-strip">
+          <span class="live-dot"></span>
+          <span class="live-text">
+            متصلة الآن —
+            <transition name="live-fade" mode="out-in">
+              <strong :key="liveIndex" :style="{ color: liveSchools[liveIndex].color }">{{
+                liveSchools[liveIndex].name
+              }}</strong>
+            </transition>
+          </span>
         </div>
       </div>
     </div>
@@ -38,23 +51,25 @@
     <div class="right-panel">
       <div class="form-card">
         <div class="form-header">
-          <h1>مرحباً 👋</h1>
+          <h1>مرحباً بعودتك</h1>
           <p>سجّل الدخول إلى منصتك</p>
         </div>
 
-        <div v-if="error" class="error-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          {{ error }}
-        </div>
+        <transition name="error-pop">
+          <div v-if="error" class="error-box" :class="{ shake: shakeError }">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {{ error }}
+          </div>
+        </transition>
 
         <div class="form">
           <div class="field">
             <label>البريد الإلكتروني</label>
-            <div class="input-wrap">
+            <div class="input-wrap" :class="{ filled: email.length > 0 }">
               <svg
                 class="input-icon"
                 viewBox="0 0 24 24"
@@ -73,6 +88,7 @@
                 dir="ltr"
                 @keyup.enter="handleLogin"
               />
+              <span class="input-underline"></span>
             </div>
           </div>
 
@@ -81,7 +97,7 @@
               كلمة المرور
               <a href="#" class="forgot">نسيت كلمة المرور؟</a>
             </label>
-            <div class="input-wrap">
+            <div class="input-wrap" :class="{ filled: password.length > 0 }">
               <svg
                 class="input-icon"
                 viewBox="0 0 24 24"
@@ -99,7 +115,12 @@
                 dir="ltr"
                 @keyup.enter="handleLogin"
               />
-              <button type="button" class="toggle-pw" @click="showPassword = !showPassword">
+              <button
+                type="button"
+                class="toggle-pw"
+                @click="showPassword = !showPassword"
+                :aria-label="showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+              >
                 <svg
                   v-if="!showPassword"
                   viewBox="0 0 24 24"
@@ -124,6 +145,7 @@
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
               </button>
+              <span class="input-underline"></span>
             </div>
           </div>
 
@@ -148,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { platformLogin } from '../services/api.js'
 
@@ -200,10 +222,64 @@ async function handleLogin() {
     isLoading.value = false
   }
 }
+
+/* ── Purely visual additions below — no effect on auth logic ── */
+
+// Shake the error box each time a new error message appears
+const shakeError = ref(false)
+watch(error, (val) => {
+  if (!val) return
+  shakeError.value = false
+  requestAnimationFrame(() => {
+    shakeError.value = true
+  })
+})
+
+// Count-up for the left panel stat pills
+const statTargets = [200, 48, 100]
+const displayedStats = ref([0, 0, 0])
+function animateStats() {
+  statTargets.forEach((target, i) => {
+    const steps = 40
+    const duration = 1200
+    const increment = target / steps
+    let current = 0
+    const interval = setInterval(() => {
+      current += increment
+      if (current >= target) {
+        displayedStats.value[i] = target
+        clearInterval(interval)
+      } else {
+        displayedStats.value[i] = Math.floor(current)
+      }
+    }, duration / steps)
+  })
+}
+
+// Small rotating "who's online" brand detail, echoes the multi-tenant identity
+// switcher on the landing page — purely decorative, no data connection.
+const liveSchools = [
+  { name: 'مدرسة ابن خلدون', color: '#e879f9' },
+  { name: 'أكاديمية التميز', color: '#4ade80' },
+  { name: 'مدرسة النخبة', color: '#38bdf8' },
+  { name: 'مدرسة الأمل', color: '#fb923c' },
+]
+const liveIndex = ref(0)
+let liveTimer = null
+
+onMounted(() => {
+  animateStats()
+  liveTimer = setInterval(() => {
+    liveIndex.value = (liveIndex.value + 1) % liveSchools.length
+  }, 2800)
+})
+onBeforeUnmount(() => {
+  if (liveTimer) clearInterval(liveTimer)
+})
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
 
 * {
   box-sizing: border-box;
@@ -212,16 +288,34 @@ async function handleLogin() {
 }
 
 .auth-page {
+  --ink: #1e0a3c;
+  --ink-soft: #7c6b99;
+  --paper: #f9f7ff;
+  --violet-900: #2e0652;
+  --violet-700: #5b21b6;
+  --violet-600: #7c3aed;
+  --violet-400: #a855f7;
+  --orchid: #e879f9;
+  --line: #ede9fe;
+
   display: flex;
   min-height: 100vh;
   font-family: 'IBM Plex Sans Arabic', sans-serif;
   direction: rtl;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .auth-page * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .left-panel {
   position: relative;
   width: 42%;
-  background: #1e0a3c;
+  background: var(--ink);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -239,7 +333,7 @@ async function handleLogin() {
   height: 500px;
   bottom: -150px;
   right: -150px;
-  background: radial-gradient(circle, #5b21b6 0%, #7c3aed 40%, transparent 75%);
+  background: radial-gradient(circle, var(--violet-700) 0%, var(--violet-600) 40%, transparent 75%);
   opacity: 0.85;
   animation: blobFloat1 9s ease-in-out infinite;
 }
@@ -248,7 +342,7 @@ async function handleLogin() {
   height: 350px;
   top: -80px;
   left: -80px;
-  background: radial-gradient(circle, #a855f7 0%, #e879f9 45%, transparent 75%);
+  background: radial-gradient(circle, var(--violet-400) 0%, var(--orchid) 45%, transparent 75%);
   opacity: 0.55;
   animation: blobFloat2 11s ease-in-out infinite;
 }
@@ -258,9 +352,16 @@ async function handleLogin() {
   top: 50%;
   right: 50%;
   transform: translate(50%, -50%);
-  background: radial-gradient(circle, #7c3aed 0%, transparent 70%);
+  background: radial-gradient(circle, var(--violet-600) 0%, transparent 70%);
   opacity: 0.3;
   animation: blobFloat1 7s ease-in-out infinite reverse;
+}
+.noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .left-content {
@@ -269,7 +370,23 @@ async function handleLogin() {
   color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2.2rem;
+}
+.left-content > * {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
+}
+.left-content > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.left-content > *:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.left-content > *:nth-child(3) {
+  animation-delay: 0.25s;
+}
+.left-content > *:nth-child(4) {
+  animation-delay: 0.35s;
 }
 
 .logo {
@@ -281,15 +398,21 @@ async function handleLogin() {
   font-weight: 600;
   color: #fff;
   text-decoration: none;
+  width: fit-content;
+}
+.logo:focus-visible {
+  outline: 2px solid var(--orchid);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 .logo-img {
-  width: 80px; /* تكبير الرمز مباشرة */
+  width: 80px;
   height: auto;
   object-fit: contain;
   border-radius: 0;
-  background: none !important; /* حذف التظليل الخلفي الصغير */
+  background: none !important;
   padding: 0;
-  mix-blend-mode: multiply; /* إزالة الخلفية البيضاء برمجياً */
+  mix-blend-mode: multiply;
 }
 
 .panel-quote h2 {
@@ -302,7 +425,7 @@ async function handleLogin() {
 }
 .panel-quote h2 em {
   font-style: italic;
-  background: linear-gradient(135deg, #c084fc, #e879f9);
+  background: linear-gradient(135deg, #c084fc, var(--orchid));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -311,6 +434,7 @@ async function handleLogin() {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.7;
+  max-width: 380px;
 }
 
 .stats-row {
@@ -325,13 +449,21 @@ async function handleLogin() {
   padding: 14px 10px;
   text-align: center;
   backdrop-filter: blur(8px);
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.stat-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(232, 121, 249, 0.4);
 }
 .stat-num {
   display: block;
   font-family: 'Fraunces', serif;
   font-size: 20px;
-  color: #e879f9;
+  color: var(--orchid);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .stat-lbl {
   font-size: 11px;
@@ -340,9 +472,37 @@ async function handleLogin() {
   display: block;
 }
 
+.live-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+  animation: pulseDot 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.live-text strong {
+  font-weight: 700;
+}
+.live-fade-enter-active,
+.live-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.live-fade-enter-from,
+.live-fade-leave-to {
+  opacity: 0;
+}
+
 .right-panel {
   flex: 1;
-  background: #f9f7ff;
+  background: var(--paper);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -352,6 +512,8 @@ async function handleLogin() {
 .form-card {
   width: 100%;
   max-width: 420px;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.15s forwards;
 }
 
 .form-header {
@@ -361,13 +523,13 @@ async function handleLogin() {
   font-family: 'Fraunces', serif;
   font-size: 30px;
   font-weight: 300;
-  color: #1e0a3c;
+  color: var(--ink);
   letter-spacing: -0.8px;
   margin-bottom: 6px;
 }
 .form-header p {
   font-size: 14px;
-  color: #7c6b99;
+  color: var(--ink-soft);
 }
 
 .error-box {
@@ -386,6 +548,24 @@ async function handleLogin() {
   width: 15px;
   height: 15px;
   flex-shrink: 0;
+}
+.error-box.shake {
+  animation: shake 0.4s ease;
+}
+.error-pop-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.error-pop-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.error-pop-leave-active {
+  transition: opacity 0.15s ease;
+}
+.error-pop-leave-to {
+  opacity: 0;
 }
 
 .form {
@@ -411,11 +591,15 @@ async function handleLogin() {
 .forgot {
   font-size: 12px;
   font-weight: 400;
-  color: #a855f7;
+  color: var(--violet-400);
   text-decoration: none;
 }
 .forgot:hover {
   text-decoration: underline;
+}
+.forgot:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
 }
 
 .input-wrap {
@@ -431,16 +615,20 @@ async function handleLogin() {
   height: 16px;
   color: #a78bfa;
   pointer-events: none;
+  transition: color 0.2s;
+}
+.input-wrap:focus-within .input-icon {
+  color: var(--violet-600);
 }
 
 .input-wrap input {
   width: 100%;
   padding: 11px 44px 11px 44px;
-  border: 1.5px solid #ede9fe;
+  border: 1.5px solid var(--line);
   border-radius: 10px;
   font-size: 14px;
   font-family: 'IBM Plex Sans Arabic', sans-serif;
-  color: #1e0a3c;
+  color: var(--ink);
   background: #fff;
   outline: none;
   transition:
@@ -448,11 +636,29 @@ async function handleLogin() {
     box-shadow 0.2s;
 }
 .input-wrap input:focus {
-  border-color: #a855f7;
+  border-color: var(--violet-400);
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
 }
 .input-wrap input::placeholder {
   color: #c4b5fd;
+}
+
+.input-underline {
+  position: absolute;
+  bottom: -1.5px;
+  right: 50%;
+  left: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--violet-600), var(--orchid));
+  border-radius: 2px;
+  transition:
+    right 0.25s ease,
+    left 0.25s ease;
+  pointer-events: none;
+}
+.input-wrap:focus-within .input-underline {
+  right: 0;
+  left: 0;
 }
 
 .toggle-pw {
@@ -461,10 +667,19 @@ async function handleLogin() {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 2px;
   color: #a78bfa;
   display: flex;
   align-items: center;
+  transition: color 0.2s;
+}
+.toggle-pw:hover {
+  color: var(--violet-600);
+}
+.toggle-pw:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 .toggle-pw svg {
   width: 16px;
@@ -475,7 +690,7 @@ async function handleLogin() {
   margin-top: 6px;
   width: 100%;
   padding: 13px;
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: linear-gradient(135deg, var(--violet-600), var(--violet-400));
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -485,7 +700,8 @@ async function handleLogin() {
   cursor: pointer;
   transition:
     opacity 0.2s,
-    transform 0.15s;
+    transform 0.15s,
+    box-shadow 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -493,8 +709,13 @@ async function handleLogin() {
   box-shadow: 0 4px 18px rgba(124, 58, 237, 0.3);
 }
 .btn-submit:hover:not(:disabled) {
-  opacity: 0.9;
+  opacity: 0.92;
   transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+}
+.btn-submit:focus-visible {
+  outline: 2px solid var(--violet-700);
+  outline-offset: 2px;
 }
 .btn-submit.loading,
 .btn-submit:disabled {
@@ -517,16 +738,20 @@ async function handleLogin() {
   margin-top: 22px;
   text-align: center;
   font-size: 13px;
-  color: #7c6b99;
+  color: var(--ink-soft);
 }
 .switch-link a {
-  color: #7c3aed;
+  color: var(--violet-600);
   font-weight: 600;
   text-decoration: none;
   margin-right: 4px;
 }
 .switch-link a:hover {
   text-decoration: underline;
+}
+.switch-link a:focus-visible {
+  outline: 2px solid var(--violet-600);
+  outline-offset: 2px;
 }
 
 @keyframes blobFloat1 {
@@ -550,6 +775,45 @@ async function handleLogin() {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+@keyframes pulseDot {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
 }
 
