@@ -41,3 +41,4 @@ backend/.env
 .env
 backend/node_modules
 node_modules
+backend/uploads

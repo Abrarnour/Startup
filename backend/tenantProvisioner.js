@@ -17,7 +17,7 @@ function getRootClient() {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: 'postgres',
-    ssl: process.env.DB_HOST === 'localhost' ? false : { rejectUnauthorized: false },
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   })
 }
 
@@ -55,7 +55,7 @@ export async function provisionTenant({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: dbName,
-    ssl: process.env.DB_HOST === 'localhost' ? false : { rejectUnauthorized: false },
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   })
 
   const rawSQL = readFileSync(path.join(__dirname, 'tenant_schema.sql'), 'utf-8')

@@ -18,7 +18,7 @@ export const platformPool = new Pool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.PLATFORM_DB_NAME || 'platform_db',
-  ssl: process.env.DB_HOST === 'localhost' ? false : { rejectUnauthorized: false },
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   max: 5,
   idleTimeoutMillis: 30000,
 })
@@ -46,7 +46,7 @@ export function getPool(dbName) {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: dbName,
-    ssl: process.env.DB_HOST === 'localhost' ? false : { rejectUnauthorized: false },
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     max: 10,
     idleTimeoutMillis: 20000,
     connectionTimeoutMillis: 5000,
